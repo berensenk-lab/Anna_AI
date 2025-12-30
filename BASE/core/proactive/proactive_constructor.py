@@ -81,13 +81,14 @@ class ProactiveConstructor:
         formatted = "\n".join([f"- {t}" for t in thoughts])
         return f"""
 ## YOUR RECENT THOUGHTS
-###THOUGHT LABELS
--[THOUGHT] These are your recent thoughts
--[USER] This is the user's input
--[SELF] These are your spoken responses
--[SYSTEM]/[TOOL] These are internal processing messages from your code execution
+### SOURCE LABELS
+- [THOUGHT] These are your recent thoughts
+- [USER] This is the user's input
+- [SELF] These are your spoken responses
+- [FAMILY] These are the spoken responses from your AI family members
+- [SYSTEM]/[TOOL]/etc. These are internal processing messages from your code execution
 
-###YOUR RECENT THOUGHT CHAIN:
+### YOUR RECENT THOUGHT CHAIN:
 {formatted}
 """
     

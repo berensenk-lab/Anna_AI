@@ -11,6 +11,7 @@ class ChatView:
     MESSAGE_TYPE_TO_TAG = {
         MessageType.USER: "user",
         MessageType.AGENT: "agent",
+        MessageType.FAMILY: "family",
         MessageType.SYSTEM: "system",
         MessageType.ERROR: "error",
         MessageType.WARNING: "warning",
@@ -156,6 +157,7 @@ class ChatView:
         font_configs = {
             "user": (font_name, 10, "bold"),
             "agent": (font_name, 10, "bold"),
+            "family": (font_name, 10, "bold"),
             "system": (font_name, 9, "italic"),
             "error": (font_name, 10, "bold"),
             "warning": (font_name, 10, "bold"),
@@ -365,7 +367,7 @@ class ChatView:
             prefix = ">> " if is_cyber else ""
             self.parent.chat_display.insert(tk.END, f"{prefix}{sender}: ", tag)
             self.parent.chat_display.insert(tk.END, f"{message}\n\n")
-        elif msg_type == MessageType.AGENT:
+        elif msg_type == MessageType.AGENT or MessageType.FAMILY:
             prefix = "<< " if is_cyber else ""
             self.parent.chat_display.insert(tk.END, f"{prefix}{sender}: ", tag)
             self.parent.chat_display.insert(tk.END, f"{message}\n\n")
@@ -384,6 +386,7 @@ class ChatView:
         type_map = {
             MessageType.USER: "user",
             MessageType.AGENT: "agent",
+            MessageType.FAMILY: "family",
             MessageType.SYSTEM: "system",
             MessageType.ERROR: "error",
             MessageType.SPEECH: "user",
@@ -430,6 +433,7 @@ class ChatView:
         legacy_map = {
             "user": MessageType.USER,
             "agent": MessageType.AGENT,
+            "family": MessageType.FAMILY,
             "system": MessageType.SYSTEM,
             "error": MessageType.ERROR,
             "warning": MessageType.WARNING,

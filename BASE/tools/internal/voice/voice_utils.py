@@ -50,6 +50,36 @@ def find_vb_cable_device() -> Optional[int]:
     print("[VoiceUtils] VB-Cable not found")
     return None
 
+def find_cable_by_name(cable_name: str) -> Optional[int]:
+    """
+    Find audio device by exact name match
+    
+    Args:
+        cable_name: Exact device name to search for
+        
+    Returns:
+        Optional[int]: Device index if found, None otherwise
+    """
+    devices = sd.query_devices()
+    
+    for i, device in enumerate(devices):
+        device_name = device['name']
+        if device['max_output_channels'] > 0:
+            if device_name == cable_name:
+                print(f"[VoiceUtils] Found cable by name: [{i}] {device_name}")
+                return i
+            elif cable_name.lower() in device_name.lower():
+                print(f"[VoiceUtils] Found cable by partial match: [{i}] {device_name}")
+                return i
+    
+    print(f"[VoiceUtils] Cable not found: '{cable_name}'")
+    print("[VoiceUtils] Available output devices:")
+    for i, device in enumerate(devices):
+        if device['max_output_channels'] > 0:
+            print(f"  [{i}] {device['name']}")
+    
+    return None
+
 
 def list_audio_devices() -> List[dict]:
     """

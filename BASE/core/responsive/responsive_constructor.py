@@ -115,13 +115,14 @@ class ResponsiveConstructor:
         
         return f"""
 ## YOUR RECENT THOUGHTS
-###THOUGHT LABELS
--[THOUGHT] These are your recent thoughts
--[USER] This is the user's input
--[SELF] These are your spoken responses
--[SYSTEM]/[TOOL] These are internal processing messages from your code execution
+### SOURCE LABELS
+- [THOUGHT] These are your recent thoughts
+- [USER] This is the user's input
+- [SELF] These are your spoken responses
+- [FAMILY] These are the spoken responses from your AI family members
+- [SYSTEM]/[TOOL]/etc. These are internal processing messages from your code execution
 
-###YOUR RECENT THOUGHT CHAIN:
+### YOUR RECENT THOUGHT CHAIN:
 {formatted}
 """
     
@@ -177,7 +178,7 @@ class ResponsiveConstructor:
         # Search for relevant examples using the stage-specific method
         examples = self.memory_search.get_response_generation_examples(
             context=combined_query,
-            k=3  # Get top 3 most relevant examples
+            k=1  # Get top 3 most relevant examples
         )
         
         if not examples:

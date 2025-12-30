@@ -45,7 +45,8 @@ def format_source(source: str) -> str:
         'proactive_reflection': 'THOUGHT',
         'internal': 'THOUGHT',
         'system_notification': 'SYSTEM',
-        'chat_engagement': 'SYSTEM'
+        'chat_engagement': 'SYSTEM',
+        'group_chat': 'FAMILY'
     }
     formatted = source_map.get(source, source.upper())
     return f"[{formatted}]"

@@ -30,6 +30,11 @@ reasoning_model = "gemma3:12b-it-q4_K_M"
 
 voiceIndex = 1
 
+# VB-Cable for audio output (use exact device name)
+vb_cable_name = "CABLE Input"
 
-
+# GROUP CHAT CONFIGURATION
+# Unique port for this agent's group chat server
+# Each agent needs a different port (e.g., 54321, 54322, 54323, etc.)
+group_chat_port = 54321
 

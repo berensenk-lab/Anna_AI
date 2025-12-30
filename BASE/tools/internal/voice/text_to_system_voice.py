@@ -164,8 +164,22 @@ def speak_system_voice(text: str, engine, stop_event=None, volume: float = 1.0) 
         else:
             logger.audio(f"Playing at full volume")
         
-        # Find VB-Cable using shared utility
-        device = find_vb_cable_device()
+        # Find VB-Cable using name from bot_info
+        try:
+            from personality.bot_info import vb_cable_name
+            from BASE.tools.internal.voice.voice_utils import find_cable_by_name
+            
+            device = find_cable_by_name(vb_cable_name)
+            
+            if device is None:
+                logger.audio(f"Configured cable '{vb_cable_name}' not found, using auto-detection")
+                device = find_vb_cable_device()
+        except ImportError:
+            logger.audio("vb_cable_name not in bot_info, using auto-detection")
+            device = find_vb_cable_device()
+        except Exception as e:
+            logger.error(f"Error finding cable: {e}, using auto-detection")
+            device = find_vb_cable_device()
         
         if device is None:
             logger.audio("VB-Cable not found, using default output")

@@ -30,6 +30,7 @@ class MessageType(Enum):
     TOOL_STATUS = "tool_status"
     USER = "user"
     AGENT = "agent"
+    FAMILY = "family"
     ERROR = "error"
     WARNING = "warning"
     SUCCESS = "success"
@@ -74,7 +75,8 @@ class Logger:
         MessageType.ACTION: "#f4a803",
         MessageType.GOAL: "#f403e8",       
         MessageType.MEMORY: "#e6ff07",      
-        MessageType.AGENT: "#bb86fc",         
+        MessageType.AGENT: "#bb86fc",
+        MessageType.FAMILY: "#bb86fc",         
         MessageType.SPEECH: "#6f00ff",
         MessageType.LIVECHAT: "#00c3ff",        
         MessageType.DISCORD: "#00c3ff",  
@@ -217,7 +219,7 @@ class Logger:
             elif msg_type in (MessageType.SYSTEM, MessageType.SUCCESS):
                 return self.config.LOG_SYSTEM_INFORMATION
             
-            elif msg_type in (MessageType.ERROR, MessageType.WARNING, MessageType.USER):
+            elif msg_type in (MessageType.ERROR, MessageType.WARNING, MessageType.USER, MessageType.FAMILY):
                 # Always log errors, warnings, and user input
                 return True
             

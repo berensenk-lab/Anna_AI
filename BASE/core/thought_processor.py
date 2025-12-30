@@ -793,13 +793,28 @@ class ThoughtProcessor:
                 if system_prompt:
                     messages.append({"role": "system", "content": system_prompt})
                 messages.append({"role": "user", "content": prompt, "images": [image_data]})
-                payload = {"model": model, "messages": messages, "stream": False, "keep_alive": "24h"}
+                
+                payload = {
+                    "model": model,
+                    "messages": messages,
+                    "stream": False,
+                    "keep_alive": "24h",
+                    "options": {
+                        "temperature": temperature,
+                        "top_p": self.config.ollama_top_p,
+                        "top_k": self.config.ollama_top_k,
+                        "repeat_penalty": self.config.ollama_repeat_penalty,
+                        "num_predict": self.config.ollama_max_tokens
+                    }
+                }
             else:
                 url = f"{self.config.ollama_endpoint}/api/generate"
                 full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
                 
                 payload = {
-                    "model": model, "prompt": full_prompt, "stream": False,
+                    "model": model,
+                    "prompt": full_prompt,
+                    "stream": False,
                     "temperature": temperature,
                     "top_p": self.config.ollama_top_p,
                     "top_k": self.config.ollama_top_k,
@@ -810,8 +825,6 @@ class ThoughtProcessor:
                 
                 if self.config.ollama_seed is not None:
                     payload["seed"] = self.config.ollama_seed
-            
-            # self.logger.system(f"[Ollama] Mode: {mode} | Temp: {temperature:.2f}")
             
             response = requests.post(url, json=payload, timeout=self.config.ollama_timeout)
             response.raise_for_status()

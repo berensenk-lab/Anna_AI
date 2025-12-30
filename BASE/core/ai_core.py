@@ -392,6 +392,33 @@ class AICore:
                 self.memory_manager.save_bot_response(reply)
                 self.logger.memory("Saved bot response to memory")
             
+            # Broadcast to group chat if enabled
+            if reply and getattr(self.controls, 'IN_GROUP_CHAT', False):
+                if hasattr(self, 'tool_manager') and self.tool_manager:
+                    # CRITICAL FIX: Wait for tool to be ready
+                    import asyncio
+                    
+                    tool_ready = await self.tool_manager.wait_for_tool_ready(
+                        'group_chat',
+                        timeout=2.0
+                    )
+                    
+                    if tool_ready:
+                        group_chat_tool = self.tool_manager._active_tools.get('group_chat')
+                        if group_chat_tool and hasattr(group_chat_tool, 'broadcast_spoken_response'):
+                            try:
+                                result = group_chat_tool.broadcast_spoken_response(reply)
+                                if result:
+                                    self.logger.success(f"[Group Chat] Broadcast successful")
+                                else:
+                                    self.logger.warning(f"[Group Chat] Broadcast returned False")
+                            except Exception as e:
+                                self.logger.warning(f"[Group Chat] Broadcast failed: {e}")
+                                import traceback
+                                traceback.print_exc()
+                    else:
+                        self.logger.warning("[Group Chat] Tool not ready after 2s wait")
+            
             return reply
             
         except Exception as e:

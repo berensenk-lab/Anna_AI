@@ -167,7 +167,7 @@ class MemoryAwarePromptBuilder:
         if relevance.needs_medium_memory and relevance.query_hint:
             medium_results = self.memory_search.search_medium_memory(
                 relevance.query_hint, 
-                k=3
+                k=1
             )
             if medium_results:
                 context_parts.append("\n## EARLIER TODAY")
@@ -180,7 +180,7 @@ class MemoryAwarePromptBuilder:
         if relevance.needs_long_memory and relevance.query_hint:
             long_results = self.memory_search.search_long_memory(
                 relevance.query_hint,
-                k=2
+                k=1
             )
             if long_results:
                 context_parts.append("\n## PAST DAYS")
@@ -192,7 +192,7 @@ class MemoryAwarePromptBuilder:
         if relevance.needs_base_knowledge and relevance.query_hint:
             base_results = self.memory_search.search_base_knowledge(
                 relevance.query_hint,
-                k=3,
+                k=1,
                 min_similarity=0.4  # Higher threshold for base knowledge
             )
             if base_results:

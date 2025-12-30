@@ -44,15 +44,17 @@ Guidelines:
     def get_standard_guidance() -> str:
         """Guidance for standard responses"""
         return """
-## RESPOND NATURALLY
+## RESPONSE GUIDANCE
 
-Based on your recent thoughts and the current situation, respond in 1-2 sentences.
+Respond naturally based on your recent thoughts and the current situation. This is a casual conversation.
 
 Guidelines:
+- Respond in 1-2 sentences, no more than 15 words.
 - Speak naturally in your own voice
-- Keep it conversational
-- Don't repeat what you just said recently
-- Base response on your thoughts"""
+- Keep it conversational and light
+- Don't repeat what you just said recently. Responses should not be too similar.
+- If your thoughts have been repetitive, mention some future ideas, plans, or goals based on your personality.
+- Base your response on your thoughts, personality, and available context"""
     
     @staticmethod
     def get_response_rules() -> str:

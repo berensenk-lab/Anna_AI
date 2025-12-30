@@ -538,14 +538,16 @@ class ProcessingDelegator:
             url = f"{self.config.ollama_endpoint}/api/generate"
             full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
             
+            # [FIX] Use config values instead of hardcoded parameters
             payload = {
                 "model": model,
                 "prompt": full_prompt,
                 "stream": False,
-                "temperature": 0.7,
-                "top_p": 0.9,
-                "top_k": 40,
-                "repeat_penalty": 1.1,
+                "temperature": self.config.ollama_temperature_response,  # Changed from 0.7
+                "top_p": self.config.ollama_top_p,  # Changed from 0.9
+                "top_k": self.config.ollama_top_k,  # Changed from 40
+                "repeat_penalty": self.config.ollama_repeat_penalty,  # Changed from 1.1
+                "num_predict": self.config.ollama_max_tokens,  # Added (was missing)
                 "keep_alive": "24h"
             }
             
@@ -592,7 +594,7 @@ class ProcessingDelegator:
         try:
             memory_results = self.memory_search.search_medium_memory(
                 query=user_input or combined_text[:200],
-                k=3
+                k=1
             )
             
             if memory_results:

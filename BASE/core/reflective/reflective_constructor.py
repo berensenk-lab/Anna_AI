@@ -125,13 +125,14 @@ class ReflectiveConstructor:
         formatted = "\n".join([f"- {t}" for t in thoughts])
         return f"""
 ## YOUR RECENT THOUGHTS
-###THOUGHT LABELS
--[THOUGHT] These are your recent thoughts
--[USER] This is the user's input
--[SELF] These are your spoken responses
--[SYSTEM]/[TOOL] These are internal processing messages from your code execution
+### SOURCE LABELS
+- [THOUGHT] These are your recent thoughts
+- [USER] This is the user's input
+- [SELF] These are your spoken responses
+- [FAMILY] These are the spoken responses from your AI family members
+- [SYSTEM]/[TOOL]/etc. These are internal processing messages from your code execution
 
-###YOUR RECENT THOUGHT CHAIN:
+### YOUR RECENT THOUGHT CHAIN:
 {formatted}
 """
     
@@ -168,7 +169,7 @@ class ReflectiveConstructor:
             # Use get_thought_interpretation_examples (for BEHAVIORS)
             examples = self.memory_search.get_thought_interpretation_examples(
                 context=combined_query,
-                k=3,
+                k=1,
                 min_similarity=0.3
             )
             
@@ -228,7 +229,7 @@ class ReflectiveConstructor:
         # Yesterday's context
         if any(kw in text_lower for kw in ['yesterday', 'last night', 'this morning']):
             try:
-                yesterday_ctx = self.memory_search.get_yesterday_context(max_entries=8)
+                yesterday_ctx = self.memory_search.get_yesterday_context(max_entries=1)
                 if yesterday_ctx:
                     yesterday_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
                     context_sections.append(f"## YESTERDAY ({yesterday_date})")
@@ -243,7 +244,7 @@ class ReflectiveConstructor:
                 medium_results = self.memory_search.search_medium_memory_combined(
                     user_input=combined_query,
                     recent_thoughts=thought_chain[-5:] if thought_chain else [],
-                    k=3,
+                    k=1,
                     use_embedding_combination=True
                 )
                 if medium_results:
@@ -264,7 +265,7 @@ class ReflectiveConstructor:
                 long_results = self.memory_search.search_long_memory_combined(
                     user_input=combined_query,
                     recent_thoughts=thought_chain[-5:] if thought_chain else [],
-                    k=3,
+                    k=1,
                     use_embedding_combination=True
                 )
                 if long_results:
@@ -284,7 +285,7 @@ class ReflectiveConstructor:
                 base_results = self.memory_search.search_base_knowledge_combined(
                     user_input=combined_query,
                     recent_thoughts=thought_chain[-5:] if thought_chain else [],
-                    k=3,
+                    k=1,
                     min_similarity=0.4,
                     use_embedding_combination=True
                 )
@@ -367,7 +368,7 @@ class ReflectiveConstructor:
         try:
             results = self.memory_search.search_long_memory(
                 "core identity personality traits preferences",
-                k=3
+                k=1
             )
             
             if not results:
@@ -388,7 +389,7 @@ class ReflectiveConstructor:
         try:
             examples = self.memory_search.get_personality_examples(
                 query="personality traits behavior patterns preferences",
-                k=3
+                k=1
             )
             return examples if examples else ""
         except Exception as e:
@@ -404,7 +405,7 @@ class ReflectiveConstructor:
         try:
             results = self.memory_search.search_long_memory(
                 "important events relationships goals",
-                k=5
+                k=1
             )
             
             if not results:
@@ -428,7 +429,7 @@ class ReflectiveConstructor:
             
             results = self.memory_search.search_long_memory(
                 f"yesterday {yesterday_str} events interactions",
-                k=3
+                k=1
             )
             
             if not results:
@@ -449,7 +450,7 @@ class ReflectiveConstructor:
         try:
             results = self.memory_search.search_long_memory(
                 "recent conversation interactions",
-                k=5
+                k=1
             )
             
             if not results:

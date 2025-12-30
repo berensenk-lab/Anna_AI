@@ -104,6 +104,11 @@ class CoreInitializer:
                 logger=self.logger
             )
             
+            # CRITICAL FIX: Set event loop and thought buffer BEFORE starting tools
+            if self.main_loop:
+                self.tool_manager.set_event_loop(self.main_loop)
+                self.logger.system("[Init] Event loop set for tool manager")
+            
             # Get enabled tools
             enabled_tools = self.tool_manager.get_enabled_tool_names()
             self.logger.system(
@@ -158,7 +163,7 @@ class CoreInitializer:
     def _inject_tool_manager(self):
         """
         Inject tool manager into processing system
-        SEPARATED: Now runs AFTER processing system is fully initialized
+        FIXED: Set thought buffer BEFORE starting tools
         """
         try:
             if not hasattr(self, 'tool_manager') or not self.tool_manager:
@@ -259,10 +264,10 @@ class CoreInitializer:
             self.tool_manager.set_thought_buffer(thought_buffer)
             
             self.logger.system(
-                "[Init] [SUCCESS] Event loop and thought buffer injected into tool manager"
+                "[Init] [SUCCESS] Thought buffer set for tool manager"
             )
             
-            # Start enabled tools
+            # NOW start enabled tools (they'll have access to thought buffer)
             enabled_tools = self.tool_manager.get_enabled_tool_names()
             for tool_name in enabled_tools:
                 asyncio.run_coroutine_threadsafe(
@@ -272,7 +277,7 @@ class CoreInitializer:
             
             if enabled_tools:
                 self.logger.system(
-                    f"[Init] [SUCCESS] Started {len(enabled_tools)} enabled tool(s)"
+                    f"[Init] Starting {len(enabled_tools)} enabled tool(s)..."
                 )
             
         except Exception as e:

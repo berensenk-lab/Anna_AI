@@ -226,6 +226,7 @@ class ToolManager:
     ) -> bool:
         """
         Wait for a tool to become active and available
+        FIXED: Better logging and longer default timeout
         
         Args:
             tool_name: Tool name or control variable
@@ -238,20 +239,62 @@ class ToolManager:
         # Resolve to actual tool name
         resolved = self._resolve_tool_name(tool_name)
         if not resolved:
+            if self.logger:
+                self.logger.warning(
+                    f"[Tool Manager] wait_for_tool_ready: Unknown tool '{tool_name}'"
+                )
             return False
         
         start_time = time.time()
+        last_log = 0.0
         
         while (time.time() - start_time) < timeout:
-            # Check if fully active and available
-            if self.is_tool_active(resolved):
-                if self.is_tool_available(resolved):
-                    return True
+            # Check if fully active
+            is_active = self.is_tool_active(resolved)
+            is_available = self.is_tool_available(resolved) if is_active else False
+            
+            # Log every 2 seconds
+            if time.time() - last_log >= 2.0:
+                if self.logger:
+                    self.logger.system(
+                        f"[Tool Manager] Waiting for {resolved}: "
+                        f"active={is_active}, available={is_available}"
+                    )
+                last_log = time.time()
+            
+            if is_active and is_available:
+                if self.logger:
+                    elapsed = time.time() - start_time
+                    self.logger.success(
+                        f"[Tool Manager] {resolved} ready after {elapsed:.1f}s"
+                    )
+                return True
             
             # Wait before next check
             await asyncio.sleep(check_interval)
         
-        # Timeout reached
+        # Timeout - log detailed diagnostics
+        if self.logger:
+            is_active = self.is_tool_active(resolved)
+            is_available = self.is_tool_available(resolved) if is_active else False
+            
+            self.logger.error(
+                f"[Tool Manager] {resolved} NOT ready after {timeout}s timeout\n"
+                f"  Active: {is_active}\n"
+                f"  Available: {is_available}\n"
+                f"  In _active_tools: {resolved in self._active_tools}\n"
+                f"  In _starting_tools: {resolved in self._starting_tools}"
+            )
+            
+            # Get tool instance for more diagnostics
+            if resolved in self._active_tools:
+                tool = self._active_tools[resolved]
+                if hasattr(tool, '_clients'):
+                    self.logger.error(
+                        f"  Tool has {len(tool._clients)} clients\n"
+                        f"  Tool has server: {tool._server is not None}"
+                    )
+        
         return False
     
     # ========================================================================

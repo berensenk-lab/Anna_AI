@@ -174,7 +174,6 @@ class BaseTool(ABC):
                     thought_buffer.add_processed_thought(
                         content=f"[{self.name}] Status: {status}",
                         source='tool_context',
-                        urgency_override=4
                     )
                     
                     # Wait before next update

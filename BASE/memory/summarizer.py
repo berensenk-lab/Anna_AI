@@ -74,7 +74,8 @@ def summarize_previous_day(memory_manager, previous_date: str) -> bool:
     prompt = f"""Create a concise summary of this full day's conversation between {username}, other humans and AI agents, and {agentname} that took place on {previous_date}. 
 Summarize in the first person from the perspective of {agentname}, the AI assistant, creating a short diary entry from {agentname} reflecting on that day. 
 Focus on key topics, important information, decisions made, emotional context, personal preferences, ongoing plans, and anything else the assistant, {agentname}, should later recall about that day's interactions. 
-Do not include formatting such as headers, subsections, bullet points, line breaks, or other extraneous details. Write this diary entry in complete sentences and a reflective tone.
+Do not include formatting such as headers, subsections, bullet points, line breaks, or other extraneous details. Write this diary entry in complete sentences and a reflective tone. 
+No more than 2000 characters.
 
 Conversation from {previous_date} ({len(entries_from_date)} messages):
 {conversation}

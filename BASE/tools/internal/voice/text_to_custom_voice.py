@@ -282,14 +282,28 @@ def get_text_hash(text):
     return hashlib.md5(text.encode()).hexdigest()[:16]
 
 def find_vb_cable():
-    """Find VB-Cable"""
-    devs = sd.query_devices()
-    for i, d in enumerate(devs):
-        if d['max_output_channels'] > 0:
-            name = d['name'].lower()
-            if any(p in name for p in ("cable input", "vb-audio", "voicemeeter")):
-                return i
-    return None
+    """Find VB-Cable using name from bot_info"""
+    try:
+        from personality.bot_info import vb_cable_name
+        from BASE.tools.internal.voice.voice_utils import find_cable_by_name
+        
+        device_index = find_cable_by_name(vb_cable_name)
+        if device_index is not None:
+            return device_index
+        
+        print(f"[XTTS] Configured cable '{vb_cable_name}' not found")
+        print("[XTTS] Falling back to auto-detection")
+        
+        from BASE.tools.internal.voice.voice_utils import find_vb_cable_device
+        return find_vb_cable_device()
+        
+    except ImportError:
+        print("[XTTS] vb_cable_name not in bot_info, using auto-detection")
+        from BASE.tools.internal.voice.voice_utils import find_vb_cable_device
+        return find_vb_cable_device()
+    except Exception as e:
+        print(f"[XTTS] Error finding cable: {e}")
+        return None
 
 def detect_and_fix_artifacts(audio, sample_rate=24000, threshold=0.9, min_duration=0.3):
     """

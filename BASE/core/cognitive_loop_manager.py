@@ -285,7 +285,7 @@ class CognitiveLoopManager:
     async def _generate_response(self):
         """
         Generate autonomous spoken response
-        FIXED: Add response echo to thoughts and clear trigger only after success
+        FIXED: Wait for tool to be ready before broadcasting
         """
         # Rate limiting check
         time_since_last_response = time.time() - self.last_response_time
@@ -293,7 +293,6 @@ class CognitiveLoopManager:
         
         if SLOW_MODE and time_since_last_response < self.min_response_interval:
             remaining = self.min_response_interval - time_since_last_response
-            # self.logger.system(f"[Autonomous] Rate limited - {remaining:.0f}s remaining")
             self.thought_processor.thought_buffer.response_trigger.clear()
             return
         
@@ -304,32 +303,27 @@ class CognitiveLoopManager:
             return
         
         try:
-            # self.logger.system("[Autonomous] Generating spoken response...")
-            
             # Use processing_delegator to generate response
             if hasattr(self.ai_core_ref, 'processing_delegator'):
                 delegator = self.ai_core_ref.processing_delegator
                 
                 # Generate autonomous response
                 response = await delegator._generate_responsive_response(
-                    user_text="",  # Empty = autonomous
+                    user_text="",
                     context_parts=[],
                     chat_context=None,
                     is_chat_engagement=False
                 )
                 
                 if response:
-                    # self.logger.system(f"[Autonomous] Generated: {response[:60]}...")
-                    
-                    # CRITICAL FIX 1: Add response echo to thought buffer FIRST
+                    # Add response echo to thought buffer FIRST
                     thought_buffer = self.thought_processor.thought_buffer
                     thought_buffer.add_response_echo(
                         response_text=response,
                         timestamp=time.time()
                     )
-                    # self.logger.system("[Autonomous] Response echo added to thoughts")
                     
-                    # Save to memory (autonomous responses need explicit save)
+                    # Save to memory
                     if hasattr(self.ai_core_ref, 'memory_manager'):
                         memory_mgr = self.ai_core_ref.memory_manager
                         if self.controls.SAVE_MEMORY:
@@ -339,35 +333,68 @@ class CognitiveLoopManager:
                                 self.logger.memory(
                                     f"[Autonomous] Saved (Short: {len(memory_mgr.short_memory)})"
                                 )
-                        else:
-                            self.logger.warning("[Autonomous] Memory save disabled")
                     
-                    # CRITICAL FIX 2: Call the callback to queue for GUI
+                    # CRITICAL FIX: Wait for group chat tool to be ready (10 seconds)
+                    if getattr(self.controls, 'IN_GROUP_CHAT', False):
+                        if hasattr(self.ai_core_ref, 'tool_manager') and self.ai_core_ref.tool_manager:
+                            # Wait for tool to be active (10 seconds for group chat)
+                            tool_ready = await self.ai_core_ref.tool_manager.wait_for_tool_ready(
+                                'group_chat',
+                                timeout=10.0  # Longer timeout for network setup
+                            )
+                            
+                            if tool_ready:
+                                group_chat_tool = self.ai_core_ref.tool_manager._active_tools.get('group_chat')
+                                if group_chat_tool and hasattr(group_chat_tool, 'broadcast_spoken_response'):
+                                    try:
+                                        # Verify tool has connections
+                                        if len(group_chat_tool._clients) == 0:
+                                            self.logger.warning(
+                                                "[Autonomous] [Group Chat] Tool ready but no peer connections"
+                                            )
+                                        
+                                        result = group_chat_tool.broadcast_spoken_response(response)
+                                        if result:
+                                            self.logger.success(
+                                                f"[Autonomous] [Group Chat] Broadcast to "
+                                                f"{len(group_chat_tool._clients)} peer(s)"
+                                            )
+                                        else:
+                                            self.logger.warning(
+                                                f"[Autonomous] [Group Chat] Broadcast returned False"
+                                            )
+                                    except Exception as e:
+                                        self.logger.error(
+                                            f"[Autonomous] [Group Chat] Broadcast failed: {e}"
+                                        )
+                                        import traceback
+                                        traceback.print_exc()
+                            else:
+                                self.logger.warning(
+                                    "[Autonomous] [Group Chat] Tool not ready after 10s wait"
+                                )
+                    
+                    # Call the callback to queue for GUI
                     if self.autonomous_response_callback:
                         try:
-                            self.logger.system("[Autonomous] Calling GUI callback...")
                             self.autonomous_response_callback(response)
-                            self.logger.system("[Autonomous] [SUCCESS] Response queued for GUI")
                             
-                            # CRITICAL FIX 3: Clear trigger ONLY after successful callback
+                            # Clear trigger ONLY after successful callback
                             thought_buffer.response_trigger.clear()
-                            # self.logger.system("[Autonomous] Response trigger cleared")
                             
                         except Exception as e:
                             self.logger.error(f"[Autonomous] Callback error: {e}")
+                            import traceback
                             traceback.print_exc()
-                            # Don't clear trigger on callback failure - allow retry
                             return
                     else:
                         self.logger.error("[Autonomous] [FAILED] No callback registered!")
-                        # Don't clear trigger if no callback - system issue
                         return
                     
                     # Update timestamp (only after successful callback)
                     self.last_response_time = time.time()
                 else:
                     self.logger.warning("[Autonomous] Empty response")
-                    # Clear trigger on empty response
                     self.thought_processor.thought_buffer.response_trigger.clear()
             else:
                 self.logger.error("[Autonomous] No processing_delegator")
@@ -375,8 +402,8 @@ class CognitiveLoopManager:
             
         except Exception as e:
             self.logger.error(f"[Autonomous] Error: {e}")
+            import traceback
             traceback.print_exc()
-            # Clear trigger on exception to prevent infinite retry
             self.thought_processor.thought_buffer.response_trigger.clear()
 
     def set_ai_core(self, ai_core):
