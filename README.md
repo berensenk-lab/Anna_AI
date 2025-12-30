@@ -153,133 +153,147 @@ The architecture separates **thinking** (internal cognitive processing) from **s
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                      2. THOUGHT INTERPRETATION                           │
+│                  2. COGNITIVE MODE DETERMINATION                         │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  ThoughtProcessor processes each raw event through thinking model:       │
+│  ResponseDecider determines thinking mode based on timing:               │
 │                                                                           │
-│  Raw Event → LLM Interpretation → Processed Thought                      │
+│  • REACTIVE: New incoming data → process events                          │
+│  • PROACTIVE: Recent input (<6 min) → plan ahead                         │
+│  • REFLECTIVE: No input (6+ min) → review memories                       │
+│  • STARTUP: First 3 thoughts → orient to context                         │
 │                                                                           │
-│  • Short prompt: "What does this mean to you?"                           │
-│  • Agent personality applied                                             │
-│  • Recent thoughts included for context                                  │
-│  • Output: 1-2 sentence internal thought                                 │
-│                                                                           │
-│  ➜ Thoughts stored with metadata: [TIMESTAMP][SOURCE][PRIORITY]         │
+│  ➜ Mode selected, context flags set                                     │
 └────────────────────────────────┬────────────────────────────────────────┘
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                        3. PRIORITY ASSIGNMENT                            │
+│                      3. COGNITIVE THOUGHT GENERATION                     │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  Automatic priority tagging based on event source:                       │
+│  ThoughtProcessor processes through selected cognitive mode:             │
 │                                                                           │
-│  [CRITICAL] → Urgent reminders, direct mentions                          │
-│  [HIGH]     → User input, direct questions, tool failures                │
-│  [MEDIUM]   → Chat messages, tool results, observations                  │
-│  [LOW]      → Background events, ambient data                            │
+│  ► Contextual Prompt Built (mode-specific constructor):                  │
+│    - Personality injection (voice consistency)                           │
+│    - Recent thought chain (continuity)                                   │
+│    - Tool list (minimal overview, names only)                            │
+│    - Mode-specific instructions (reactive/proactive/reflective)          │
+│    - Grounding rules (hallucination prevention)                          │
 │                                                                           │
-│  ➜ Priority stored as metadata on each thought                           │
+│  ► Model generates:                                                      │
+│    - Natural language thought (1-2 sentences)                            │
+│    - <speak>YES/NO</speak> (agent decides when to respond)               │
+│    - Tool names if needed (e.g., {"tool": "sound"})                      │
+│                                                                           │
+│  ➜ Thought + metadata stored in buffer                                  │
 └────────────────────────────────┬────────────────────────────────────────┘
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                       4. MODE DETERMINATION                              │
+│                        4. ACTION MODE (If tools needed)                  │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  ThinkingModes analyzes context to determine cognitive mode:             │
+│  If tool names identified in cognitive thought:                          │
 │                                                                           │
-│  Priority 1: STARTUP                                                     │
-│    ➜ First 3 thoughts use memory_reflection_startup                     │
+│  ► ActionConstructor builds specialized prompt:                          │
+│    - Recent thoughts (for parameter extraction)                          │
+│    - Planned tool names (from cognitive mode)                            │
+│    - DETAILED tool documentation (command-specific)                      │
+│    - Output format rules (command + args structure)                      │
 │                                                                           │
-│  Priority 2: SELF-REFLECTION                                             │
-│    ➜ Past-related keywords OR 6+ min idle                               │
-│    ➜ Uses memory_reflection mode                                        │
+│  ► Model constructs complete tool commands:                              │
+│    - Input: {"tool": "sound"}                                            │
+│    - Output: {"tool": "sound.play", "args": ["squee"]}                   │
 │                                                                           │
-│  Priority 3: FUTURE PROACTIVE                                             │
-│    ➜ Proactive keywords detected                                          │
-│    ➜ Uses future_proactive mode                                          │
+│  ► ToolManager validates and executes                                    │
+│  ► ActionStateManager tracks state                                       │
+│  ► Tool executes asynchronously                                          │
+│  ► Result injected back as raw event                                     │
 │                                                                           │
-│  Priority 4: STANDARD (default)                                          │
-│    ➜ Uses standard proactive mode                                         │
-│                                                                           │
-│  ➜ Mode determines which prompt constructor to use                       │
+│  ➜ Tool results processed in next cognitive cycle                       │
 └────────────────────────────────┬────────────────────────────────────────┘
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                      5. RESPONSE DECISION                                │
+│                     5. SPEAK DECISION (Agent-Driven)                     │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  ResponseDecider analyzes thought buffer to determine action:            │
+│  Agent's <speak> tag determines response:                                │
 │                                                                           │
-│  A. SHOULD SPEAK?                                                        │
-│     • HIGH/CRITICAL priority detected? → YES                             │
-│     • Direct mention or question? → YES                                  │
-│     • Thought accumulation threshold reached? → YES                      │
-│     • Otherwise → NO (continue thinking silently)                        │
+│  • <speak>YES</speak> → Proceed to response generation                   │
+│  • <speak>NO</speak> → Continue thinking, no response yet                │
 │                                                                           │
-│  B. WHICH PROMPT TYPE?                                                   │
-│     • Incoming input → REACTIVE (process new data)                     │
-│     • Recent input (<6 min) → PROACTIVE (set goals)                       │
-│     • Idle (6+ min) → REFLECTIVE (review memories)                       │
-│     • Need verbal output → RESPONSIVE (generate response)                    │
-│                                                                           │
-│  ➜ Returns PromptDecision with type and reasoning                        │
+│  ➜ Decision: speak now or continue thinking                             │
 └────────────────────────────────┬────────────────────────────────────────┘
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                     6. PROMPT CONSTRUCTION                               │
+│                   6. RESPONSIVE OUTPUT GENERATION                        │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  Modular constructors build specialized prompts:                         │
+│  If <speak>YES</speak>:                                                  │
 │                                                                           │
-│  ReactiveConstructor:                                                  │
-│    • Analyzes incoming data and context                                  │
-│    • Detects tools, vision data, chat messages                           │
-│    • Constructs focused response prompt                                  │
-│    • Includes tool usage instructions if relevant                        │
+│  ► ResponsiveConstructor synthesizes response:                           │
+│    - Personality examples (memory-retrieved)                             │
+│    - Accumulated thought chain                                           │
+│    - Memory context (relevant past interactions)                         │
+│    - Current conversation state                                          │
 │                                                                           │
-│  ReflectiveConstructor:                                                  │
-│    • Queries memory system for relevant past experiences                 │
-│    • Builds context from memories and current thoughts                   │
-│    • Constructs introspective reasoning prompt                           │
-│    • Optimized for long-term pattern recognition                         │
+│  ► Generates natural verbal output (1-2 sentences, max 15 words)         │
+│  ► Response filtered and logged                                          │
+│  ► Response echo stored in buffer                                        │
 │                                                                           │
-│  ProactiveConstructor:                                                    │
-│    • Analyzes current state and available tools                          │
-│    • Constructs goal-setting and action-proactive prompt                  │
-│    • Includes time context and user activity status                      │
-│    • Optimized for proactive behavior                                    │
-│                                                                           │
-│  ResponsiveConstructor (when verbal output needed):                          │
-│    • Synthesizes recent thought chain                                    │
-│    • Applies personality and conversation style                          │
-│    • Constructs natural language response prompt                         │
-│    • Optimized for human-readable output                                 │
-│                                                                           │
-│  ➜ Each constructor outputs optimized prompt for specific reasoning      │
+│  ➜ Final response text sent to TTS                                      │
 └────────────────────────────────┬────────────────────────────────────────┘
                                  │
                                  ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                       7. LLM GENERATION                                  │
-├─────────────────────────────────────────────────────────────────────────┤
-│  Constructed prompt sent to appropriate LLM:                             │
-│                                                                           │
-│  Thinking Model (fast, efficient):                                       │
-│    • Used for internal thoughts and reasoning                            │
-│    • Generates <think> tags with brief thoughts                          │
-│    • May include <actions> with tool calls                           │
-│                                                                           │
-│  Text Model (higher quality):                                            │
-│    • Used for verbal responses to users                                  │
-│    • Generates natural conversational output                             │
-│    • Applied personality and style constraints                           │
-│                                                                           │
-│  ➜ Response parsed and validated                                         │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      8. ACTION EXECUTION                                 │
+                        [Loop continues indefinitely]
+```
+
+## Component Responsibilities
+
+**CognitiveLoopManager** (`cognitive_loop_manager.py`):
+* Orchestrates the continuous cognitive loop
+* Detects pending events and triggers processing
+* Manages loop timing and pacing
+* Coordinates between components
+
+**ResponseDecider** (`response_decider.py`):
+* Determines which cognitive mode to use (REACTIVE/PROACTIVE/REFLECTIVE)
+* Based purely on timing (new input vs. recent vs. idle)
+* No content analysis or priority detection
+* Returns PromptDecision with mode and context flags
+
+**ThoughtProcessor** (`thought_processor.py`):
+* Processes events through the appropriate cognitive mode
+* Routes to mode-specific prompt constructors
+* Extracts <speak> tags and tool names from cognitive output
+* Delegates to ACTION mode if tools identified
+* Stores processed thoughts with metadata
+
+**ProcessingDelegator** (`processing_delegator.py`):
+* Routes events to appropriate constructors
+* Manages mode-specific processing pipelines
+* Handles STARTUP, REACTIVE, PROACTIVE, and REFLECTIVE modes
+* Coordinates with memory search for reflective modes
+
+**ThoughtBuffer** (`thought_buffer.py`):
+* Maintains thought history and conversation state
+* Queues unprocessed events
+* Provides context (user input, ongoing focus, goals)
+* Tracks speak decisions from agent
+
+**Prompt Constructors** (mode-specific):
+* **ReactiveConstructor**: Processes new incoming events
+* **ProactiveConstructor**: Plans ahead during quiet periods
+* **ReflectiveConstructor**: Reviews memories during idle time
+* **ActionConstructor**: Constructs complete tool commands with parameters
+* **ResponsiveConstructor**: Generates verbal responses when agent decides to speak
+
+**ToolManager** (`tool_manager.py`):
+* Validates tool commands from ACTION mode
+* Executes tools asynchronously
+* Injects results back as events
+
+**MemorySearch** (memory system):
+* Retrieves relevant past experiences
+* Provides personality-matched examples for responses
+* Supports reflective thinking with memory context
 ├─────────────────────────────────────────────────────────────────────────┤
 │  If LLM generated tool actions:                                          │
 │                                                                           │
@@ -405,22 +419,55 @@ The prompting system separates **what to think about** (mode determination) from
 │                        PROMPT CONSTRUCTION PIPELINE                      │
 └─────────────────────────────────────────────────────────────────────────┘
 
+## Prompt Construction Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        PROMPT CONSTRUCTION PIPELINE                      │
+└─────────────────────────────────────────────────────────────────────────┘
+
+COGNITIVE & ACTION MODE SEPARATION
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     COGNITIVE MODES (Decide WHAT to do)                  │
+│  • REACTIVE: Process new events                                          │
+│  • PROACTIVE: Plan ahead during quiet time                               │
+│  • REFLECTIVE: Review memories during idle time                          │
+│  • Output: Thought + <speak>YES/NO</speak> + Tool names (if needed)      │
+└─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      ACTION MODE (Construct HOW to do it)                │
+│  • Receives: Tool names from cognitive mode (e.g., {"tool": "sound"})    │
+│  • Retrieves: DETAILED tool documentation                                │
+│  • Constructs: Complete commands (e.g., {"tool": "sound.play",           │
+│                "args": ["squee"]})                                        │
+└─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                   RESPONSIVE MODE (Generate spoken response)             │
+│  • Triggers: When <speak>YES</speak> in cognitive output                 │
+│  • Uses: Accumulated thought chain + personality examples                │
+│  • Output: Natural 1-2 sentence verbal response (max 15 words)           │
+└─────────────────────────────────────────────────────────────────────────┘
+
 STAGE 1: MODE DETERMINATION
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                           ResponseDecider                                │
 ├─────────────────────────────────────────────────────────────────────────┤
-│ Analyzes:                                                                │
-│  • Priority markers in thought chain ([HIGH], [CRITICAL])                │
-│  • Presence of incoming events                                           │
-│  • Time since last user input                                            │
-│  • Memory-related keywords                                               │
-│  • Proactive-related keywords                                             │
+│ Analyzes TIMING only (no content analysis):                              │
+│  • Has new incoming events? → REACTIVE                                   │
+│  • Recent input (<6 min)? → PROACTIVE                                    │
+│  • Idle (6+ min)? → REFLECTIVE                                           │
+│  • First 3 thoughts? → STARTUP (reflective variant)                      │
 │                                                                           │
 │ Outputs:                                                                 │
-│  • PromptType: REACTIVE | REFLECTIVE | PROACTIVE | RESPONSIVE              │
-│  • Priority level (1-10)                                                 │
+│  • PromptType: REACTIVE | REFLECTIVE | PROACTIVE                         │
 │  • Reasoning explanation                                                 │
-│  • Context flags (special handling indicators)                           │
+│  • Context flags (vision, chat, memory triggers)                         │
+│                                                                           │
+│ NOTE: Agent decides WHEN to speak via <speak> tags, not the decider     │
 └────────────────────────────────┬────────────────────────────────────────┘
                                  │
                                  ▼
@@ -433,7 +480,7 @@ STAGE 2: CONSTRUCTOR SELECTION
         │                        │                        │
         ▼                        ▼                        ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   REACTIVE    │    │   REFLECTIVE    │    │    PROACTIVE     │
+│   REACTIVE      │    │   REFLECTIVE    │    │    PROACTIVE    │
 │  Constructor    │    │  Constructor    │    │  Constructor    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
         │                        │                        │
@@ -441,13 +488,19 @@ STAGE 2: CONSTRUCTOR SELECTION
                                  │
                                  ▼
                     ┌─────────────────────────┐
-                    │      If needs speech    │
-                    │   → RESPONSIVE Constructor  │
+                    │  If tool names present  │
+                    │   → ACTION Constructor  │
+                    └─────────────────────────┘
+                                 │
+                                 ▼
+                    ┌─────────────────────────┐
+                    │  If <speak>YES</speak>  │
+                    │ → RESPONSIVE Constructor│
                     └─────────────────────────┘
 
-STAGE 3: COMPONENT ASSEMBLY
+STAGE 3: COGNITIVE MODE PROMPT ASSEMBLY
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    Each Constructor Assembles Prompt                     │
+│              Cognitive Constructors Build Thinking Prompts               │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                           │
 │  1. PERSONALITY INJECTION                                                │
@@ -457,104 +510,224 @@ STAGE 3: COMPONENT ASSEMBLY
 │     └─ Voice guidelines (natural expressions)                            │
 │                                                                           │
 │  2. RECENT THOUGHT CHAIN                                                 │
-│     ├─ Last 5-10 thoughts with metadata                                  │
-│     ├─ Formatted: [TIMESTAMP] [SOURCE] [PRIORITY] content                │
-│     └─ Provides continuity between reasoning cycles                      │
+│     ├─ Last 5-10 thoughts for continuity                                 │
+│     ├─ Source labels ([THOUGHT], [USER], [SELF], [TOOL])                 │
+│     └─ Provides context for next thought                                 │
 │                                                                           │
 │  3. MODE-SPECIFIC INSTRUCTIONS                                           │
-│     ├─ What kind of thinking to do                                       │
-│     ├─ Expected output format                                            │
-│     └─ Constraints and guidelines                                        │
+│     ├─ REACTIVE: Process new events                                      │
+│     ├─ PROACTIVE: Plan ahead, set goals                                  │
+│     ├─ REFLECTIVE: Review memories, find patterns                        │
+│     └─ STARTUP: Orient to context                                        │
 │                                                                           │
-│  4. CONTEXT INJECTION                                                    │
-│     ├─ Retrieved memories (if relevant)                                  │
-│     ├─ Tool instructions (if actions likely)                             │
-│     ├─ Session files (if referenced)                                     │
-│     ├─ Vision data (if present)                                          │
-│     ├─ Chat messages (if engagement mode)                                │
-│     └─ Pending actions (if awaiting results)                             │
+│  4. MINIMAL TOOL LIST                                                    │
+│     ├─ Tool names + 1-line descriptions ONLY                             │
+│     ├─ NO detailed documentation (saved for ACTION mode)                 │
+│     ├─ Agent decides WHICH tools to use                                  │
+│     └─ Format: {"tool": "tool_name"} (no commands/args yet)              │
 │                                                                           │
 │  5. PRIMARY CONTENT                                                      │
-│     ├─ Reactive: Raw events to interpret                               │
-│     ├─ Reflective: Memories to analyze                                   │
-│     ├─ Proactive: Current situation assessment                            │
-│     └─ Responsive: User message or chat to address                           │
+│     ├─ REACTIVE: Incoming events to process                              │
+│     ├─ PROACTIVE: Current situation + time context                       │
+│     ├─ REFLECTIVE: Retrieved memories                                    │
+│     └─ Context parts (session files, vision, etc.)                       │
 │                                                                           │
-│  6. GROUNDING RULES                                                      │
-│     ├─ Hallucination prevention                                          │
-│     ├─ Data verification requirements                                    │
-│     └─ Uncertainty acknowledgment                                        │
+│  6. SPEAK DECISION RULES                                                 │
+│     ├─ Agent decides via <speak>YES/NO</speak>                           │
+│     ├─ Speak when user input requires response                           │
+│     ├─ Stay silent if thinking internally                                │
+│     └─ Guidelines prevent spam responses                                 │
 │                                                                           │
-│  7. OUTPUT FORMAT SPECIFICATION                                          │
-│     ├─ XML tag structure                                                 │
-│     ├─ Length constraints                                                │
-│     └─ Action list format                                                │
+│  7. GROUNDING RULES                                                      │
+│     ├─ Base thoughts on provided data only                               │
+│     ├─ Don't invent information                                          │
+│     ├─ Acknowledge uncertainty                                           │
+│     └─ Vision/tool state grounding                                       │
+│                                                                           │
+│  8. OUTPUT FORMAT                                                        │
+│     ├─ Natural thought (1-2 sentences)                                   │
+│     ├─ <speak>YES/NO</speak> tags                                        │
+│     ├─ Tool names only (no commands): [{"tool": "name"}]                 │
+│     └─ No parameters or args at this stage                               │
 │                                                                           │
 └─────────────────────────────────────────────────────────────────────────┘
 
-STAGE 4: SPECIALIZED ENHANCEMENTS
+STAGE 4: ACTION MODE PROMPT ASSEMBLY (If tools identified)
+┌─────────────────────────────────────────────────────────────────────────┐
+│               ActionConstructor Builds Tool Execution Prompt             │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  1. ACTION MODE INSTRUCTIONS                                             │
+│     ├─ Task: Construct complete tool commands                            │
+│     ├─ Input format: Base tool names from cognitive mode                 │
+│     ├─ Output format: tool.command with args                             │
+│     └─ Example: "sound" → "sound.play" + ["squee"]                       │
+│                                                                           │
+│  2. RECENT THOUGHTS                                                      │
+│     ├─ Extract parameters from thought context                           │
+│     ├─ Use natural language in thoughts as args                          │
+│     └─ Ground tool usage in recent thinking                              │
+│                                                                           │
+│  3. PLANNED ACTIONS                                                      │
+│     ├─ Tool names from cognitive mode                                    │
+│     ├─ Current args if any (usually empty at this stage)                 │
+│     └─ Clear list of what needs execution                                │
+│                                                                           │
+│  4. DETAILED TOOL DOCUMENTATION                                          │
+│     ├─ FULL command documentation for planned tools                      │
+│     ├─ Available commands (e.g., sound.play, sound.list)                 │
+│     ├─ Parameter requirements and formats                                │
+│     ├─ Usage examples for each command                                   │
+│     └─ Dynamically retrieved per tool                                    │
+│                                                                           │
+│  5. EXECUTION PRINCIPLES                                                 │
+│     ├─ Command construction rules                                        │
+│     ├─ Parameter extraction guidelines                                   │
+│     ├─ Format matching requirements                                      │
+│     └─ Following documentation exactly                                   │
+│                                                                           │
+│  6. OUTPUT FORMAT                                                        │
+│     ├─ <actions> XML block ONLY                                          │
+│     ├─ Complete: {"tool": "tool.command", "args": [...]}                 │
+│     ├─ No explanations or commentary                                     │
+│     └─ Ready for immediate execution                                     │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+STAGE 5: RESPONSIVE MODE PROMPT ASSEMBLY (If <speak>YES</speak>)
+┌─────────────────────────────────────────────────────────────────────────┐
+│            ResponsiveConstructor Builds Spoken Response Prompt           │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  1. PERSONALITY EXAMPLES (Memory-Retrieved)                              │
+│     ├─ Query: Recent thoughts + user input combined                      │
+│     ├─ Retrieves similar past conversation situations                    │
+│     ├─ Matches full context (not just user words)                        │
+│     └─ Primes speaking style and tone                                    │
+│                                                                           │
+│  2. RECENT THOUGHT CHAIN                                                 │
+│     ├─ What agent has been thinking                                      │
+│     ├─ Internal context for response                                     │
+│     └─ Accumulated observations and reasoning                            │
+│                                                                           │
+│  3. CONTEXT (Memory, Session Files, etc.)                                │
+│     ├─ Relevant past interactions                                        │
+│     ├─ Session file context if referenced                                │
+│     └─ Additional background information                                 │
+│                                                                           │
+│  4. CURRENT INPUT                                                        │
+│     ├─ User message to respond to                                        │
+│     ├─ OR live chat messages if chat engagement                          │
+│     └─ Clear indication of what to address                               │
+│                                                                           │
+│  5. RESPONSE GUIDANCE                                                    │
+│     ├─ Chat: Address by name, keep conversational                        │
+│     ├─ Standard: Natural based on thoughts                               │
+│     └─ Maximum 1-2 sentences, 15 words total                             │
+│                                                                           │
+│  6. OUTPUT FORMAT                                                        │
+│     ├─ Direct natural response text                                      │
+│     ├─ No XML tags                                                       │
+│     ├─ No labels or meta-text                                            │
+│     └─ Ready for TTS verbatim                                            │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+STAGE 6: SPECIALIZED ENHANCEMENTS
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                  Constructor-Specific Optimizations                      │
 └─────────────────────────────────────────────────────────────────────────┘
 
 ReactiveConstructor:
-  • Checks tool instruction persistence
-  • Includes detailed tool docs if recently used
-  • Adds vision grounding for visual observations
-  • Formats incoming events for interpretation
+  • Detects vision/chat data in context
+  • Adds vision-specific grounding rules
+  • Formats events with clear source labels
+  • Minimal tool list (names only)
 
 ReflectiveConstructor:
   • Detects startup mode (first 3 thoughts)
   • Loads comprehensive context for startup
   • Queries memory system for relevant past
-  • Builds temporal context (yesterday, earlier today)
+  • Keyword detection for memory triggers
 
 ProactiveConstructor:
-  • Formats time context (minutes since user input)
-  • Includes current trajectory assessment
-  • Adds anticipatory proactive guidelines
-  • Optimizes for goal-setting behavior
+  • Formats time context (minutes since user)
+  • Includes current situation assessment
+  • Anticipatory planning guidelines
+  • Minimal tool list (names only)
+
+ActionConstructor:
+  • Retrieves DETAILED tool docs dynamically
+  • Only for specific tools being used
+  • Command-level documentation with examples
+  • Parameter extraction from thoughts
 
 ResponsiveConstructor:
-  • Retrieves personality-matched examples from memory
-  • Combines thought context + user input for example search
-  • Adjusts guidance based on priority level
-  • Optimizes for natural responsive output
+  • Memory-based personality example retrieval
+  • Combined context query (thoughts + user input)
+  • Chat engagement detection and formatting
+  • Natural spoken output optimization
 ```
+
 
 ## Constructor Responsibilities
 
 ### ReactiveConstructor
-**Purpose**: Process incoming events and generate interpretive thoughts
+**Purpose**: Process new incoming events through real-time cognitive processing
 
 **Input Processing**:
 - Raw event queue (user messages, tool results, observations)
 - Recent thought chain for continuity
 - Last user message for context
-- Pending actions summary
-- Additional context parts
+- Additional context parts (vision, chat, session files)
 
 **Prompt Strategy**:
-- Leads with personality to maintain character
-- Includes recent thoughts to preserve narrative flow
-- Lists incoming events clearly with source tags
-- Adds tool instructions if relevant (checks persistence)
-- Emphasizes grounding rules to prevent hallucination
-- Requests one thought per event (numbered list format)
-- Allows optional action proactive
+- Personality injection first (maintain character)
+- Recent thoughts with source labels ([THOUGHT], [USER], [TOOL])
+- Mode instructions (process new events)
+- Minimal tool list (names + 1-line descriptions only)
+- Incoming events formatted with clear source tags
+- Speak decision rules (agent controls when to respond)
+- Grounding rules (hallucination prevention, especially for vision/tool state)
 
 **Output Format**:
 ```xml
-<thoughts>
-[1] Thought about event 1
-[2] Thought about event 2
-</thoughts>
-<think>Optional strategic thought</think>
-<actions>[{tool actions}]</actions>
+Natural thought (1-2 sentences)
+
+<speak>YES or NO</speak>
+
+<actions>[{"tool": "tool_name"}]</actions>
+```
+
+### ProactiveConstructor
+**Purpose**: Plan ahead and set goals during quiet periods
+
+**Context Building**:
+- Current situation assessment
+- Time context (minutes since user input)
+- User activity status
+- Minimal tool list (names only)
+
+**Prompt Strategy**:
+- Personality injection
+- Recent thoughts for context
+- Proactive mode instructions (anticipate, prepare, plan)
+- Minimal tool list (no detailed docs)
+- Time context and user status
+- Speak decision rules
+- Grounding rules (realistic planning based on context)
+
+**Output Format**:
+```xml
+Forward-looking thought (1-2 sentences)
+
+<speak>YES or NO</speak>
+
+<actions>[{"tool": "tool_name"}]</actions>
 ```
 
 ### ReflectiveConstructor
-**Purpose**: Connect past experiences to present situation
+**Purpose**: Review memories and find patterns during idle time
 
 **Modes**:
 - **Startup Mode**: First 3 thoughts use comprehensive initialization
@@ -573,42 +746,62 @@ ResponsiveConstructor:
 3. Temporal context (yesterday, earlier today)
 
 **Prompt Strategy**:
-- Emphasizes memory grounding (only reference provided memories)
-- Focuses on pattern recognition and insight
-- Requests single reflective thought (15-50 words)
-- Encourages genuine connections, not forced ones
-- Maintains conversational authenticity
+- Personality injection
+- Recent thoughts
+- Reflective mode instructions (review, connect, find patterns)
+- Retrieved memories (startup or query-based)
+- Minimal tool list (names only)
+- Speak decision rules
+- Memory grounding (only reference provided memories)
 
 **Output Format**:
 ```xml
-<think>Single reflective thought</think>
-<actions>[{optional tool actions}]</actions>
+Reflective thought (1-2 sentences)
+
+<speak>YES or NO</speak>
+
+<actions>[{"tool": "tool_name"}]</actions>
 ```
 
-### ProactiveConstructor
-**Purpose**: Anticipate needs and plan future actions
+### ActionConstructor
+**Purpose**: Construct complete tool commands with proper parameters
 
-**Context Building**:
-- Current situation assessment
-- Time context (how long since user input)
-- User activity status
-- Available tools and capabilities
+**Critical Design**: ACTION mode is separate from cognitive modes. Cognitive modes decide WHICH tools to use (output: {"tool": "sound"}), then ACTION mode constructs HOW to execute them (output: {"tool": "sound.play", "args": ["squee"]}).
+
+**Input Processing**:
+- Recent thought chain (for parameter extraction)
+- Planned tool names from cognitive mode
+- Action context (why these tools)
 
 **Prompt Strategy**:
-- Encourages proactive thinking
-- Focuses on anticipation and preparation
-- Emphasizes actionable proactive
-- Suggests helpful preparatory actions
-- Maintains agent's helpful personality
+- Action mode instructions (construct complete commands)
+- Recent thoughts (parameter context)
+- Planned tool names (what to execute)
+- DETAILED tool documentation (dynamically retrieved for specific tools only)
+- Execution principles (command construction, parameter extraction)
+- Output format rules (complete tool.command + args structure)
 
 **Output Format**:
 ```xml
-<think>Forward-looking proactive thought</think>
-<actions>[{tool actions for preparation}]</actions>
+<actions>
+[
+  {"tool": "tool.command", "args": ["param1", "param2"]},
+  {"tool": "another.command", "args": ["param"]}
+]
+</actions>
 ```
 
+**Example Flow**:
+1. Cognitive mode output: `{"tool": "sound"}`
+2. ACTION mode reads sound tool documentation
+3. Sees available commands: sound.play, sound.list
+4. Checks thoughts: "that's funny haha"
+5. Constructs: `{"tool": "sound.play", "args": ["laugh"]}`
+
 ### ResponsiveConstructor
-**Purpose**: Generate natural verbal responses to users
+**Purpose**: Generate natural verbal responses when agent decides to speak
+
+**Trigger**: Only activated when <speak>YES</speak> in cognitive output
 
 **Context Building**:
 - Recent thought chain (what agent has been thinking)
@@ -620,6 +813,28 @@ ResponsiveConstructor:
 **Example Retrieval Innovation**:
 Unlike other constructors, ResponsiveConstructor uses a **combined query approach** for retrieving personality examples:
 ```
+Query = Recent Thoughts + User Input + Chat Context
+```
+This ensures examples match the full conversational situation, not just the user's words in isolation. The system searches past conversations for similar **thought states** + **user interactions**, finding responses that fit the agent's current mental context.
+
+**Prompt Strategy**:
+- Personality examples FIRST (retrieved from memory, primes style)
+- Recent thought chain (internal context)
+- Memory/session context (background)
+- Current input (user message or chat)
+- Response guidance (chat vs. standard, length constraints)
+- Output format (natural text, no XML, max 15 words)
+
+**Output Format**:
+```
+Natural spoken response (1-2 sentences, max 15 words total)
+```
+
+**Key Differences**:
+- No XML tags in output
+- No <speak> tags (already decided YES)
+- No tool actions (those came from cognitive modes)
+- Pure natural language for TTS
 Query = Recent Thoughts + User Input + Chat Context
 ```
 This ensures examples match the full conversational situation, not just the user's words in isolation. The system searches past conversations for similar **thought states** + **user interactions**, finding responses that fit the agent's current mental context.
