@@ -27,7 +27,7 @@ class AICore:
         'discord_integration', 'youtube_chat', 'twitch_chat', 'chat_handler',
         'last_reminder_cleanup', 'reminder_cleanup_interval', 'initializer', 'content_filter',
         'action_state_manager', 'instruction_persistence_manager', 'tool_manager',
-        'streaming_enabled'
+        'streaming_enabled', 'hot_reload_manager', 'core_hot_reload', 'tool_hot_reload'
     )
     
     def __init__(self, config, controls_module, project_root=None, gui_logger=None):
@@ -135,14 +135,10 @@ class AICore:
         # Run initialization
         self.initializer.initialize_all_systems()
 
-        # Initialize content filter ONCE
-        self.content_filter = ContentFilter(
-            ollama_endpoint=config.ollama_endpoint,
-            use_ai_filter=controls_module.USE_AI_CONTENT_FILTER
-        )
-        self.logger.system("Content filter initialized (centralized)")
-
-        # Extract initialized components
+        # ===================================================================
+        # STEP 5: Extract ALL initialized components from initializer
+        # ===================================================================
+        # CRITICAL: Must happen BEFORE hot-reload systems are initialized
         self.memory_manager = self.initializer.memory_manager
         self.memory_search = self.initializer.memory_search
         self.session_file_manager = self.initializer.session_file_manager
@@ -152,20 +148,86 @@ class AICore:
         self.control_manager = self.initializer.control_manager
         self.tool_manager = self.initializer.tool_manager
 
-        # ===================================================================
-        # STEP 5: Verify all components share same config
-        # ===================================================================
-        self._verify_config_propagation()
-        
-        # After all components are initialized:
-        self.logger.system("AI Core Initialization Complete")
-        
-        # NEW: Store streaming flag
-        self.streaming_enabled = getattr(controls_module, 'USE_STREAMING', False)
-        if self.streaming_enabled:
-            self.logger.system("[Streaming] Streaming mode ENABLED")
+    # ========================================================================
+    # STEP 6: HOT-RELOAD SYSTEMS (Development Features)
+    # ========================================================================
+
+        # Tool Hot-Reload (existing system - for BaseTool instances)
+        if getattr(controls_module, 'ENABLE_TOOL_HOT_RELOAD', False):
+            from BASE.core.tool_hot_reload_manager import HotReloadManager as ToolHotReloadManager
+            
+            self.tool_hot_reload = ToolHotReloadManager(
+                project_root=self.project_root,
+                logger=self.logger,
+                config=self.config
+            )
+            
+            self.tool_hot_reload.register_tool_manager(self.tool_manager)
+            
+            self.logger.system("[Hot Reload] Tool hot-reloading ENABLED (GUI reload buttons active)")
         else:
-            self.logger.system("[Streaming] Streaming mode DISABLED (non-streaming)")
+            self.tool_hot_reload = None
+            self.logger.system("[Hot Reload] Tool hot-reloading DISABLED")
+
+        # Core Hot-Reload (new system - for prompt constructors)
+        if getattr(controls_module, 'ENABLE_CORE_HOT_RELOAD', False):
+            from BASE.core.core_hot_reload_manager import CoreHotReloadManager
+            
+            self.logger.system("[Hot Reload] Initializing core hot-reload manager...")
+            
+            self.core_hot_reload = CoreHotReloadManager(
+                project_root=self.project_root,
+                logger=self.logger
+            )
+            
+            self.logger.system(f"[Hot Reload] Manager created, enabled={self.core_hot_reload.enabled}")
+            
+            # Register components for hot-reloading
+            self.logger.system("[Hot Reload] Registering thought processor constructors...")
+            self.processing_delegator.thought_processor.set_hot_reload_manager(self.core_hot_reload)
+            
+            self.logger.system("[Hot Reload] Registering processing delegator constructor...")
+            self.processing_delegator.set_hot_reload_manager(self.core_hot_reload)
+            
+            # Debug: Check what got registered
+            self.logger.system(f"[Hot Reload] Registered modules: {len(self.core_hot_reload.modules)}")
+            for name, module in self.core_hot_reload.modules.items():
+                self.logger.system(f"[Hot Reload]   - {name}: {module.file_path.name}")
+            
+            # Start file watching
+            self.logger.system("[Hot Reload] Starting file watcher...")
+            self.core_hot_reload.start_watching()
+            
+            # Debug: Check observer status
+            if self.core_hot_reload.observer:
+                self.logger.system("[Hot Reload] Observer started successfully")
+            else:
+                self.logger.warning("[Hot Reload] Observer failed to start!")
+            
+            self.logger.system("[Hot Reload] Core module hot-reloading ENABLED (prompt constructors)")
+        else:
+            self.core_hot_reload = None
+            self.logger.system("[Hot Reload] Core hot-reloading DISABLED")
+
+        # Log combined hot-reload status
+        if self.tool_hot_reload or self.core_hot_reload:
+            systems = []
+            if self.tool_hot_reload:
+                systems.append("tools")
+            if self.core_hot_reload:
+                systems.append("core")
+            self.logger.system(f"[Hot Reload] Active systems: {', '.join(systems)}")
+        
+        self.logger.system("[Init] AI Core initialization complete")
+
+
+        # Initialize content filter ONCE
+        self.content_filter = ContentFilter(
+            ollama_endpoint=config.ollama_endpoint,
+            use_ai_filter=controls_module.USE_AI_CONTENT_FILTER
+        )
+        
+        self.logger.system("[Init] AI Core initialization complete")
     
     def _verify_config_propagation(self):
         """
@@ -279,6 +341,14 @@ class AICore:
         self.logger.system("🛑 Starting IMMEDIATE shutdown...")
         self.shutdown_flag.set()
         self.speech_stop_flag.set()
+        
+        # Stop hot-reload managers
+        if hasattr(self, 'core_hot_reload') and self.core_hot_reload:
+            try:
+                self.core_hot_reload.stop_watching()
+                self.logger.system("🛑 Stopped core hot-reload manager")
+            except Exception as e:
+                self.logger.warning(f"Error stopping core hot-reload: {e}")
         
         # Stop cognitive loop FIRST
         try:

@@ -166,6 +166,7 @@ Multiple tools:
 - Don't invent information not in your thoughts
 - Use the tool documentation to format correctly
 - If unsure about a parameter, make reasonable inference from context
+- Use the tool in a way that fits the current context
 
 **Command Selection:**
 - Read available commands in documentation

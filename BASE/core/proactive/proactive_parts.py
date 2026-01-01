@@ -122,7 +122,7 @@ YES or NO
 - Only form a spoken response if it adds value to the interaction and contributes to the conversation.
 - If the user has not said anything new or if the situation does not warrant a response, you may choose to remain silent.
 - If the user has not spoken in a while, do not spam responses; only respond when it is meaningful to do so or to check in with the user if you have not spoken recently.
-- It is better to remain silent if you have nothing new to comment on or have been saying the same things repeatedly
+- If you have spoken very similar responses lately and have nothing new to add, remain silent and continue thinking
 - If you decide to speak, include <speak>YES</speak> in your response to indicate you will speak.
 - If you decide not to speak, include <speak>NO</speak> in your response to indicate you will continue thinking and respond later.
 """

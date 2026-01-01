@@ -47,7 +47,8 @@ class ProcessingDelegator:
         'config', 'controls', 'project_root', 'memory_manager', 'logger',
         'memory_search', 'session_file_manager', 'tool_manager',
         'thought_processor', 'responsive_constructor', 'response_decider',
-        'streaming_enabled', 'streaming_handler', 'ollama_streaming'
+        'streaming_enabled', 'streaming_handler', 'ollama_streaming',
+        'hot_reload_manager'
     )
     
     def __init__(
@@ -161,9 +162,52 @@ class ProcessingDelegator:
             f"[ProcessingDelegator] Tool manager injected "
             f"({len(enabled)} tools enabled)"
         )
+
+    # ========================================================================
+    # HOT RELOAD MANAGEMENT
+    # ========================================================================
+
+    def _register_constructors_for_hot_reload(self):
+            """
+            Register prompt constructors with hot-reload manager
+            
+            HYBRID APPROACH: Uses directory watching with auto-dependency detection
+            """
+            if not hasattr(self, 'hot_reload_manager'):
+                return
+            
+            if not self.hot_reload_manager or not self.hot_reload_manager.enabled:
+                return
+            
+            base_path = self.project_root / 'BASE' / 'core'
+            
+            # HYBRID APPROACH: Watch responsive directory
+            # Auto-registers responsive_constructor AND helper files
+            self.hot_reload_manager.watch_directory_recursively(base_path / 'responsive')
+            
+            # Register self for reference updates
+            self.hot_reload_manager.register_processing_delegator(self)
+            
+            if self.logger:
+                self.logger.system(
+                    "[Hot Reload] Registered responsive constructor + helpers "
+                    "(auto-detected dependencies)"
+                )
+
+    def set_hot_reload_manager(self, hot_reload_manager):
+        """
+        Inject hot-reload manager
+        
+        NEW METHOD: Called by core_initializer to enable hot-reloading
+        
+        Args:
+            hot_reload_manager: CoreHotReloadManager instance
+        """
+        self.hot_reload_manager = hot_reload_manager
+        self._register_constructors_for_hot_reload()
     
     # ========================================================================
-    # MAIN ENTRY POINT (NO CHANGES)
+    # MAIN ENTRY POINT
     # ========================================================================
     
     async def process_user_input(

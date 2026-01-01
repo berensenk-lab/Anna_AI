@@ -199,6 +199,8 @@ class OllamaGUI:
         self.send_button = None
         self.processing_label = None
         self.system_log = None
+        self.context_text = None  # Initialize for current_context
+        self.reminders_text = None  # Initialize for important_reminders
 
         # Setup external tools
         self._setup_tts_tool()  # This will now initialize even if disabled

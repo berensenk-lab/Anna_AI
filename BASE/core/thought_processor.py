@@ -31,12 +31,12 @@ class ThoughtProcessor:
         'session_file_manager', 'logger', 'thought_buffer',
         '_is_processing', '_last_memory_integration',
         'cognitive_loop', 'event_loop', '_ai_core_ref',
-        '_autonomous_response_callback',  # ADDED: Store callback for autonomous responses
+        '_autonomous_response_callback',
         'thinking_modes', 'action_state_manager', 'tool_manager',
         '_last_tool_exploration',
         'response_decider', 'reactive_constructor',
         'reflective_constructor', 'proactive_constructor',
-        'action_constructor'
+        'action_constructor', 'hot_reload_manager'
     )
     
     def __init__(
@@ -95,7 +95,7 @@ class ThoughtProcessor:
         self.cognitive_loop = None
         self.event_loop = None
         self._ai_core_ref = None
-        self._autonomous_response_callback = None  # Store callback for later registration
+        self._autonomous_response_callback = None
         
         # Initialize thinking modes
         self.thinking_modes = ThinkingModes(
@@ -105,8 +105,61 @@ class ThoughtProcessor:
             logger=self.logger
         )
         
+        # NEW: Register constructors for hot-reloading
+        self._register_constructors_for_hot_reload()
+        
         self.logger.system("Thought Processor initialized (simplified response triggering)")
+
+    # ========================================================================
+    # HOT RELOAD SYSTEM
+    # ========================================================================
     
+    def _register_constructors_for_hot_reload(self):
+        """
+        Register prompt constructors with hot-reload manager
+        
+        HYBRID APPROACH: Uses directory watching with auto-dependency detection
+        """
+        if not hasattr(self, 'hot_reload_manager'):
+            return
+        
+        if not self.hot_reload_manager or not self.hot_reload_manager.enabled:
+            return
+        
+        base_path = self.project_root / 'BASE' / 'core'
+        
+        # HYBRID APPROACH: Watch entire directories
+        # This auto-registers constructors AND their helper files
+        self.hot_reload_manager.watch_directory_recursively(base_path / 'reactive')
+        self.hot_reload_manager.watch_directory_recursively(base_path / 'reflective')
+        self.hot_reload_manager.watch_directory_recursively(base_path / 'proactive')
+        self.hot_reload_manager.watch_directory_recursively(base_path / 'action')
+        
+        # Register self for reference updates
+        self.hot_reload_manager.register_thought_processor(self)
+        
+        registered_count = len([m for m in self.hot_reload_manager.modules.keys() 
+                               if m in ['reactive_constructor', 'reflective_constructor', 
+                                       'proactive_constructor', 'action_constructor']])
+        
+        if self.logger:
+            self.logger.system(
+                f"[Hot Reload] Registered {registered_count} constructors + helpers "
+                f"(auto-detected dependencies)"
+            )
+
+    def set_hot_reload_manager(self, hot_reload_manager):
+        """
+        Inject hot-reload manager
+        
+        NEW METHOD: Called by core_initializer to enable hot-reloading
+        
+        Args:
+            hot_reload_manager: CoreHotReloadManager instance
+        """
+        self.hot_reload_manager = hot_reload_manager
+        self._register_constructors_for_hot_reload()
+
     # ========================================================================
     # DATA INGESTION
     # ========================================================================

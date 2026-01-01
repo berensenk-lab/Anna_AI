@@ -57,6 +57,11 @@ class ReflectiveConstructor:
         # 1. Personality injection
         sections.append(self.personality.get_unified_personality())
         
+        # 1.5. Current context (if available)
+        current_ctx = self.personality.format_current_context()
+        if current_ctx:
+            sections.append(current_ctx)
+        
         # 2. Thought examples (personality-matched BEHAVIORS)
         if self.memory_search:
             examples = self._get_thought_examples(
@@ -108,6 +113,11 @@ class ReflectiveConstructor:
         
         # 10. Output format
         sections.append(self.parts.get_output_format())
+        
+        # 11. Important reminders (if available) - ALWAYS LAST
+        reminders = self.personality.format_important_reminders()
+        if reminders:
+            sections.append(reminders)
         
         prompt = "\n".join(sections)
         

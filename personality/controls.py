@@ -49,6 +49,31 @@ USE_STREAMING = True  # Enable streaming response generation
 # COGNITIVE LOOP CONTROLS
 # ========================================================================
 
+# === CONTINUOUS AUTONOMOUS THINKING ===
+# Single system for all background cognitive processing
+# Handles reactive (responding to events) and proactive (self-initiated) thinking
+
+# ENABLE_CONTINUOUS_THINKING = True  # Master toggle for autonomous cognitive loop
+
+CHAT_ENGAGEMENT = False
+
+# Thinking pace configuration
+MIN_PROACTIVE_INTERVAL = 5.0   # Minimum seconds between self-initiated thoughts
+MAX_PROACTIVE_INTERVAL = 15.0  # Force a thought after this much silence
+MAX_CONSECUTIVE_PROACTIVE = 200 # Max autonomous thoughts before needing external input
+
+# === AUTO-RESPONSE (GUI/CLI specific) ===
+# Separate from continuous thinking - this is for explicit user-facing responses
+AUTO_RESPOND = False              # Enable automatic responses when no user input detected
+AUTO_RESPOND_INTERVAL = 60        # Time interval (seconds) to trigger auto-response
+
+# Streaming configuration
+USE_STREAMING = True  # Enable streaming response generation
+
+# ========================================================================
+# COGNITIVE LOOP CONTROLS
+# ========================================================================
+
 # Enable continuous autonomous thinking
 ENABLE_CONTINUOUS_THINKING = False
 
@@ -60,8 +85,14 @@ AUTO_RESTART = True  # NEW CONTROL VARIABLE
 # Limit processing frequency (rate limiting)
 SLOW_MODE = True
 
-# Delay timer for rate limiting (seconds)
+# Delay timer for processing cycles (seconds)
+# This controls how often the cognitive loop runs when SLOW_MODE is enabled
 DELAY_TIMER = 30
+
+# Delay timer for spoken responses (seconds)
+# This controls minimum time between autonomous spoken responses
+# Independent of processing speed - allows fast thinking with slow speaking
+RESPONSE_DELAY_TIMER = 60
 
 
 # ========================================================================
@@ -160,11 +191,23 @@ opencv_vision_change_threshold = 50000  # Change detection sensitivity
 # LIVE EDITING CONTROLS
 # ========================================================================
 
+# Tool Hot-Reload: Reload individual tools via GUI buttons
+# - Click reload button on any tool panel
+# - Tool stops, reloads code, restarts with state preserved
+# - Useful for rapid tool development iteration
+ENABLE_TOOL_HOT_RELOAD = True
+
+# Core Hot-Reload: Auto-reload prompt constructors on file save
+# - Watches prompt constructor files for changes
+# - Automatically reloads when you save edits
+# - Useful for rapid prompt engineering iteration
+# - Requires 'watchdog' package: pip install watchdog
+ENABLE_CORE_HOT_RELOAD = True
+
 # Hot-reload configuration
 ENABLE_HOT_RELOAD = True  # Master switch
-ENABLE_FILE_WATCHING = False  # Auto-reload on file change (dev mode)
+ENABLE_FILE_WATCHING = True  # Auto-reload on file change (dev mode)
 HOT_RELOAD_DEBOUNCE = 2.0  # Seconds to wait before reload (prevents spam)
-
 
 # ========================================================================
 # LOGGING AND DISPLAY CONTROLS

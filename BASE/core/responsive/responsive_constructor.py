@@ -67,6 +67,11 @@ class ResponsiveConstructor:
         # 1. Personality injection (core identity)
         sections.append(self.personality.get_unified_personality())
         
+        # 1.5. Current context (if available)
+        current_ctx = self.personality.format_current_context()
+        if current_ctx:
+            sections.append(current_ctx)
+        
         # 2. Response examples (personality-matched) - MOVED BEFORE THOUGHTS
         # FIXED: Now retrieves based on combined thought chain + user input
         if self.memory_search:
@@ -96,6 +101,11 @@ class ResponsiveConstructor:
         
         # 7. Output format
         sections.append(self.parts.get_output_format())
+        
+        # 8. Important reminders (if available) - ALWAYS LAST
+        reminders = self.personality.format_important_reminders()
+        if reminders:
+            sections.append(reminders)
         
         prompt = "\n".join(sections)
         

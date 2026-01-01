@@ -54,6 +54,13 @@ class Config:
         self.agentname: str = agentname
         self.username: str = username
         
+        # Current context (optional prompt addendum - editable from GUI)
+        from personality.prompts.personality_prompt_parts import PersonalityPromptParts
+        self.current_context: Optional[str] = PersonalityPromptParts.current_context
+        
+        # Important reminders (optional prompt addendum - editable from GUI)
+        self.important_reminders: Optional[str] = PersonalityPromptParts.important_reminders
+        
         # Model configuration
         from personality.bot_info import (
             thoughtmodel, responsemodel, visionmodel, 

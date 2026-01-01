@@ -314,6 +314,45 @@ class SessionFileManager:
         sorted_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)
         return {word for word, count in sorted_words[:max_keywords]}
     
+    def _truncate_text(self, text: str, max_length: int = 1000) -> str:
+        """
+        Truncate text at natural boundary with max_length limit
+        
+        Args:
+            text: Text to truncate
+            max_length: Maximum character limit (default 1000)
+        
+        Returns:
+            Truncated text with [...] suffix if truncated
+        """
+        if len(text) <= max_length:
+            return text
+        
+        truncated = text[:max_length]
+        
+        # Try to break at paragraph
+        para_break = truncated.rfind('\n\n')
+        if para_break > max_length * 0.6:
+            return text[:para_break].strip() + "\n\n[...]"
+        
+        # Try to break at line
+        line_break = truncated.rfind('\n')
+        if line_break > max_length * 0.7:
+            return text[:line_break].strip() + "\n[...]"
+        
+        # Try to break at sentence
+        sentence_ends = [truncated.rfind('.'), truncated.rfind('!'), truncated.rfind('?')]
+        last_sentence = max(sentence_ends)
+        if last_sentence > max_length * 0.7:
+            return text[:last_sentence + 1].strip() + " [...]"
+        
+        # Break at word
+        last_space = truncated.rfind(' ')
+        if last_space > 0:
+            return text[:last_space].strip() + " [...]"
+        
+        return truncated.strip() + " [...]"
+    
     def search(self, query: str, file_id: Optional[str] = None, top_k: int = 5) -> List[Dict[str, Any]]:
         """
         Search for relevant sections in session files
@@ -324,7 +363,7 @@ class SessionFileManager:
             top_k: Number of top results to return
             
         Returns:
-            List of relevant sections with scores
+            List of relevant sections with scores (content truncated to 1000 chars)
         """
         query_keywords = self._extract_keywords(query.lower())
         results = []
@@ -344,12 +383,15 @@ class SessionFileManager:
                 score = keyword_overlap * 2 + text_match
                 
                 if score > 0:
+                    # [Changed] Truncate content to 1000 chars
+                    truncated_content = self._truncate_text(section['content'], 1000)
+                    
                     results.append({
                         'file_id': fid,
                         'filename': file_data['filename'],
                         'section_name': section['name'],
                         'section_type': section['type'],
-                        'content': section['content'],
+                        'content': truncated_content,
                         'line_start': section['line_start'],
                         'line_end': section['line_end'],
                         'score': score
@@ -481,8 +523,10 @@ class SessionFileManager:
             context_lines.append(f"*Lines {result['line_start']}-{result['line_end']} (relevance: {result['score']})*")
             context_lines.append("```")
             
-            # Add content
-            section_lines = result['content'].split('\n')
+            # [Changed] Content is already truncated to 1000 chars by search()
+            # Add additional line limit for extremely long single-line content
+            section_content = result['content']
+            section_lines = section_content.split('\n')
             lines_to_add = min(len(section_lines), max_lines - total_lines)
             
             context_lines.extend(section_lines[:lines_to_add])

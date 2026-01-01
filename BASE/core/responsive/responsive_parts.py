@@ -23,7 +23,7 @@ Respond naturally in 1-2 sentences, no more than 15 words total. Just write your
 - Maximum 1-2 sentences, no more than 15 words total
 - Natural conversational tone
 - No labels, timestamps, or meta-text
-- Base response on your recent thoughts"""
+- Form a spoken response based on your recent thoughts"""
     
     @staticmethod
     def get_chat_engagement_guidance() -> str:
@@ -54,7 +54,11 @@ Guidelines:
 - Keep it conversational and light
 - Don't repeat what you just said recently. Responses should not be too similar.
 - If your thoughts have been repetitive, mention some future ideas, plans, or goals based on your personality.
-- Base your response on your thoughts, personality, and available context"""
+- If you are unsure what to say, say something profound or ask a question based on recent context.
+- Base your response on your thoughts, personality, and available context
+
+Remember:
+- You have decided to speak based on recent thoughts and current context. Form a new spoken statement or question that drives the conversation forward and elicits reaction from the user."""
     
     @staticmethod
     def get_response_rules() -> str:

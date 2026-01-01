@@ -183,9 +183,13 @@ class MemorySearch:
             similarity = self._cosine_similarity(query_embedding, entry['embedding'])
             
             if similarity > 0.3:  # Minimum threshold
+                content = entry.get('content', '')
+                # [Changed] Truncate content to 1000 chars
+                truncated_content = self._truncate_text(content, 1000)
+                
                 results.append({
                     'role': entry.get('role', 'unknown'),
-                    'content': entry.get('content', ''),
+                    'content': truncated_content,
                     'timestamp': entry.get('timestamp', ''),
                     'date': entry.get('date', ''),
                     'similarity': similarity
@@ -233,8 +237,12 @@ class MemorySearch:
             similarity = self._cosine_similarity(query_embedding, entry['embedding'])
             
             if similarity > 0.3:  # Minimum threshold
+                summary = entry.get('summary', '')
+                # [Changed] Truncate summary to 1000 chars
+                truncated_summary = self._truncate_text(summary, 1000)
+                
                 results.append({
-                    'summary': entry.get('summary', ''),
+                    'summary': truncated_summary,
                     'date': entry.get('date', ''),
                     'timestamp': entry.get('timestamp', ''),
                     'entry_count': entry.get('entry_count', 0),
@@ -408,6 +416,33 @@ class MemorySearch:
             if self.logger:
                 self.logger.debug(f"[MemorySearch] Cosine similarity error: {e}")
             return 0.0
+    
+    def _truncate_text(self, text: str, max_length: int) -> str:
+        """
+        Truncate text at natural boundary
+        
+        Args:
+            text: Text to truncate
+            max_length: Maximum length
+        
+        Returns:
+            Truncated text with [...] suffix
+        """
+        if len(text) <= max_length:
+            return text
+        
+        truncated = text[:max_length]
+        
+        sentence_ends = [truncated.rfind('.'), truncated.rfind('!'), truncated.rfind('?')]
+        last_sentence = max(sentence_ends)
+        if last_sentence > max_length * 0.7:
+            return text[:last_sentence + 1].strip() + " [...]"
+        
+        last_space = truncated.rfind(' ')
+        if last_space > 0:
+            return text[:last_space].strip() + " [...]"
+        
+        return truncated.strip() + " [...]"
     
     def _keyword_match_score(self, query_keywords: List[str], chunk_keywords: List[str]) -> float:
         """
@@ -598,6 +633,10 @@ class MemorySearch:
             keywords = metadata.get('keywords', [])
             similarity = result['similarity']
             
+            # [Changed] Truncate context and response to ensure total under 1000 chars
+            context = self._truncate_text(context, 400)
+            response = self._truncate_text(response, 500)
+            
             if stage == 'thought':
                 lines.append(f"SITUATION: {context}")
                 lines.append(f"INTERNAL COGNITION: {response}")
@@ -606,7 +645,7 @@ class MemorySearch:
                 lines.append(f"RESPONSE: {response}")
             
             if keywords:
-                lines.append(f"KEYWORDS: {', '.join(keywords)}")
+                lines.append(f"KEYWORDS: {', '.join(keywords[:5])}")
             
             lines.append(f"(relevance: {similarity:.2f})")
             
