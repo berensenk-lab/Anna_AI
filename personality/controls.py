@@ -49,49 +49,27 @@ USE_STREAMING = True  # Enable streaming response generation
 # COGNITIVE LOOP CONTROLS
 # ========================================================================
 
-# === CONTINUOUS AUTONOMOUS THINKING ===
-# Single system for all background cognitive processing
-# Handles reactive (responding to events) and proactive (self-initiated) thinking
-
-# ENABLE_CONTINUOUS_THINKING = True  # Master toggle for autonomous cognitive loop
-
-CHAT_ENGAGEMENT = False
-
-# Thinking pace configuration
-MIN_PROACTIVE_INTERVAL = 5.0   # Minimum seconds between self-initiated thoughts
-MAX_PROACTIVE_INTERVAL = 15.0  # Force a thought after this much silence
-MAX_CONSECUTIVE_PROACTIVE = 200 # Max autonomous thoughts before needing external input
-
-# === AUTO-RESPONSE (GUI/CLI specific) ===
-# Separate from continuous thinking - this is for explicit user-facing responses
-AUTO_RESPOND = False              # Enable automatic responses when no user input detected
-AUTO_RESPOND_INTERVAL = 60        # Time interval (seconds) to trigger auto-response
-
-# Streaming configuration
-USE_STREAMING = True  # Enable streaming response generation
-
-# ========================================================================
-# COGNITIVE LOOP CONTROLS
-# ========================================================================
-
 # Enable continuous autonomous thinking
 ENABLE_CONTINUOUS_THINKING = False
 
 # Auto-restart cognitive loop after crashes
 # - True: Auto-restart up to 3 times with exponential backoff
 # - False: Stop completely on first error, require manual restart
-AUTO_RESTART = True  # NEW CONTROL VARIABLE
+AUTO_RESTART = True
 
-# Limit processing frequency (rate limiting)
-SLOW_MODE = True
+# === PROCESSING RATE LIMITING ===
+# Limit how fast the agent can think/process
+LIMIT_PROCESSING = False  # Enable processing rate limiting
+PROCESSING_DELAY = 30     # Seconds between processing cycles when LIMIT_PROCESSING enabled
 
-# Delay timer for processing cycles (seconds)
-# This controls how often the cognitive loop runs when SLOW_MODE is enabled
+# === SPEAKING RATE LIMITING ===
+# Limit how often the agent can speak (independent of thinking speed)
+LIMIT_SPEAKING = True     # Enable speaking rate limiting
+SPEAKING_DELAY = 60       # Minimum seconds between spoken responses when LIMIT_SPEAKING enabled
+
+# DEPRECATED: Old combined control (kept for backwards compatibility)
+SLOW_MODE = False
 DELAY_TIMER = 30
-
-# Delay timer for spoken responses (seconds)
-# This controls minimum time between autonomous spoken responses
-# Independent of processing speed - allows fast thinking with slow speaking
 RESPONSE_DELAY_TIMER = 60
 
 

@@ -76,15 +76,23 @@ class CognitiveLoopManager:
         self.is_running = True
         self.logger.system("[Cognitive Loop] Starting - Agent decides with <speak>YES/NO</speak>")
         
-        # Update response interval
-        SLOW_MODE = getattr(self.controls, 'SLOW_MODE', False)
-        if SLOW_MODE:
-            delay = getattr(self.controls, 'DELAY_TIMER', 30)
-            self.min_response_interval = delay
-            self.logger.system(f"[Cognitive Loop] Response rate limiting: 1 per {delay}s")
+        # Update processing delay logging
+        LIMIT_PROCESSING = getattr(self.controls, 'LIMIT_PROCESSING', False)
+        if LIMIT_PROCESSING:
+            delay = getattr(self.controls, 'PROCESSING_DELAY', 30)
+            self.logger.system(f"[Cognitive Loop] Processing rate: 1 cycle per {delay}s")
         else:
-            self.min_response_interval = 30.0
-            self.logger.system("[Cognitive Loop] No response rate limiting")
+            self.logger.system("[Cognitive Loop] Processing rate: Maximum")
+        
+        # Update response interval (LIMIT_SPEAKING)
+        LIMIT_SPEAKING = getattr(self.controls, 'LIMIT_SPEAKING', False)
+        if LIMIT_SPEAKING:
+            speaking_delay = getattr(self.controls, 'SPEAKING_DELAY', 60)
+            self.min_response_interval = speaking_delay
+            self.logger.system(f"[Cognitive Loop] Speaking rate: 1 response per {speaking_delay}s")
+        else:
+            self.min_response_interval = 0.0
+            self.logger.system("[Cognitive Loop] Speaking rate: Unlimited")
         
         # Record loop start for recovery tracking
         self.recovery.on_loop_start()
@@ -179,106 +187,71 @@ class CognitiveLoopManager:
                     )
                 else:
                     self.idle_cycles += 1
-                    self.thought_processor.thought_buffer.decay_momentum()
                 
                 # ============================================================
                 # CHECK IF AGENT SAID <speak>YES</speak>
-                # SIMPLIFIED: Just a boolean check, no reason
+                # Use should_respond() method, not is_set()
                 # ============================================================
-                should_speak = self.thought_processor.thought_buffer.should_speak()
-                
-                if should_speak:
-                #     self.logger.system("[Agent Decision] <speak>YES</speak>")
-                    
-                    # Generate response (will clear flag after checking it)
+                if self.thought_processor.thought_buffer.response_trigger.should_respond():
                     await self._generate_response()
                 
-                # ============================================================
-                # ADAPTIVE PACING
-                # ============================================================
-                time_since_user = self.thought_processor.thought_buffer.get_time_since_last_user_input()
-                
-                if time_since_user < 600:  # < 10 minutes
-                    if processing_occurred:
-                        await asyncio.sleep(0.05)  # 50ms
-                    else:
-                        await asyncio.sleep(0.2)  # 200ms
-                else:  # 10+ minutes idle
-                    if processing_occurred:
-                        await asyncio.sleep(0.5)  # 500ms
-                    else:
-                        await asyncio.sleep(2.0)  # 2s
-                
-                # Periodic stats
-                if time.time() - self.last_stats_log > 120.0:
+                # Log statistics periodically
+                current_time = time.time()
+                if current_time - self.last_stats_log >= 300:
                     self._log_statistics()
-                    self.last_stats_log = time.time()
-            
+                    self.last_stats_log = current_time
+                
+                # Minimal delay to prevent tight loop spinning
+                await asyncio.sleep(0.1)
+                
             except asyncio.CancelledError:
                 self.logger.system("[Cognitive Loop] Cancelled")
                 break
                 
             except Exception as e:
-                # ============================================================
-                # CRASH RECOVERY LOGIC
-                # ============================================================
-                self.logger.error(f"[Cognitive Loop] CRASH: {type(e).__name__}: {e}")
+                self.logger.error(f"[Cognitive Loop] CRASHED: {e}")
+                traceback.print_exc()
                 
-                # Get full traceback
-                tb_str = traceback.format_exc()
-                self.logger.error(f"[Cognitive Loop] Traceback:\n{tb_str}")
-                
-                # Report crash to recovery manager
-                should_auto_restart = self.recovery.on_crash(
+                # Use recovery.on_crash instead of should_auto_restart
+                should_restart = self.recovery.on_crash(
                     error=e,
-                    traceback_str=tb_str,
+                    traceback_str=traceback.format_exc(),
                     cycle_count=self.total_cycles
                 )
                 
-                if should_auto_restart:
-                    # Auto-restart approved
+                if should_restart:
                     cooldown = self.recovery.get_current_cooldown()
                     self.logger.warning(
-                        f"[Recovery] AUTO-RESTART in {cooldown:.1f}s "
-                        f"(Crash {self.recovery.crash_count}/{self.recovery.max_auto_restarts})"
+                        f"[Recovery] Auto-restart #{self.recovery.crash_count} "
+                        f"in {cooldown:.1f}s"
                     )
                     
-                    # Wait for cooldown
+                    # Wait cooldown
                     await asyncio.sleep(cooldown)
                     
-                    # Check if we should still restart (user might have stopped it)
-                    if not self.is_running:
-                        self.logger.system("[Recovery] Restart cancelled (loop stopped)")
-                        break
-                    
-                    self.logger.system("[Recovery] Auto-restarting cognitive loop...")
-                    
-                    # Reset loop task and continue
+                    # Record successful restart
                     self.recovery.successful_restarts += 1
-                    self.recovery.on_loop_start()  # Record restart time
                     
-                    continue  # Loop continues
-                    
+                    # Continue loop (restart)
+                    self.logger.system("[Recovery] Restarting cognitive loop...")
+                    continue
                 else:
-                    # Auto-restart not allowed
-                    self.is_running = False
-                    
-                    auto_restart_enabled = getattr(self.controls, 'AUTO_RESTART', True)
-                    
-                    if not auto_restart_enabled:
+                    # Don't auto-restart
+                    if self.recovery.crash_count > self.recovery.max_auto_restarts:
                         self.logger.error(
-                            "[Recovery] STOPPED - AUTO_RESTART is disabled\n"
-                            "[Recovery] Loop will not restart automatically\n"
-                            "[Recovery] Use restart_cognition() or GUI button to restart"
+                            f"[Recovery] Max auto-restarts ({self.recovery.max_auto_restarts}) "
+                            "reached. Loop STOPPED."
                         )
                     else:
-                        self.logger.error(
-                            f"[Recovery] STOPPED - Maximum auto-restarts exceeded ({self.recovery.max_auto_restarts})\n"
-                            "[Recovery] Manual restart required\n"
-                            "[Recovery] Use restart_cognition() or GUI button to restart"
+                        # AUTO_RESTART is False
+                        self.logger.warning(
+                            "[Recovery] AUTO_RESTART disabled. Loop STOPPED."
                         )
                     
-                    break  # Exit loop
+                    self.logger.system(
+                        "[Recovery] Use restart_cognition() or GUI button to restart"
+                    )
+                    break
         
         self.logger.system("[Cognitive Loop] STOPPED")
 
@@ -287,11 +260,11 @@ class CognitiveLoopManager:
         Generate autonomous spoken response
         FIXED: Wait for tool to be ready before broadcasting
         """
-        # Rate limiting check
+        # SPEAKING RATE LIMITING
         time_since_last_response = time.time() - self.last_response_time
-        SLOW_MODE = getattr(self.controls, 'SLOW_MODE', False)
+        LIMIT_SPEAKING = getattr(self.controls, 'LIMIT_SPEAKING', False)
         
-        if SLOW_MODE and time_since_last_response < self.min_response_interval:
+        if LIMIT_SPEAKING and time_since_last_response < self.min_response_interval:
             remaining = self.min_response_interval - time_since_last_response
             self.thought_processor.thought_buffer.response_trigger.clear()
             return
@@ -340,7 +313,7 @@ class CognitiveLoopManager:
                             # Wait for tool to be active (10 seconds for group chat)
                             tool_ready = await self.ai_core_ref.tool_manager.wait_for_tool_ready(
                                 'group_chat',
-                                timeout=10.0  # Longer timeout for network setup
+                                timeout=10.0
                             )
                             
                             if tool_ready:

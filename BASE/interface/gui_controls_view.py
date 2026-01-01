@@ -116,7 +116,7 @@ class ControlsView:
         save_btn = tk.Button(
             button_frame,
             text="[Save] Save & Apply",
-            command=self.save_important_reminders,
+            command=self.save_current_context,
             font=("Segoe UI", 9, "bold"),
             bg=DarkTheme.ACCENT_PURPLE,
             fg="white",
@@ -128,12 +128,12 @@ class ControlsView:
             pady=5
         )
         save_btn.pack(side=tk.LEFT, padx=(0, 5))
-        
+
         # Clear button
         clear_btn = tk.Button(
             button_frame,
             text="[Clear] Clear",
-            command=self.clear_important_reminders,
+            command=self.clear_current_context,
             font=("Segoe UI", 9),
             bg=DarkTheme.BUTTON_BG,
             fg=DarkTheme.FG_PRIMARY,
@@ -253,7 +253,7 @@ class ControlsView:
         # Save button
         save_btn = tk.Button(
             button_frame,
-            text="💾 Save & Apply",
+            text="Save & Apply",
             command=self.save_current_context,
             font=("Segoe UI", 9, "bold"),
             bg=DarkTheme.ACCENT_PURPLE,
@@ -270,7 +270,7 @@ class ControlsView:
         # Clear button
         clear_btn = tk.Button(
             button_frame,
-            text="🗑️ Clear",
+            text="Clear",
             command=self.clear_current_context,
             font=("Segoe UI", 9),
             bg=DarkTheme.BUTTON_BG,
@@ -305,14 +305,14 @@ class ControlsView:
                 self.parent.config.current_context = context
                 self.parent.logger.system(f"[Current Context] Updated: {context[:50]}...")
                 self.parent.context_status_label.config(
-                    text="✓ Saved",
+                    text="[Confirmed] Saved",
                     fg=DarkTheme.ACCENT_GREEN
                 )
             else:
                 self.parent.config.current_context = None
                 self.parent.logger.system("[Current Context] Cleared")
                 self.parent.context_status_label.config(
-                    text="✓ Cleared",
+                    text="[Confirmed] Cleared",
                     fg=DarkTheme.ACCENT_GREEN
                 )
             
@@ -322,7 +322,7 @@ class ControlsView:
         except Exception as e:
             self.parent.logger.error(f"[Current Context] Save error: {e}")
             self.parent.context_status_label.config(
-                text="✗ Error",
+                text="[Warning] Error",
                 fg=DarkTheme.ACCENT_RED
             )
     

@@ -30,6 +30,7 @@ class ThoughtProcessor:
         'config', 'controls', 'project_root', 'memory_search',
         'session_file_manager', 'logger', 'thought_buffer',
         '_is_processing', '_last_memory_integration',
+        '_last_processing_time',
         'cognitive_loop', 'event_loop', '_ai_core_ref',
         '_autonomous_response_callback',
         'thinking_modes', 'action_state_manager', 'tool_manager',
@@ -86,6 +87,7 @@ class ThoughtProcessor:
         self._is_processing = False
         self._last_memory_integration = 0.0
         self._last_tool_exploration = 0.0
+        self._last_processing_time = 0.0
         
         # Tool system references
         self.tool_manager = None
@@ -282,6 +284,18 @@ class ThoughtProcessor:
         if self._is_processing:
             return False
         
+        # PROCESSING RATE LIMITING
+        LIMIT_PROCESSING = getattr(self.controls, 'LIMIT_PROCESSING', False)
+        if LIMIT_PROCESSING:
+            current_time = time.time()
+            time_since_last = current_time - self._last_processing_time
+            processing_delay = getattr(self.controls, 'PROCESSING_DELAY', 30)
+            
+            if time_since_last < processing_delay:
+                return False
+            
+            self._last_processing_time = current_time
+        
         self._is_processing = True
         processing_occurred = False
         context_parts = context_parts or []
@@ -325,10 +339,8 @@ class ThoughtProcessor:
                 # SIMPLIFIED: Just set boolean flag if agent said YES
                 if should_speak:
                     self.thought_buffer.response_trigger.trigger()
-                    # self.logger.system("[Response Trigger] Agent said <speak>YES</speak>")
                 
                 # Execute actions if present (regardless of speaking)
-                # FIXED: Agent can use tools AND speak at the same time
                 if actions and self.tool_manager:
                     tool_names = [a.get('tool', 'unknown') for a in actions]
                     execution_msg = (
@@ -371,8 +383,6 @@ class ThoughtProcessor:
                     context_parts=context_parts
                 )
                 
-                # self.logger.system(f"[Proactive] {decision.reasoning}")
-                
                 result = await self._proactive_processing_by_type(
                     decision.prompt_type,
                     context_parts
@@ -392,9 +402,6 @@ class ThoughtProcessor:
                     # SIMPLIFIED: Just set boolean flag if agent said YES
                     if should_speak:
                         self.thought_buffer.response_trigger.trigger()
-                        # self.logger.system(
-                        #     "[Response Trigger] Agent said <speak>YES</speak>"
-                        # )
                     
                     # Execute actions if present (regardless of speaking)
                     # FIXED: Agent can use tools AND speak at the same time

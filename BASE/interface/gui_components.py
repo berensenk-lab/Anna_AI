@@ -312,10 +312,14 @@ class ControlPanelManager:
             "AI Behavior": [
                 ("Continuous Thinking", "ENABLE_CONTINUOUS_THINKING",
                 "Enable continuous thought processing"),
-                ("Slow Mode", "SLOW_MODE",
-                "Add delay to agent's processing loop"),
                 ("Auto Restart", "AUTO_RESTART",
                 "Automatically restart the agent after errors"),
+            ],
+            "Rate Limiting": [
+                ("Limit Processing", "LIMIT_PROCESSING",
+                "Limit how fast the agent can think/process"),
+                ("Limit Speaking", "LIMIT_SPEAKING",
+                "Limit how often the agent can speak"),
             ],
             "Agent Memory": [
                 ("Base Memory", "USE_BASE_MEMORY", "Include base knowledge context"),
@@ -323,9 +327,6 @@ class ControlPanelManager:
                 ("Long Memory", "USE_LONG_MEMORY", "Include past day summaries"),
                 ("Save Memory", "SAVE_MEMORY", "Save conversations to memory system"),
             ],
-            # "Prompt Components": [
-            #     ("System Prompt", "USE_SYSTEM_PROMPT", "Include system/personality prompt")
-            # ],
             "Output Actions": [
                 ("TTS Speech", "AVATAR_SPEECH", "Enable text-to-speech"),
                 ("Custom Voice", "USE_CUSTOM_VOICE", "Use voice cloning instead of system TTS")
@@ -338,7 +339,6 @@ class ControlPanelManager:
             ],
             "Debug & Logging": [
                 ("Log System", "LOG_SYSTEM_INFORMATION", "Log system messages"),
-                # ("Log Prompts", "LOG_PROMPT_CONSTRUCTION", "Log prompt building"),
                 ("Log Responsive Prompts", "LOG_RESPONSIVE_PROMPT", "Log responsive prompt details"),
                 ("Log Reactive Prompts", "LOG_REACTIVE_PROMPT", "Log reactive prompt details"),
                 ("Log Reflective Prompts", "LOG_REFLECTIVE_PROMPT", "Log reflective prompt details"),
@@ -353,6 +353,10 @@ class ControlPanelManager:
         # Create static control sections
         for group_name, controls_list in static_control_groups.items():
             self.create_control_group(scrollable_frame, group_name, controls_list)
+            
+            # Add numeric controls after Rate Limiting section
+            if group_name == "Rate Limiting":
+                self.create_timing_controls(scrollable_frame)
 
         # Create dynamic tool sections
         dynamic_tool_groups = self._get_dynamic_tool_groups()
@@ -621,7 +625,119 @@ class ControlPanelManager:
 
             if description:
                 self.create_tooltip(checkbox, description)
-                
+    
+    def create_timing_controls(self, parent):
+        """Create numeric spinbox controls for timing parameters"""
+        timing_frame = ttk.LabelFrame(
+            parent,
+            text="Timing Controls",
+            style="Dark.TLabelframe"
+        )
+        timing_frame.pack(fill=tk.X, padx=3, pady=1)
+        
+        # Processing delay control
+        proc_frame = tk.Frame(timing_frame, bg=DarkTheme.BG_DARKER)
+        proc_frame.pack(fill=tk.X, padx=5, pady=3)
+        
+        proc_label = tk.Label(
+            proc_frame,
+            text="Processing Delay (s):",
+            font=("Segoe UI", 9),
+            bg=DarkTheme.BG_DARKER,
+            fg=DarkTheme.FG_PRIMARY,
+            width=20,
+            anchor=tk.W
+        )
+        proc_label.pack(side=tk.LEFT)
+        
+        self.proc_delay_var = tk.IntVar(value=getattr(controls, 'PROCESSING_DELAY', 30))
+        proc_spinbox = tk.Spinbox(
+            proc_frame,
+            from_=5,
+            to=300,
+            textvariable=self.proc_delay_var,
+            command=lambda: self.update_delay_timer('PROCESSING_DELAY', self.proc_delay_var.get()),
+            font=("Segoe UI", 9),
+            bg=DarkTheme.BG_DARK,
+            fg=DarkTheme.FG_PRIMARY,
+            buttonbackground=DarkTheme.BUTTON_BG,
+            width=8
+        )
+        proc_spinbox.pack(side=tk.LEFT, padx=5)
+        
+        proc_desc = tk.Label(
+            proc_frame,
+            text="(Cycle delay)",
+            font=("Segoe UI", 8, "italic"),
+            bg=DarkTheme.BG_DARKER,
+            fg=DarkTheme.FG_MUTED
+        )
+        proc_desc.pack(side=tk.LEFT, padx=5)
+        
+        # Speaking delay control
+        speak_frame = tk.Frame(timing_frame, bg=DarkTheme.BG_DARKER)
+        speak_frame.pack(fill=tk.X, padx=5, pady=3)
+        
+        speak_label = tk.Label(
+            speak_frame,
+            text="Speaking Delay (s):",
+            font=("Segoe UI", 9),
+            bg=DarkTheme.BG_DARKER,
+            fg=DarkTheme.FG_PRIMARY,
+            width=20,
+            anchor=tk.W
+        )
+        speak_label.pack(side=tk.LEFT)
+        
+        self.speak_delay_var = tk.IntVar(value=getattr(controls, 'SPEAKING_DELAY', 60))
+        speak_spinbox = tk.Spinbox(
+            speak_frame,
+            from_=10,
+            to=600,
+            textvariable=self.speak_delay_var,
+            command=lambda: self.update_delay_timer('SPEAKING_DELAY', self.speak_delay_var.get()),
+            font=("Segoe UI", 9),
+            bg=DarkTheme.BG_DARK,
+            fg=DarkTheme.FG_PRIMARY,
+            buttonbackground=DarkTheme.BUTTON_BG,
+            width=8
+        )
+        speak_spinbox.pack(side=tk.LEFT, padx=5)
+        
+        speak_desc = tk.Label(
+            speak_frame,
+            text="(Response delay)",
+            font=("Segoe UI", 8, "italic"),
+            bg=DarkTheme.BG_DARKER,
+            fg=DarkTheme.FG_MUTED
+        )
+        speak_desc.pack(side=tk.LEFT, padx=5)
+
+    def update_delay_timer(self, var_name, value):
+        """Update delay timer control variable"""
+        try:
+            value = int(value)
+            
+            # Update controls module
+            setattr(controls, var_name, value)
+            
+            # Update cognitive loop if running
+            if var_name == 'SPEAKING_DELAY':
+                if hasattr(self.ai_core, 'processing_delegator'):
+                    thought_proc = self.ai_core.processing_delegator.thought_processor
+                    if thought_proc.cognitive_loop:
+                        thought_proc.cognitive_loop.min_response_interval = value
+                        self.logger.system(
+                            f"[Timing] Speaking delay updated to {value}s"
+                        )
+            elif var_name == 'PROCESSING_DELAY':
+                self.logger.system(
+                    f"[Timing] Processing delay updated to {value}s"
+                )
+            
+        except ValueError:
+            self.logger.error(f"Invalid value for {var_name}")
+
     def create_tts_status_section(self, parent):
         """Create TTS tool status section"""
         tts_frame = ttk.LabelFrame(
