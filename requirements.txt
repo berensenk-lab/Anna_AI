@@ -4,12 +4,17 @@
 #
 # For complete setup instructions including GPU package installation,
 # see SETUP.md in the project root directory.
-#
+# GPU-specific setup instructions are for Nvidia 50-series GPU compatibility only
+# (Custom pytorch and pyaudio wheels were built for tool compatibility on 50-series
+# GPUs with CUDA 13+) 
+# Ignore the GPU-specific instructions for other GPUs
+# 
 # ============================================================================
 # PREREQUISITES:
 # ============================================================================
 # 1. Python 3.11.9
-# 2. RTX 50-series GPU (5060 Ti, 5070, 5080, 5090) with latest drivers
+# 2. RTX 50-series GPU (5060 Ti, 5070, 5080, 5090) with latest drivers for best
+# performance
 # 3. Anna_AI as base template with working GPU support
 # 4. Visual Studio Build Tools (if building PyAudio from source)
 #
@@ -91,6 +96,9 @@ screeninfo==0.8.1
 colorama==0.4.6
 python-dotenv==1.1.1
 
+# ============================================================================
+# OPTIONAL INSTALLS FOR SOME TOOLS/FUNCTIONALITY
+# ============================================================================
 # pip install mss opencv-python numpy --break-system-packages
 # pip install websocket-client
 # pip install watchdog
@@ -151,7 +159,6 @@ python-dotenv==1.1.1
 # ============================================================================
 # For detailed setup instructions, troubleshooting, and explanations:
 # - See SETUP.md in project root
-# - Base template: Anna_AI venv at C:\Users\KryptykBioz\Desktop\Anna_AI
 # - GPU: NVIDIA RTX 5060 Ti (sm_120 / Blackwell architecture)
 #
 # ============================================================================
