@@ -1,77 +1,86 @@
 """
-Voice input management component with volume controls.
-Fixed to use GPU-accelerated voice recognition
+Modified Voice Manager - Connects to Shared Voice Service
 Location: BASE/interface/voice_manager.py
+
+MODIFIED: Instead of initializing its own Vosk/Whisper instance, this manager
+subscribes to the SharedVoiceService singleton, allowing multiple agents to
+share a single voice recognition instance.
+
+AUTOMATIC AGENT ID: Uses agent name from Config class (personality/bot_info.py)
+No manual agent_id required - automatically unique per agent.
 """
 import tkinter as tk
 from tkinter import ttk
 import threading
-import time
-import json
-import sounddevice as sd
-import numpy as np
 import sys
 from pathlib import Path
 
-# Path setup
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from BASE.interface.gui_themes import DarkTheme
-
-# Import GPU-accelerated voice module
-try:
-    from BASE.tools.internal.voice.voice_to_text import init_audio, start_vosk_stream
-    GPU_VOICE_AVAILABLE = True
-except ImportError:
-    GPU_VOICE_AVAILABLE = False
-    print("[Voice] GPU voice module not found, using legacy")
+from BASE.tools.internal.voice.shared_voice_service import SharedVoiceService
 
 try:
-    from personality.bot_info import agentname, username
+    from personality.bot_info import username
 except ImportError:
-    agentname = "Anna"
     username = "User"
 
 
 class VoiceManager:
-    """Manages GPU-accelerated voice input and volume controls"""
+    """
+    Voice manager that uses SharedVoiceService
+    
+    MODIFIED: No longer creates its own audio stream or recognition model.
+    Instead subscribes to centralized service.
+    
+    AUTOMATIC AGENT ID: Retrieves agent name from Config class automatically.
+    Each agent's personality/bot_info.py provides unique identification.
+    """
 
-    __slots__ = ('message_queue', 'input_queue', 'logger', 'voice_enabled', 'audio_started',
-                 'recognition_backend', 'recognition_device', 'whisper_model', 'vosk_model',
-                 'stream', 'raw_queue', 'text_queue', 'voice_thread', 'voice_worker_thread',
+    __slots__ = ('message_queue', 'input_queue', 'logger', 'voice_enabled',
+                 'agent_id', 'subscriber_id', 'voice_service', 'polling_thread',
                  'voice_button', 'voice_status', 'voice_volume_slider', 'voice_volume_label',
-                 'sound_volume_slider', 'sound_volume_label')
+                 'sound_volume_slider', 'sound_volume_label', 'config')
 
-    def __init__(self, message_queue, input_queue, logger):
-        """Initialize voice manager"""
+    def __init__(self, message_queue, input_queue, logger, config=None):
+        """
+        Initialize voice manager
+        
+        Args:
+            message_queue: Queue for GUI messages
+            input_queue: Queue for user input
+            logger: Logger instance
+            config: Config instance (optional - will import if not provided)
+        """
         self.message_queue = message_queue
         self.input_queue = input_queue
         self.logger = logger
 
         self.voice_enabled = False
-        self.audio_started = False
         
-        # GPU voice recognition components
-        self.recognition_backend = None
-        self.recognition_device = None
-        self.whisper_model = None
-        self.vosk_model = None
-        self.stream = None
-        self.raw_queue = None
-        self.text_queue = None
+        # AUTOMATIC: Get agent ID from config (personality/bot_info.py agentname)
+        if config is None:
+            from BASE.core.config import Config
+            config = Config()
+        self.config = config
+        self.agent_id = config.agentname  # Automatically uses personality/bot_info.py
         
-        # Voice thread
-        self.voice_thread = None
-        self.voice_worker_thread = None
+        self.subscriber_id = None
+        
+        self.voice_service = SharedVoiceService.get_instance()
+        self.voice_service.set_logger(logger)
+        
+        self.polling_thread = None
 
-        # GUI components
         self.voice_button = None
         self.voice_status = None
         self.voice_volume_slider = None
         self.voice_volume_label = None
         self.sound_volume_slider = None
         self.sound_volume_label = None
+        
+        self.logger.system(f"VoiceManager initialized for agent: {self.agent_id}")
 
     def create_voice_panel(self, parent_frame):
         """Create voice control panel with volume controls"""
@@ -80,7 +89,6 @@ class VoiceManager:
         )
         voice_frame.pack(fill=tk.X, pady=(0, 5))
 
-        # Voice Input Controls
         voice_controls = ttk.Frame(voice_frame)
         voice_controls.pack(fill=tk.X, padx=5, pady=(5, 0))
 
@@ -101,7 +109,6 @@ class VoiceManager:
         )
         self.voice_status.pack(side=tk.LEFT)
         
-        # Volume Controls
         self._create_volume_controls(voice_frame)
 
     def _create_volume_controls(self, parent_frame):
@@ -111,7 +118,6 @@ class VoiceManager:
         volume_container = ttk.Frame(parent_frame)
         volume_container.pack(fill=tk.X, padx=5, pady=(10, 5))
         
-        # TTS Voice Volume
         voice_vol_frame = ttk.Frame(volume_container)
         voice_vol_frame.pack(fill=tk.X, pady=(0, 8))
         
@@ -120,7 +126,7 @@ class VoiceManager:
         
         voice_icon = tk.Label(
             voice_label_frame,
-            text="",
+            text="🎤",
             font=("Segoe UI", 12),
             background=DarkTheme.BG_DARKER,
             width=2
@@ -166,7 +172,6 @@ class VoiceManager:
         )
         self.voice_volume_label.pack(side=tk.LEFT, padx=(5, 0))
         
-        # Sound Effects Volume
         sound_vol_frame = ttk.Frame(volume_container)
         sound_vol_frame.pack(fill=tk.X)
         
@@ -175,7 +180,7 @@ class VoiceManager:
         
         sound_icon = tk.Label(
             sound_label_frame,
-            text="",
+            text="🔊",
             font=("Segoe UI", 12),
             background=DarkTheme.BG_DARKER,
             width=2
@@ -220,75 +225,60 @@ class VoiceManager:
             width=5
         )
         self.sound_volume_label.pack(side=tk.LEFT, padx=(5, 0))
-        
-        hint_label = tk.Label(
-            volume_container,
-            text="Volumes apply immediately to all audio output",
-            font=("Segoe UI", 8, "italic"),
-            foreground=DarkTheme.FG_MUTED,
-            background=DarkTheme.BG_DARKER
-        )
-        hint_label.pack(pady=(5, 0))
-    
+
     def _on_voice_volume_change(self, value):
-        """Handle TTS voice volume slider change"""
         import personality.controls as controls
         volume = int(value) / 100.0
         controls.VOICE_VOLUME = volume
         if self.voice_volume_label:
             self.voice_volume_label.config(text=f"{int(value)}%")
-        # self.logger.speech(f"Voice volume: {int(value)}%")
-    
+
     def _on_sound_volume_change(self, value):
-        """Handle sound effects volume slider change"""
         import personality.controls as controls
         volume = int(value) / 100.0
         controls.SOUND_EFFECT_VOLUME = volume
         if self.sound_volume_label:
             self.sound_volume_label.config(text=f"{int(value)}%")
-        # self.logger.system(f"Sound effects volume: {int(value)}%")
 
     def toggle_voice_input(self):
-        """Toggle GPU-accelerated voice input on/off"""
+        """
+        Toggle voice input - MODIFIED to use shared service
+        """
         if not self.voice_enabled:
             try:
-                self.logger.system("Initializing GPU voice input...")
+                status = self.voice_service.get_status()
                 
-                if not GPU_VOICE_AVAILABLE:
-                    self.logger.error("GPU voice module not available")
-                    return
+                if not status['running']:
+                    self.logger.system("Starting shared voice service...")
+                    if not self.voice_service.start(preferred_backend="auto"):
+                        raise RuntimeError("Failed to start shared voice service")
                 
-                # Initialize GPU voice recognition
-                import queue
-                self.raw_queue = queue.Queue(maxsize=50)
-                self.text_queue = queue.Queue(maxsize=20)
+                self.subscriber_id = self.voice_service.subscribe(
+                    agent_id=self.agent_id,
+                    callback=None
+                )
                 
-                # Initialize audio system (tries GPU, falls back to CPU)
-                init_audio(self)
-                
-                # Log backend
-                backend_name = f"{self.recognition_backend.upper()} on {self.recognition_device.upper()}"
-                self.logger.success(f"Voice backend: {backend_name}")
+                status = self.voice_service.get_status()
+                backend_name = f"{status['backend'].upper()} on {status['device'].upper()}"
                 
                 self.voice_enabled = True
                 if self.voice_button:
                     self.voice_button.config(text="Stop Voice Input")
                 if self.voice_status:
                     self.voice_status.config(
-                        text=f"Voice: {backend_name}", 
+                        text=f"Voice: {backend_name} [SHARED]", 
                         foreground=DarkTheme.ACCENT_GREEN
                     )
-
-                # Start recognition stream
-                start_vosk_stream(self)
                 
-                # Start text processing thread
-                self.voice_thread = threading.Thread(
-                    target=self.voice_processing_loop, daemon=True
+                self.polling_thread = threading.Thread(
+                    target=self._poll_voice_queue, 
+                    daemon=True,
+                    name=f"VoicePolling-{self.agent_id}"
                 )
-                self.voice_thread.start()
+                self.polling_thread.start()
                 
-                self.logger.success("Voice input started successfully")
+                self.logger.success(f"Voice input started for {self.agent_id}")
+                self.logger.system(f"Total subscribers: {status['subscribers']}")
 
             except Exception as e:
                 self.logger.error(f"Voice initialization error: {str(e)}")
@@ -299,7 +289,7 @@ class VoiceManager:
             self.stop_voice_input()
 
     def stop_voice_input(self):
-        """Stop voice input and cleanup"""
+        """Stop voice input - unsubscribe from shared service"""
         try:
             self.voice_enabled = False
             
@@ -311,54 +301,48 @@ class VoiceManager:
                     foreground=DarkTheme.FG_MUTED
                 )
             
-            # Stop audio stream
-            if self.stream is not None:
-                try:
-                    self.stream.stop()
-                    self.stream.close()
-                except Exception as e:
-                    self.logger.error(f"Error stopping stream: {str(e)}")
-                self.stream = None
+            if self.subscriber_id:
+                self.voice_service.unsubscribe(self.subscriber_id)
+                self.subscriber_id = None
             
-            # Signal worker to stop
-            if self.raw_queue:
-                try:
-                    self.raw_queue.put(b"__EXIT__")
-                except:
-                    pass
+            if self.polling_thread and self.polling_thread.is_alive():
+                self.polling_thread.join(timeout=2.0)
             
-            # Wait for threads
-            if self.voice_thread and self.voice_thread.is_alive():
-                self.voice_thread.join(timeout=2.0)
+            status = self.voice_service.get_status()
+            
+            if status['subscribers'] == 0:
+                self.logger.system("No more subscribers - stopping shared service")
+                self.voice_service.stop()
             
             self.logger.system("Voice input stopped")
 
         except Exception as e:
             self.logger.error(f"Error in stop_voice_input: {str(e)}")
 
-    def voice_processing_loop(self):
-        """Process recognized text from text_queue"""
+    def _poll_voice_queue(self):
+        """Poll voice queue from shared service"""
         try:
-            self.logger.system("Voice processing loop started")
-            self.logger.system(f"Backend: {self.recognition_backend}, Device: {self.recognition_device}")
+            self.logger.system(f"Voice polling started for {self.agent_id}")
+            
+            text_queue = self.voice_service.get_subscriber_queue(self.agent_id)
+            if not text_queue:
+                self.logger.error("Failed to get subscriber queue")
+                return
             
             while self.voice_enabled:
                 try:
-                    # Get recognized text from queue (non-blocking with timeout)
-                    text = self.text_queue.get(timeout=0.1)
+                    text = text_queue.get(timeout=0.1)
                     
                     if text and len(text) >= 3:
-                        # Queue for AI processing
                         self.message_queue.put(("voice_input", username, text))
                         self.input_queue.put(text)
-                        self.logger.speech(f"Voice recognized: {text}")
+                        self.logger.speech(f"[{self.agent_id}] Voice: {text}")
                         
-                except Exception:
-                    # Timeout or queue empty - continue loop
+                except:
                     continue
                     
         except Exception as e:
-            self.logger.error(f"Voice processing loop error: {str(e)}")
+            self.logger.error(f"Voice polling error: {str(e)}")
             import traceback
             traceback.print_exc()
 
@@ -391,7 +375,6 @@ class VolumeControlPanel:
         
         container.pack(fill=tk.X, pady=5)
         
-        # Voice Volume
         voice_frame = ttk.Frame(container)
         voice_frame.pack(fill=tk.X, padx=5, pady=(5, 8))
         
@@ -429,7 +412,6 @@ class VolumeControlPanel:
         )
         self.voice_volume_label.pack(side=tk.LEFT, padx=(5, 0))
         
-        # Sound Effects Volume
         sound_frame = ttk.Frame(container)
         sound_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
         
@@ -474,11 +456,9 @@ class VolumeControlPanel:
         self.controls.VOICE_VOLUME = volume
         if self.voice_volume_label:
             self.voice_volume_label.config(text=f"{int(value)}%")
-        # self.logger.speech(f"Voice volume: {int(value)}%")
     
     def _on_sound_volume_change(self, value):
         volume = int(value) / 100.0
         self.controls.SOUND_EFFECT_VOLUME = volume
         if self.sound_volume_label:
             self.sound_volume_label.config(text=f"{int(value)}%")
-        # self.logger.system(f"Sound effects volume: {int(value)}%")

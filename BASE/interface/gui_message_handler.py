@@ -1,6 +1,6 @@
-# gui_chat_handler.py - Simplified filtering (already done in gui_chat_view)
+# gui_message_handler.py - Simplified filtering (already done in gui_chat_view)
 """
-GUI Chat Handler - Manages message flow between GUI and AI Core
+GUI Message Handler - Manages message flow between GUI and AI Core
 Filtering now happens in gui_chat_view before display
 """
 
@@ -18,6 +18,9 @@ class GUIMessageHandler:
     4. Process through AI Core
     5. Display bot response
     """
+
+    __slots__ = ('ai_core', 'message_processor', 'message_queue', 'logger', 
+                 'username', 'agentname', 'content_filter', 'controls')
     
     def __init__(self, ai_core, message_processor, message_queue, logger):
         """

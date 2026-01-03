@@ -24,6 +24,8 @@ from personality.prompts.personality_prompt_parts import PersonalityPromptParts
 
 class ReflectiveConstructor:
     """Constructs prompts for reflective thinking"""
+
+    __slots__ = ('memory_search', 'tool_manager', 'logger', 'parts', 'personality')
     
     STARTUP_THOUGHT_THRESHOLD = 3
     

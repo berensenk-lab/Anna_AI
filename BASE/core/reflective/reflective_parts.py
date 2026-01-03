@@ -8,6 +8,8 @@ Minimal tool instructions - detailed docs only in ACTION mode
 
 class ReflectivePromptParts:
     """Reusable prompt parts for reflective thinking"""
+
+    __slots__ = ()  # Static methods only, no instance variables
     
     @staticmethod
     def get_mode_instructions() -> str:

@@ -10,6 +10,8 @@ from BASE.interface.gui_themes import DarkTheme
 
 class ControlsView:
     """Manages the Controls view, including control panel and auxiliary panels"""
+
+    __slots__ = ('parent',)
     
     def __init__(self, parent):
         self.parent = parent

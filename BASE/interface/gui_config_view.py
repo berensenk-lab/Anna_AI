@@ -12,7 +12,10 @@ from BASE.interface.gui_themes import DarkTheme
 
 class ConfigView:
     """Displays and allows editing of configuration files"""
-    
+
+    __slots__ = ('parent', 'project_root', 'bot_info_path', 'personality_path', 
+                 'bot_info_text', 'personality_text')
+
     def __init__(self, parent, project_root):
         self.parent = parent
         self.project_root = Path(project_root)

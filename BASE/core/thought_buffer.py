@@ -2,9 +2,9 @@
 """
 THOUGHT BUFFER - Core Cognitive State Management
 ==================================================
-SIMPLIFIED: Response trigger is just a boolean flag
-Agent decides with <speak>YES/NO</speak> - that's it
+OPTIMIZED: String interning for memory efficiency and faster comparisons
 """
+import sys
 import time
 from typing import List, Dict, Optional, Deque, Any 
 from collections import deque
@@ -12,6 +12,20 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from personality.bot_info import agentname, username
+
+
+# ============================================================================
+# STRING INTERNING OPTIMIZATION
+# ============================================================================
+
+_SOURCES = {
+    'user_input', 'chat_message', 'chat_direct_mention', 'chat_question',
+    'direct_mention', 'tool_result', 'tool_failed', 'tool_timeout',
+    'vision_result', 'search_result', 'memory_result', 'urgent_reminder',
+    'response_echo', 'proactive_reflection', 'internal',
+    'system_notification', 'chat_engagement', 'group_chat', 'tool_context'
+}
+_INTERNED_SOURCES = {s: sys.intern(s) for s in _SOURCES}
 
 
 # ============================================================================
@@ -72,7 +86,7 @@ class RawDataEvent:
     __slots__ = ('source', 'data', 'timestamp', 'processed')
     
     def __init__(self, source: str, data: str, timestamp: float = None, processed: bool = False):
-        self.source = source
+        self.source = sys.intern(source) if source not in _INTERNED_SOURCES else _INTERNED_SOURCES[source]
         self.data = data
         self.timestamp = timestamp if timestamp is not None else time.time()
         self.processed = processed
@@ -97,7 +111,7 @@ class ProcessedThought:
     def __init__(self, content: str, source: str, timestamp: float, 
                  original_ref: Optional[str] = None, included_in_response: bool = False):
         self.content = content
-        self.source = source
+        self.source = sys.intern(source) if source not in _INTERNED_SOURCES else _INTERNED_SOURCES[source]
         self.timestamp = timestamp
         self.original_ref = original_ref
         self.included_in_response = included_in_response
@@ -158,7 +172,7 @@ class ResponseTriggers:
 class ThoughtBuffer:
     """
     Central cognitive state manager.
-    SIMPLIFIED: Response trigger is just a boolean flag.
+    OPTIMIZED: String interning for reduced memory and faster comparisons.
     """
     
     __slots__ = (
@@ -175,51 +189,40 @@ class ThoughtBuffer:
     )
     
     def __init__(self, max_thoughts=25):
-        # Core buffers
         self._raw_events: Deque[RawDataEvent] = deque(maxlen=50)
         self._thoughts: Deque[ProcessedThought] = deque(maxlen=max_thoughts)
         
-        # Configuration
         self.max_thoughts = max_thoughts
         
-        # Timing state
         self.last_response_time = 0.0
         self.last_thought_generation = 0.0
         self.last_proactive_thought_time = 0.0
         self.last_cognitive_activity = time.time()
         self._response_counter = 0
         
-        # User interaction tracking
         self.last_user_input = ""
         self.last_user_input_time = 0.0
         
-        # Context management
         self.ongoing_context = ""
         
-        # Goal tracking
         self.current_goal = None
         self.goal_set_time = None
         self.goal_progress_thoughts = []
         self.goals_achieved = []
         
-        # Urgent reminders
         self.has_urgent_reminders = False
         self.urgent_reminder_count = 0
         
-        # Proactive thinking parameters
         self.min_proactive_interval = 5.0
         self.max_proactive_interval = 15.0
         self.thought_momentum = 0.5
         self.consecutive_proactive_thoughts = 0
         
-        # System control
         self._shutdown_requested = False
         
-        # Chat engagement subsystem
         from BASE.handlers.chat_engagement import ChatEngagement
         self.chat_engagement = ChatEngagement(thought_buffer_ref=self)
 
-        # Response trigger system - SIMPLIFIED
         self.response_trigger = ResponseTriggers()
 
     # ========================================================================
@@ -264,31 +267,29 @@ class ThoughtBuffer:
         timestamp: Optional[float] = None
     ):
         """Add interpreted thought with metadata."""
-        # Track urgent reminders
         if source == 'urgent_reminder':
             self.has_urgent_reminders = True
             self.urgent_reminder_count += 1
         
-        # Use provided timestamp or current time
         if timestamp is None:
             timestamp = time.time()
         
-        # Prepend speaker labels for clarity
         if source == 'user_input':
             content = f'{username} said: {content}'
         elif source == 'response_echo':
-            content = f'I said: {content}'  # This adds the "[SELF] I said:" equivalent
+            content = f'I said: {content}'
         
-        # Format with metadata prefix
+        interned_source = _INTERNED_SOURCES.get(source, sys.intern(source))
+        
         formatted_content = format_thought_with_metadata(
             content=content,
-            source=source,
+            source=interned_source,
             timestamp=timestamp
         )
         
         self._thoughts.append(ProcessedThought(
             content=formatted_content,
-            source=source,
+            source=interned_source,
             timestamp=timestamp,
             original_ref=original_ref,
             included_in_response=False
@@ -377,7 +378,6 @@ class ThoughtBuffer:
         if timestamp is None:
             timestamp = time.time()
         
-        # CRITICAL: The prepending happens in add_processed_thought for 'response_echo' source
         self.add_processed_thought(
             content=response_text,
             source='response_echo',
@@ -385,7 +385,6 @@ class ThoughtBuffer:
             timestamp=timestamp
         )
         
-        # Mark as included in response
         if self._thoughts:
             self._thoughts[-1].included_in_response = True
         
@@ -456,7 +455,6 @@ class ThoughtBuffer:
         self.last_cognitive_activity = time.time()
         self.consecutive_proactive_thoughts += 1
         
-        # Adjust momentum based on thought quality
         content_lower = content.lower()
         high_quality_indicators = [
             'wonder', 'curious', 'should check', 'could', 'might want',

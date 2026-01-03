@@ -32,6 +32,8 @@ class TTSTool:
     - Handle audio generation directly
     - Manage device selection
     """
+
+    __slots__ = ('backend', 'logger', '_is_speaking', '_speech_lock', '_stop_event')
     
     def __init__(self, backend: TTSInterface, logger: Optional[Logger] = None):
         """
@@ -250,6 +252,8 @@ class ChunkBuffer:
     Use this to accumulate streaming text chunks until we have
     a natural break point (punctuation, minimum word count).
     """
+
+    __slots__ = ('min_words', 'max_words', 'buffer')
     
     def __init__(self, min_words: int = 3, max_words: int = 10):
         """

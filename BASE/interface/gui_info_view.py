@@ -6,6 +6,8 @@ from BASE.interface.gui_themes import DarkTheme
 
 class InfoView:
     """Displays README.md content from project root"""
+
+    __slots__ = ('parent', 'project_root', 'readme_path', 'readme_text')
     
     def __init__(self, parent, project_root):
         self.parent = parent

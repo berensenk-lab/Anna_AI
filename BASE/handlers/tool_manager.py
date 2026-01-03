@@ -315,11 +315,11 @@ class ToolManager:
         tool_name = self._resolve_tool_name(control_variable)
         
         if not tool_name:
-            if self.logger:
-                self.logger.warning(
-                    f"[Tool Manager] Unknown control variable: {control_variable} "
-                    f"(no matching tool found)"
-                )
+            # if self.logger:
+            #     self.logger.warning(
+            #         f"[Tool Manager] Unknown control variable: {control_variable} "
+            #         f"(no matching tool found)"
+            #     )
             return
         
         if self.logger:
@@ -647,7 +647,9 @@ class ToolManager:
     # ========================================================================
     
     def get_statistics(self) -> Dict[str, Any]:
-        """Get tool manager statistics"""
+        """Get tool manager statistics with optimization metrics"""
+        cache_stats = self.lifecycle_manager.get_cache_stats()
+        
         return {
             'discovered_count': len(self._tool_metadata),
             'active_count': len(self._active_tools),
@@ -655,12 +657,19 @@ class ToolManager:
             'control_mappings': len(self._control_to_tool_map),
             'enabled_tools': self.get_enabled_tool_names(),
             'active_tools': self.get_active_tool_names(),
-            'starting_tools': sorted(list(self._starting_tools))
+            'starting_tools': sorted(list(self._starting_tools)),
+            'optimization': {
+                'fully_loaded_tools': cache_stats['fully_loaded_tools'],
+                'minimal_only_tools': cache_stats['minimal_only_tools'],
+                'cached_json_files': cache_stats['cached_json_files'],
+                'memory_saved_kb': cache_stats['memory_saved_estimate_kb']
+            }
         }
-    
+
     def get_status_summary(self) -> str:
-        """Get human-readable status summary"""
+        """Get human-readable status summary with optimization info"""
         stats = self.get_statistics()
+        opt = stats['optimization']
         
         lines = [
             f"Tool Manager Status:",
@@ -668,13 +677,20 @@ class ToolManager:
             f"  Control Mappings: {stats['control_mappings']}",
             f"  Active: {stats['active_count']}",
             f"  Starting: {stats['starting_count']}",
-            f"  Total Enabled: {len(stats['enabled_tools'])}"
+            f"  Total Enabled: {len(stats['enabled_tools'])}",
+            f"",
+            f"Optimization:",
+            f"  Fully Loaded: {opt['fully_loaded_tools']}",
+            f"  Lazy (Minimal): {opt['minimal_only_tools']}",
+            f"  JSON Cache Size: {opt['cached_json_files']} files",
+            f"  Memory Saved: ~{opt['memory_saved_kb']}KB"
         ]
         
         if stats['active_tools']:
-            lines.append(f"  Active: {', '.join(stats['active_tools'])}")
+            lines.append(f"")
+            lines.append(f"Active Tools: {', '.join(stats['active_tools'])}")
         
         if stats['starting_tools']:
-            lines.append(f"  Starting: {', '.join(stats['starting_tools'])}")
+            lines.append(f"Starting Tools: {', '.join(stats['starting_tools'])}")
         
         return "\n".join(lines)

@@ -8,6 +8,8 @@ Minimal tool instructions - detailed docs only in ACTION mode
 
 class ProactivePromptParts:
     """Reusable prompt parts for proactive thinking"""
+
+    __slots__ = ()  # Static methods only, no instance variables
     
     @staticmethod
     def get_mode_instructions() -> str:

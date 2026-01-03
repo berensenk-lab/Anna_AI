@@ -7,6 +7,8 @@ Minimal tool instructions - detailed docs only in ACTION mode
 
 class ReactivePromptParts:
     """Reusable prompt parts for reactive thinking"""
+
+    __slots__ = ()  # Static methods only, no instance variables
     
     @staticmethod
     def get_mode_instructions() -> str:

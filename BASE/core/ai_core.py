@@ -25,9 +25,10 @@ class AICore:
         'memory_manager', 'memory_search', 'session_file_manager',
         'processing_delegator', 'control_manager', 'tts_tool',
         'discord_integration', 'youtube_chat', 'twitch_chat', 'chat_handler',
-        'last_reminder_cleanup', 'reminder_cleanup_interval', 'initializer', 'content_filter',
-        'action_state_manager', 'instruction_persistence_manager', 'tool_manager',
-        'streaming_enabled', 'hot_reload_manager', 'core_hot_reload', 'tool_hot_reload'
+        'last_reminder_cleanup', 'reminder_cleanup_interval', 'initializer',
+        'content_filter', 'action_state_manager', 'instruction_persistence_manager',
+        'tool_manager', 'streaming_enabled', 'hot_reload_manager',
+        'core_hot_reload', 'tool_hot_reload'
     )
     
     def __init__(self, config, controls_module, project_root=None, gui_logger=None):

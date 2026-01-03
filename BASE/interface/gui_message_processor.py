@@ -1,7 +1,7 @@
 # Filename: BASE/interface/gui_message_processor.py
 """
 Message processing logic for the GUI - fully delegated to AI Core
-FIXED: No user message saving here - handled by gui_chat_handler
+FIXED: No user message saving here - handled by gui_message_handler
 FIXED: Empty messages trigger background checks without displaying empty responses
 FIXED: TTS speech interruption and state management
 """
@@ -16,7 +16,11 @@ from BASE.core.logger import MessageType
 
 class MessageProcessor:
     """Handles message routing between GUI and AI Core"""
-    
+
+    __slots__ = ('ai_core', 'message_queue', 'speech_stop_flag', 'logger', 'speech_thread',
+                 '_is_speaking', '_speech_lock', '_speech_stop_event', 'agentname', 
+                 'username', 'project_root')
+
     def __init__(self, ai_core, message_queue, speech_stop_flag, logger):
         self.ai_core = ai_core
         self.message_queue = message_queue

@@ -25,6 +25,8 @@ class ControlPanelManager:
     All control logic delegated to AI Core's ControlManager
     Tool system updates delegated to ToolManager (modular system)
     """
+    __slots__ = ('ai_core', 'control_manager', 'logger', 'control_vars', 'status_labels', 
+                 'tts_backend_switcher', 'proc_delay_var', 'speak_delay_var', 'tts_status_label')
 
     def __init__(self, ai_core, logger):
         """Initialize control panel manager"""

@@ -22,6 +22,8 @@ from personality.prompts.personality_prompt_parts import PersonalityPromptParts
 
 class ReactiveConstructor:
     """Constructs prompts for reactive thinking"""
+
+    __slots__ = ('tool_manager', 'logger', 'parts', 'personality')
     
     def __init__(self, tool_manager=None, logger=None):
         self.tool_manager = tool_manager

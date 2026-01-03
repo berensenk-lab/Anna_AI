@@ -12,7 +12,9 @@ from BASE.interface.gui_themes import THEMES, DEFAULT_THEME
 
 class ThemeManager:
     """Manages application themes and Tkinter style configurations"""
-    
+
+    __slots__ = ('parent', 'current_theme', 'theme_name', 'skip_widget_update')
+
     def __init__(self, parent):
         self.parent = parent
         self.current_theme = THEMES[DEFAULT_THEME]

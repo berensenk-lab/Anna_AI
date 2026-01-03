@@ -19,7 +19,12 @@ import personality.controls as controls
 
 class UIBuilder:
     """Handles main UI creation and view switching for the GUI"""
-    
+
+    __slots__ = ('parent', 'theme_manager', 'controls_view', 'chat_view_instance',
+                 'tools_view', 'info_view', 'config_view', 'files_view', 'view_frames',
+                 'menubar_frame', 'current_view', 'theme_selector', 'config_tab',
+                 'controls_tab', 'chat_tab', 'files_tab', 'tools_tab', 'info_tab', 'tabs')
+
     def __init__(self, parent):
         self.parent = parent
         self.parent.root.geometry("770x870")

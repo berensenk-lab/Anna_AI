@@ -15,7 +15,10 @@ class ToolsView:
     Manages the Tools view with dynamically loaded tool panels
     Each installed tool with a component.py gets its own tab
     """
-    
+
+    __slots__ = ('parent', 'project_root', 'hot_reload_manager', 'panel_loader', 
+                 'notebook', 'tool_tabs', 'tool_components')
+
     def __init__(self, parent, project_root, hot_reload_manager=None):
         """
         Initialize tools view

@@ -21,6 +21,8 @@ from personality.bot_info import username
 
 class ResponsiveConstructor:
     """Constructs prompts for responsive (spoken) response generation"""
+
+    __slots__ = ('memory_search', 'logger', 'parts', 'personality')
     
     def __init__(self, memory_search=None, logger=None):
         """

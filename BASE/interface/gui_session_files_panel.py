@@ -30,7 +30,10 @@ except ImportError:
 
 class SessionFilesPanel:
     """Manages session file upload and display"""
-    
+
+    __slots__ = ('parent', 'ai_core', 'logger', 'file_items', 'canvas', 'scrollbar',
+                 'scrollable_frame', 'canvas_window')
+
     def __init__(self, parent, ai_core, logger):
         self.parent = parent
         self.ai_core = ai_core

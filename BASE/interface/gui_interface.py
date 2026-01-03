@@ -27,7 +27,7 @@ try:
     from BASE.interface.gui_components import ControlPanelManager
     from BASE.interface.gui_session_files_panel import SessionFilesPanel
     from BASE.interface.gui_message_processor import MessageProcessor
-    from BASE.interface.gui_chat_handler import GUIMessageHandler
+    from BASE.interface.gui_message_handler import GUIMessageHandler
     from BASE.interface.gui_ui_builder import UIBuilder
     from BASE.interface.gui_chat_view import ChatView
 
@@ -185,7 +185,7 @@ class OllamaGUI:
         )
 
         # Message handler
-        from BASE.interface.gui_chat_handler import GUIMessageHandler
+        from BASE.interface.gui_message_handler import GUIMessageHandler
         self.chat_handler = GUIMessageHandler(
             ai_core=self.ai_core,
             message_processor=self.message_processor,
@@ -524,8 +524,8 @@ class OllamaGUI:
                         }
                         display_type = type_map.get(msg_type, MessageType.SYSTEM)
                         
-                        if msg_type == "agent":
-                            self.logger.system(f"[Display] Agent string response: {message[:60]}...")
+                        # if msg_type == "agent":
+                        #     self.logger.system(f"[Display] Agent string response: {message[:60]}...")
                     
                     # Display message with correct type
                     ChatView.add_chat_message(self, sender, message, display_type)
@@ -551,7 +551,7 @@ class OllamaGUI:
                 is_auto_prompt = combined_message == "__AUTO_PROMPT__"
 
                 if is_auto_prompt:
-                    self.logger.system("🕐 Auto-prompt detected - checking for proactive response")
+                    self.logger.system("Auto-prompt detected - checking for proactive response")
                     process_message = ""
                 else:
                     if not combined_message:

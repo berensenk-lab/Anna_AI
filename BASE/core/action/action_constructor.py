@@ -17,6 +17,8 @@ from personality.prompts.personality_prompt_parts import PersonalityPromptParts
 
 class ActionConstructor:
     """Constructs prompts for action mode (tool execution)"""
+
+    __slots__ = ('tool_manager', 'logger', 'parts', 'personality')
     
     def __init__(self, tool_manager=None, logger=None):
         """

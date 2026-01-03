@@ -8,6 +8,8 @@ from BASE.core.logger import MessageType, Logger
 class ChatView:
     """Manages the Chat view with dynamic theme support and performance optimizations"""
     
+    __slots__ = ('parent',)
+    
     MESSAGE_TYPE_TO_TAG = {
         MessageType.USER: "user",
         MessageType.AGENT: "agent",

@@ -10,6 +10,8 @@ from tkinter import ttk
 
 class FilesView:
     """Manages the Files view tab"""
+
+    __slots__ = ('parent', 'logger', 'ai_core')
     
     def __init__(self, parent):
         self.parent = parent

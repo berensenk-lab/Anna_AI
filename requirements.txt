@@ -93,6 +93,7 @@ python-dotenv==1.1.1
 
 # pip install mss opencv-python numpy --break-system-packages
 # pip install websocket-client
+# pip install watchdog
 
 # ============================================================================
 # GPU PACKAGES (COPY FROM ANNA_AI - DO NOT INSTALL VIA PIP):

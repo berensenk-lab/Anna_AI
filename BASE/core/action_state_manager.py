@@ -1,13 +1,37 @@
 # Filename: BASE/core/action_state_manager.py
 """
-Action State Manager - COMPLETE IMPLEMENTATION
+Action State Manager - OPTIMIZED IMPLEMENTATION
 Tracks async tool executions with full context and attempt counting
-Provides rich feedback to prevent hallucination and redundant tool calls
+OPTIMIZED: String interning + bounded history size
 """
+import sys
 import time
 from typing import Dict, List, Optional, Any, Set, Tuple
 from enum import Enum
 
+
+# ============================================================================
+# STRING INTERNING OPTIMIZATION
+# ============================================================================
+
+_FAILURE_REASONS = {
+    'timeout', 'backend_offline', 'invalid_args', 'tool_unavailable',
+    'rate_limit', 'network_error', 'authentication_failed', 'unknown'
+}
+_INTERNED_FAILURE_REASONS = {r: sys.intern(r) for r in _FAILURE_REASONS}
+
+_TOOL_NAMES_CACHE: Dict[str, str] = {}
+
+def _intern_tool_name(tool_name: str) -> str:
+    """Intern tool names for memory efficiency"""
+    if tool_name not in _TOOL_NAMES_CACHE:
+        _TOOL_NAMES_CACHE[tool_name] = sys.intern(tool_name)
+    return _TOOL_NAMES_CACHE[tool_name]
+
+
+# ============================================================================
+# ENUMS
+# ============================================================================
 
 class ActionStatus(Enum):
     PENDING = "pending"
@@ -16,6 +40,10 @@ class ActionStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+
+# ============================================================================
+# DATA STRUCTURES
+# ============================================================================
 
 class ActionState:
     """Represents state of an in-flight action"""
@@ -34,7 +62,7 @@ class ActionState:
         query_simplified: bool = False
     ):
         self.action_id = action_id
-        self.tool_name = tool_name
+        self.tool_name = _intern_tool_name(tool_name)
         self.args = args
         self.status = status
         self.initiated_at = initiated_at
@@ -49,23 +77,27 @@ class ActionState:
 
 
 class ActionStateManager:
-    """Tool state awareness system"""
+    """Tool state awareness system with bounded memory"""
     __slots__ = (
         'actions', 'logger', '_action_counter', '_completed_cache', 
-        '_last_cleanup', '_tool_attempt_tracking'
+        '_last_cleanup', '_tool_attempt_tracking', '_max_actions'
     )
     
-    def __init__(self, logger):
+    def __init__(self, logger, max_actions: int = 500):
         self.actions: Dict[str, ActionState] = {}
         self.logger = logger
         self._action_counter = 0
         self._completed_cache: Set[str] = set()
         self._last_cleanup = time.time()
         self._tool_attempt_tracking: Dict[str, Dict[str, int]] = {}
+        self._max_actions = max_actions
 
     def register_action(self, tool_name: str, args: List[Any], 
                        context: Optional[Dict[str, Any]] = None) -> str:
         """Register a new action with full context tracking"""
+        if len(self.actions) >= self._max_actions:
+            self._evict_oldest_completed()
+        
         self._action_counter += 1
         timestamp = int(time.time() * 1000)
         action_id = f"a{self._action_counter}_{timestamp}"
@@ -91,11 +123,29 @@ class ActionStateManager:
         )
         return action_id
     
+    def _evict_oldest_completed(self, count: int = 50):
+        """Evict oldest completed actions to maintain size limit"""
+        completed = [
+            (action_id, action) for action_id, action in self.actions.items()
+            if action.status in [ActionStatus.COMPLETED, ActionStatus.FAILED]
+            and action.completed_at is not None
+        ]
+        
+        if len(completed) < count:
+            return
+        
+        completed.sort(key=lambda x: x[1].completed_at)
+        
+        for action_id, _ in completed[:count]:
+            del self.actions[action_id]
+            self._completed_cache.discard(action_id)
+    
     def _get_next_attempt_number(self, tool_name: str, args: List[Any]) -> int:
         """Track retry attempts for tool+query combinations"""
         if not args:
             return 1
         
+        tool_name = _intern_tool_name(tool_name)
         query_hash = f"{tool_name}:{str(args[0])}"
         
         if tool_name not in self._tool_attempt_tracking:
@@ -109,6 +159,7 @@ class ActionStateManager:
     
     def _get_last_query(self, tool_name: str) -> Optional[str]:
         """Get the last query used for this tool"""
+        tool_name = _intern_tool_name(tool_name)
         recent_actions = [
             a for a in sorted(self.actions.values(), key=lambda x: x.initiated_at, reverse=True)
             if a.tool_name == tool_name and a.args
@@ -118,12 +169,14 @@ class ActionStateManager:
     
     def reset_attempt_counter(self, tool_name: str, query: str):
         """Reset attempt counter after successful execution"""
+        tool_name = _intern_tool_name(tool_name)
         query_hash = f"{tool_name}:{query}"
         if tool_name in self._tool_attempt_tracking:
             self._tool_attempt_tracking[tool_name][query_hash] = 0
     
     def get_recent_tool_result(self, tool_name: str, max_age: float = 30.0) -> Optional[Dict[str, Any]]:
         """Get most recent result for a tool"""
+        tool_name = _intern_tool_name(tool_name)
         current_time = time.time()
         recent_actions = [
             a for a in self.actions.values()
@@ -150,6 +203,7 @@ class ActionStateManager:
     
     def is_tool_currently_executing(self, tool_name: str) -> bool:
         """Check if tool is currently executing"""
+        tool_name = _intern_tool_name(tool_name)
         return any(
             a.tool_name == tool_name 
             and a.status in [ActionStatus.PENDING, ActionStatus.IN_PROGRESS]
@@ -255,7 +309,8 @@ class ActionStateManager:
             action.error = error
             
             if reason:
-                action.context['failure_reason'] = reason
+                interned_reason = _INTERNED_FAILURE_REASONS.get(reason, sys.intern(reason))
+                action.context['failure_reason'] = interned_reason
             
             self._completed_cache.add(action_id)
             self.logger.tool(f"[Action Manager] {action_id} failed: {error}")
@@ -331,15 +386,12 @@ class ActionStateManager:
             del self.actions[action_id]
             self._completed_cache.discard(action_id)
         
-        # if old_action_ids and self.logger:
-            # self.logger.system(f"[Action State] Cleaned up {len(old_action_ids)} old actions")
-        
         if current_time - self._last_cleanup > 300.0:
             for tool_name in list(self._tool_attempt_tracking.keys()):
                 tool_tracking = self._tool_attempt_tracking[tool_name]
                 if len(tool_tracking) > 100:
                     sorted_items = sorted(tool_tracking.items(), key=lambda x: x[1], reverse=True)
-                    self._tool_attempt_tracking[tool_name] = dict(sorted_items)
+                    self._tool_attempt_tracking[tool_name] = dict(sorted_items[:50])
             
             self._last_cleanup = current_time
     
@@ -361,7 +413,7 @@ class ActionStateManager:
             action.status = ActionStatus.FAILED
             action.completed_at = time.time()
             action.error = "Timeout: No response within expected time"
-            action.context['failure_reason'] = 'timeout'
+            action.context['failure_reason'] = _INTERNED_FAILURE_REASONS['timeout']
             self._completed_cache.add(action_id)
             
             duration = time.time() - action.initiated_at
@@ -376,6 +428,7 @@ class ActionStateManager:
     
     def should_throttle_tool(self, tool_name: str, min_interval_seconds: float = 5.0) -> Tuple[bool, Optional[str]]:
         """Check if tool should be throttled"""
+        tool_name = _intern_tool_name(tool_name)
         current_time = time.time()
         
         recent_actions = [
@@ -532,5 +585,7 @@ class ActionStateManager:
             'pending': len([a for a in self.actions.values() if a.status == ActionStatus.PENDING]),
             'in_progress': len([a for a in self.actions.values() if a.status == ActionStatus.IN_PROGRESS]),
             'completed': len([a for a in self.actions.values() if a.status == ActionStatus.COMPLETED]),
-            'failed': len([a for a in self.actions.values() if a.status == ActionStatus.FAILED])
+            'failed': len([a for a in self.actions.values() if a.status == ActionStatus.FAILED]),
+            'max_actions': self._max_actions,
+            'interned_tool_names': len(_TOOL_NAMES_CACHE)
         }

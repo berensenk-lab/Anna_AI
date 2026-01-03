@@ -10,6 +10,8 @@ from personality.bot_info import username
 
 class ResponsivePromptParts:
     """Reusable prompt parts for responsive (spoken) responses"""
+
+    __slots__ = ()  # Static methods only, no instance variables
     
     @staticmethod
     def get_output_format() -> str:

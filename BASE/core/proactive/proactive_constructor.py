@@ -23,6 +23,8 @@ from personality.bot_info import username
 
 class ProactiveConstructor:
     """Constructs prompts for proactive thinking"""
+
+    __slots__ = ('tool_manager', 'logger', 'parts', 'personality')
     
     def __init__(self, tool_manager=None, logger=None):
         self.tool_manager = tool_manager

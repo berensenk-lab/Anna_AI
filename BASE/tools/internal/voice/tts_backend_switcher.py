@@ -27,6 +27,8 @@ class TTSBackendSwitcher:
     switch between XTTS and pyttsx3 without restart
     """
     
+    __slots__ = ('ai_core', 'logger', 'current_backend_type', 'controls_module')
+    
     def __init__(self, ai_core, logger: Optional[Logger] = None):
         """
         Initialize backend switcher

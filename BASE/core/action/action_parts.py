@@ -14,6 +14,8 @@ Focus: Read tool docs, extract parameters from thoughts, format properly
 
 class ActionPromptParts:
     """Reusable prompt parts for action mode"""
+
+    __slots__ = ()  # Static methods only, no instance variables
     
     @staticmethod
     def get_mode_instructions() -> str:

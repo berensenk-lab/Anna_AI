@@ -14,7 +14,10 @@ class DynamicToolPanelLoader:
     Discovers and loads GUI components from tools/installed/ directory
     Each tool can optionally provide a component.py file with GUI panel
     """
-    
+
+    __slots__ = ('project_root', 'logger', 'hot_reload_manager', 'tools_dir', 
+                 '_components', '_component_metadata')
+
     def __init__(self, project_root: Path, logger=None, hot_reload_manager=None):
         """
         Initialize panel loader

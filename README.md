@@ -1,111 +1,41 @@
 # Agentic AI System Architecture
 
-## 💡 Overview
+## Overview
 This is a sophisticated agentic AI system built on Ollama that implements a two-stage cognitive architecture separating internal thinking from external communication. The agent maintains continuous autonomous thought, manages multiple memory tiers, executes tools dynamically, and generates natural responsive (spoken) responses.
 
 **This system was created by @KryptykBioz**
+
 **Anna_AI was created as an open-source, free-to-use agentic system for personal use only.**
+
 **Other projects and information can be found here:**
-Github: [KryptykBioz](https://github.com/KryptykBioz)
-YouTube : [@KryptykBioz](https://www.youtube.com/@KryptykBioz)
-Twitch: [Kryptykbioz](https://www.twitch.tv/kryptykbioz)
+- Github: [KryptykBioz](https://github.com/KryptykBioz)
+- YouTube: [@KryptykBioz](https://www.youtube.com/@KryptykBioz)
+- Twitch: [Kryptykbioz](https://www.twitch.tv/kryptykbioz)
 
 **This framework was created in my free time without formal training. As I am self-taught, self-funded, and created this for the public, any contribution to my work is greatly appreciated (and much needed!). Consider making a small donation, subscribing to my channels, or liking some of my videos to keep me going as I continue creating these kinds of agents for others to use. Thank you!**
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 ### Core Systems
 1. [Core Processing Architecture](#core-processing-architecture)
-   - [Overview](#overview)
-   - [Key Design Principles](#key-design-principles)
-   - [Processing Flow](#processing-flow)
-   - [Component Responsibilities](#component-responsibilities)
-   - [Adaptive Behavior](#adaptive-behavior)
-   - [Performance Characteristics](#performance-characteristics)
-
 2. [Modular Prompting System](#modular-prompting-system)
-   - [Overview](#overview-1)
-   - [Design Philosophy](#design-philosophy)
-   - [Prompt Construction Flow](#prompt-construction-flow)
-   - [Constructor Responsibilities](#constructor-responsibilities)
-   - [Tool Instruction Persistence](#tool-instruction-persistence)
-   - [Personality Injection System](#personality-injection-system)
-   - [Grounding and Hallucination Prevention](#grounding-and-hallucination-prevention)
-   - [Output Format Specifications](#output-format-specifications)
-   - [Adaptive Prompt Complexity](#adaptive-prompt-complexity)
-   - [Memory-Augmented Example Retrieval](#memory-augmented-example-retrieval)
-   - [Performance Optimization](#performance-optimization)
-   - [Extension and Customization](#extension-and-customization)
-
 3. [Memory System](#memory-system)
-   - [Overview](#overview-2)
-   - [Architecture](#architecture)
-   - [Memory Tiers](#memory-tiers)
-   - [Summarization System](#summarization-system)
-   - [Memory Search](#memory-search)
-   - [Context Building](#context-building)
-   - [Date Rollover](#date-rollover)
-   - [Memory Integrity](#memory-integrity)
-
 4. [Tool Handler System](#tool-handler-system)
-   - [Overview](#overview-3)
-   - [Core Design Principles](#core-design-principles-1)
-   - [Tool System Architecture](#tool-system-architecture)
-   - [BaseTool Architecture](#basetool-architecture)
-   - [Tool Discovery and Lifecycle](#tool-discovery-and-lifecycle)
-   - [Instruction Persistence System](#instruction-persistence-system)
-   - [Action State Management](#action-state-management)
-   - [Tool Integration Patterns](#tool-integration-patterns)
-   - [Tool Instruction Documentation](#tool-instruction-documentation)
-   - [Error Handling and Guidance](#error-handling-and-guidance)
-   - [Performance Optimization](#performance-optimization-1)
-   - [Extension and Customization](#extension-and-customization-1)
-
 5. [Graphical User Interface System](#graphical-user-interface-system)
-   - [Overview](#overview-4)
-   - [Design Philosophy](#design-philosophy-1)
-   - [GUI Architecture](#gui-architecture)
-   - [View Components](#view-components)
-   - [Theme System](#theme-system)
-   - [Message Processing](#message-processing)
-   - [Voice Manager](#voice-manager)
-   - [Control Panel Manager](#control-panel-manager)
-   - [Dynamic Tool Panel System](#dynamic-tool-panel-system)
-   - [Session Files Panel](#session-files-panel)
-   - [Configuration Management](#configuration-management)
-   - [Error Handling](#error-handling)
-   - [Performance Optimizations](#performance-optimizations)
-   - [Extensibility](#extensibility)
-   - [Keyboard Shortcuts](#keyboard-shortcuts)
-   - [Accessibility Features](#accessibility-features)
 
 ### Supporting Systems
-6. [Session Management](#️-session-management)
-   - [Session File System](#session-file-system)
-
-7. [Chat Engagement System](#-chat-engagement-system)
-   - [Multi-Platform Chat Integration](#multi-platform-chat-integration)
-   - [Chat Engagement Logic](#chat-engagement-logic)
-
-8. [Configuration System](#️-configuration-system)
-   - [Singleton Architecture](#singleton-architecture)
-   - [Dynamic Control Variables](#dynamic-control-variables)
-
-9. [Content Filtering](#️-content-filtering)
-   - [Centralized Filtering Architecture](#centralized-filtering-architecture)
-
-10. [Logging System](#-logging-system)
-    - [Centralized Logging Controls](#centralized-logging-controls)
+6. [Session Management](#session-management)
+7. [Chat Engagement System](#chat-engagement-system)
+8. [Configuration System](#configuration-system)
+9. [Content Filtering](#content-filtering)
+10. [Logging System](#logging-system)
 
 ### System Overview
-11. [Data Flow Summary](#-data-flow-summary)
-    - [Typical Processing Flow](#typical-processing-flow)
-
-12. [Key Design Principles](#-key-design-principles)
-
-13. [Integration Points](#-integration-points)
+11. [Data Flow Summary](#data-flow-summary)
+12. [Key Design Principles](#key-design-principles-1)
+13. [Integration Points](#integration-points)
 
 ---
 
@@ -131,225 +61,57 @@ The architecture separates **thinking** (internal cognitive processing) from **s
 
 ## Processing Flow
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         CONTINUOUS COGNITIVE LOOP                        │
-│                           (Runs autonomously)                            │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         1. RAW EVENT CAPTURE                             │
-├─────────────────────────────────────────────────────────────────────────┤
-│  • User input (messages, commands)                                       │
-│  • Tool execution results (success, failure, timeout)                    │
-│  • Chat messages (Discord, Twitch, YouTube)                              │
-│  • Vision observations (screen analysis)                                 │
-│  • Memory retrievals (past conversations)                                │
-│  • System events (reminders, notifications)                              │
-│                                                                           │
-│  ➜ Events queued in ThoughtBuffer.unprocessed_events                    │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                  2. COGNITIVE MODE DETERMINATION                         │
-├─────────────────────────────────────────────────────────────────────────┤
-│  ResponseDecider determines thinking mode based on timing:               │
-│                                                                           │
-│  • REACTIVE: New incoming data → process events                          │
-│  • PROACTIVE: Recent input (<6 min) → plan ahead                         │
-│  • REFLECTIVE: No input (6+ min) → review memories                       │
-│  • STARTUP: First 3 thoughts → orient to context                         │
-│                                                                           │
-│  ➜ Mode selected, context flags set                                     │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      3. COGNITIVE THOUGHT GENERATION                     │
-├─────────────────────────────────────────────────────────────────────────┤
-│  ThoughtProcessor processes through selected cognitive mode:             │
-│                                                                           │
-│  ► Contextual Prompt Built (mode-specific constructor):                  │
-│    - Personality injection (voice consistency)                           │
-│    - Recent thought chain (continuity)                                   │
-│    - Tool list (minimal overview, names only)                            │
-│    - Mode-specific instructions (reactive/proactive/reflective)          │
-│    - Grounding rules (hallucination prevention)                          │
-│                                                                           │
-│  ► Model generates:                                                      │
-│    - Natural language thought (1-2 sentences)                            │
-│    - <speak>YES/NO</speak> (agent decides when to respond)               │
-│    - Tool names if needed (e.g., {"tool": "sound"})                      │
-│                                                                           │
-│  ➜ Thought + metadata stored in buffer                                  │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        4. ACTION MODE (If tools needed)                  │
-├─────────────────────────────────────────────────────────────────────────┤
-│  If tool names identified in cognitive thought:                          │
-│                                                                           │
-│  ► ActionConstructor builds specialized prompt:                          │
-│    - Recent thoughts (for parameter extraction)                          │
-│    - Planned tool names (from cognitive mode)                            │
-│    - DETAILED tool documentation (command-specific)                      │
-│    - Output format rules (command + args structure)                      │
-│                                                                           │
-│  ► Model constructs complete tool commands:                              │
-│    - Input: {"tool": "sound"}                                            │
-│    - Output: {"tool": "sound.play", "args": ["squee"]}                   │
-│                                                                           │
-│  ► ToolManager validates and executes                                    │
-│  ► ActionStateManager tracks state                                       │
-│  ► Tool executes asynchronously                                          │
-│  ► Result injected back as raw event                                     │
-│                                                                           │
-│  ➜ Tool results processed in next cognitive cycle                       │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     5. SPEAK DECISION (Agent-Driven)                     │
-├─────────────────────────────────────────────────────────────────────────┤
-│  Agent's <speak> tag determines response:                                │
-│                                                                           │
-│  • <speak>YES</speak> → Proceed to response generation                   │
-│  • <speak>NO</speak> → Continue thinking, no response yet                │
-│                                                                           │
-│  ➜ Decision: speak now or continue thinking                             │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                   6. RESPONSIVE OUTPUT GENERATION                        │
-├─────────────────────────────────────────────────────────────────────────┤
-│  If <speak>YES</speak>:                                                  │
-│                                                                           │
-│  ► ResponsiveConstructor synthesizes response:                           │
-│    - Personality examples (memory-retrieved)                             │
-│    - Accumulated thought chain                                           │
-│    - Memory context (relevant past interactions)                         │
-│    - Current conversation state                                          │
-│                                                                           │
-│  ► Generates natural verbal output (1-2 sentences, max 15 words)         │
-│  ► Response filtered and logged                                          │
-│  ► Response echo stored in buffer                                        │
-│                                                                           │
-│  ➜ Final response text sent to TTS                                      │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-                                 ▼
-                        [Loop continues indefinitely]
-```
+<img src="./documentation/flowcharts/cognitive_loop.png" alt="Cognitive Loop Flowchart" style="width: 100%; height: auto;">
 
 ## Component Responsibilities
 
 **CognitiveLoopManager** (`cognitive_loop_manager.py`):
-* Orchestrates the continuous cognitive loop
-* Detects pending events and triggers processing
-* Manages loop timing and pacing
-* Coordinates between components
+- Orchestrates the continuous cognitive loop
+- Detects pending events and triggers processing
+- Manages loop timing and pacing
+- Coordinates between components
 
 **ResponseDecider** (`response_decider.py`):
-* Determines which cognitive mode to use (REACTIVE/PROACTIVE/REFLECTIVE)
-* Based purely on timing (new input vs. recent vs. idle)
-* No content analysis or priority detection
-* Returns PromptDecision with mode and context flags
+- Determines which cognitive mode to use (REACTIVE/PROACTIVE/REFLECTIVE)
+- Based purely on timing (new input vs. recent vs. idle)
+- No content analysis or priority detection
+- Returns PromptDecision with mode and context flags
 
 **ThoughtProcessor** (`thought_processor.py`):
-* Processes events through the appropriate cognitive mode
-* Routes to mode-specific prompt constructors
-* Extracts <speak> tags and tool names from cognitive output
-* Delegates to ACTION mode if tools identified
-* Stores processed thoughts with metadata
+- Processes events through the appropriate cognitive mode
+- Routes to mode-specific prompt constructors
+- Extracts speak tags and tool names from cognitive output
+- Delegates to ACTION mode if tools identified
+- Stores processed thoughts with metadata
 
 **ProcessingDelegator** (`processing_delegator.py`):
-* Routes events to appropriate constructors
-* Manages mode-specific processing pipelines
-* Handles STARTUP, REACTIVE, PROACTIVE, and REFLECTIVE modes
-* Coordinates with memory search for reflective modes
+- Routes events to appropriate constructors
+- Manages mode-specific processing pipelines
+- Handles STARTUP, REACTIVE, PROACTIVE, and REFLECTIVE modes
+- Coordinates with memory search for reflective modes
 
 **ThoughtBuffer** (`thought_buffer.py`):
-* Maintains thought history and conversation state
-* Queues unprocessed events
-* Provides context (user input, ongoing focus, goals)
-* Tracks speak decisions from agent
+- Maintains thought history and conversation state
+- Queues unprocessed events
+- Provides context (user input, ongoing focus, goals)
+- Tracks speak decisions from agent
 
 **Prompt Constructors** (mode-specific):
-* **ReactiveConstructor**: Processes new incoming events
-* **ProactiveConstructor**: Plans ahead during quiet periods
-* **ReflectiveConstructor**: Reviews memories during idle time
-* **ActionConstructor**: Constructs complete tool commands with parameters
-* **ResponsiveConstructor**: Generates verbal responses when agent decides to speak
+- **ReactiveConstructor**: Processes new incoming events
+- **ProactiveConstructor**: Plans ahead during quiet periods
+- **ReflectiveConstructor**: Reviews memories during idle time
+- **ActionConstructor**: Constructs complete tool commands with parameters
+- **ResponsiveConstructor**: Generates verbal responses when agent decides to speak
 
 **ToolManager** (`tool_manager.py`):
-* Validates tool commands from ACTION mode
-* Executes tools asynchronously
-* Injects results back as events
+- Validates tool commands from ACTION mode
+- Executes tools asynchronously
+- Injects results back as events
 
 **MemorySearch** (memory system):
-* Retrieves relevant past experiences
-* Provides personality-matched examples for responses
-* Supports reflective thinking with memory context
-├─────────────────────────────────────────────────────────────────────────┤
-│  If LLM generated tool actions:                                          │
-│                                                                           │
-│  • Parse <actions> JSON                                              │
-│  • Validate against enabled tools                                        │
-│  • Queue actions in ActionStateManager                                   │
-│  • Execute asynchronously via ToolManager                                │
-│  • Track pending/completed/failed states                                 │
-│                                                                           │
-│  Results queued as new raw events → back to step 1                       │
-│                                                                           │
-│  ➜ Tool results feed back into cognitive loop                            │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                       9. OUTPUT DELIVERY                                 │
-├─────────────────────────────────────────────────────────────────────────┤
-│  If verbal response generated:                                           │
-│                                                                           │
-│  • Clean response (remove emojis, formatting)                            │
-│  • Apply content filter (if enabled)                                     │
-│  • Route to appropriate output channel:                                  │
-│    - GUI text display                                                    │
-│    - TTS speech synthesis                                                │
-│    - Discord/Twitch/YouTube chat                                         │
-│                                                                           │
-│  • Mark thoughts as spoken                                               │
-│  • Update response timing                                                │
-│                                                                           │
-│  Loop continues → back to step 1                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-## Component Responsibilities
-
-### ThoughtBuffer
-Central storage for cognitive state. Maintains queues of unprocessed events and processed thoughts. Tracks priorities, responsive status, and user interaction timing. Provides formatted thought chains for prompt construction.
-
-### ThoughtProcessor
-Core orchestrator that processes raw events into thoughts, determines cognitive modes, constructs prompts, calls LLMs, and coordinates action execution. Manages the flow from input to output.
-
-### CognitiveLoopManager
-Autonomous loop runner that continuously calls ThoughtProcessor. Handles pacing (fast when active, slower when idle), manages response rate limiting, and ensures thinking continues even during response generation.
-
-### ResponseDecider
-Analyzes thought buffer and context to determine whether verbal response is needed and which prompt type to use. Scans for priority markers and applies decision rules based on timing and content.
-
-### Prompt Constructors
-Specialized modules (Reactive, Reflective, Proactive, Responsive) that build optimized prompts for different reasoning modes. Each incorporates relevant context, personality, and constraints for their specific task.
-
-### ToolManager
-Manages available tools, validates action requests, and coordinates execution. Provides tool documentation to prompt constructors and tracks action states for feedback into thinking loop.
-
-### ActionStateManager
-Tracks pending, completed, and failed tool actions. Provides failure summaries to inform future decisions. Manages timeouts and retry logic.
+- Retrieves relevant past experiences
+- Provides personality-matched examples for responses
+- Supports reflective thinking with memory context
 
 ## Adaptive Behavior
 
@@ -370,25 +132,6 @@ The system implements several adaptive mechanisms:
 The cognitive loop operates at high frequency (10-20 cycles per second) during active periods, ensuring rapid response to new events. When idle, it adaptively slows to conserve resources while maintaining readiness. The separation of thinking and speaking allows the agent to maintain continuous cognitive activity (processing ~500-2000 thoughts per hour) while speaking selectively based on actual need rather than arbitrary timing.
 
 This architecture enables natural, context-aware behavior that feels reactive to users while operating autonomously in the background, much like a human maintaining continuous awareness while choosing when to verbally engage.
-
----
-
-## 💾 Memory Architecture
-
-### Four-Tier Memory System
-
-| Tier | Scope | Storage | Retrieval | Purpose |
-| :--- | :--- | :--- | :--- | :--- |
-| **1. Short-Term** | Current session (last few hours) | Recent conversation turns in memory | Chronological, recency-based | Immediate context for responses |
-| **2. Medium-Term** | Earlier today (same session) | Embedded conversation chunks | Semantic similarity search | Earlier context from today's interactions |
-| **3. Long-Term** | Past days/weeks | Daily conversation summaries with embeddings | Semantic similarity search across summaries | Historical context and patterns |
-| **4. Base Knowledge** | Permanent reference material | Static documents chunked and embedded | Semantic search with domain filtering | Instructions, guides, personality examples |
-
-### Enhanced Memory Retrieval
-The system uses combined query embedding for memory search:
-
-* **Hybrid Query Construction:** Combines user input + recent thoughts into a single query. Weights user input higher (0.7) vs thoughts (0.3) to create a richer semantic representation of current context.
-* **Benefits:** Memory retrieval considers what the agent is thinking about, not just explicit queries. Finds relevant memories based on cognitive context and improves coherence between thoughts and retrieved information.
 
 ---
 
@@ -414,261 +157,7 @@ The prompting system separates **what to think about** (mode determination) from
 
 ## Prompt Construction Flow
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        PROMPT CONSTRUCTION PIPELINE                      │
-└─────────────────────────────────────────────────────────────────────────┘
-
-## Prompt Construction Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        PROMPT CONSTRUCTION PIPELINE                      │
-└─────────────────────────────────────────────────────────────────────────┘
-
-COGNITIVE & ACTION MODE SEPARATION
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     COGNITIVE MODES (Decide WHAT to do)                  │
-│  • REACTIVE: Process new events                                          │
-│  • PROACTIVE: Plan ahead during quiet time                               │
-│  • REFLECTIVE: Review memories during idle time                          │
-│  • Output: Thought + <speak>YES/NO</speak> + Tool names (if needed)      │
-└─────────────────────────────────────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      ACTION MODE (Construct HOW to do it)                │
-│  • Receives: Tool names from cognitive mode (e.g., {"tool": "sound"})    │
-│  • Retrieves: DETAILED tool documentation                                │
-│  • Constructs: Complete commands (e.g., {"tool": "sound.play",           │
-│                "args": ["squee"]})                                        │
-└─────────────────────────────────────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                   RESPONSIVE MODE (Generate spoken response)             │
-│  • Triggers: When <speak>YES</speak> in cognitive output                 │
-│  • Uses: Accumulated thought chain + personality examples                │
-│  • Output: Natural 1-2 sentence verbal response (max 15 words)           │
-└─────────────────────────────────────────────────────────────────────────┘
-
-STAGE 1: MODE DETERMINATION
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           ResponseDecider                                │
-├─────────────────────────────────────────────────────────────────────────┤
-│ Analyzes TIMING only (no content analysis):                              │
-│  • Has new incoming events? → REACTIVE                                   │
-│  • Recent input (<6 min)? → PROACTIVE                                    │
-│  • Idle (6+ min)? → REFLECTIVE                                           │
-│  • First 3 thoughts? → STARTUP (reflective variant)                      │
-│                                                                           │
-│ Outputs:                                                                 │
-│  • PromptType: REACTIVE | REFLECTIVE | PROACTIVE                         │
-│  • Reasoning explanation                                                 │
-│  • Context flags (vision, chat, memory triggers)                         │
-│                                                                           │
-│ NOTE: Agent decides WHEN to speak via <speak> tags, not the decider     │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-                                 ▼
-STAGE 2: CONSTRUCTOR SELECTION
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        Route to Appropriate Constructor                  │
-└─────────────────────────────────────────────────────────────────────────┘
-                                 │
-        ┌────────────────────────┼────────────────────────┐
-        │                        │                        │
-        ▼                        ▼                        ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   REACTIVE      │    │   REFLECTIVE    │    │    PROACTIVE    │
-│  Constructor    │    │  Constructor    │    │  Constructor    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-        │                        │                        │
-        └────────────────────────┼────────────────────────┘
-                                 │
-                                 ▼
-                    ┌─────────────────────────┐
-                    │  If tool names present  │
-                    │   → ACTION Constructor  │
-                    └─────────────────────────┘
-                                 │
-                                 ▼
-                    ┌─────────────────────────┐
-                    │  If <speak>YES</speak>  │
-                    │ → RESPONSIVE Constructor│
-                    └─────────────────────────┘
-
-STAGE 3: COGNITIVE MODE PROMPT ASSEMBLY
-┌─────────────────────────────────────────────────────────────────────────┐
-│              Cognitive Constructors Build Thinking Prompts               │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                           │
-│  1. PERSONALITY INJECTION                                                │
-│     ├─ Core identity (who the agent is)                                  │
-│     ├─ Personality traits (friendly, curious, helpful)                   │
-│     ├─ Communication style (casual gamer language)                       │
-│     └─ Voice guidelines (natural expressions)                            │
-│                                                                           │
-│  2. RECENT THOUGHT CHAIN                                                 │
-│     ├─ Last 5-10 thoughts for continuity                                 │
-│     ├─ Source labels ([THOUGHT], [USER], [SELF], [TOOL])                 │
-│     └─ Provides context for next thought                                 │
-│                                                                           │
-│  3. MODE-SPECIFIC INSTRUCTIONS                                           │
-│     ├─ REACTIVE: Process new events                                      │
-│     ├─ PROACTIVE: Plan ahead, set goals                                  │
-│     ├─ REFLECTIVE: Review memories, find patterns                        │
-│     └─ STARTUP: Orient to context                                        │
-│                                                                           │
-│  4. MINIMAL TOOL LIST                                                    │
-│     ├─ Tool names + 1-line descriptions ONLY                             │
-│     ├─ NO detailed documentation (saved for ACTION mode)                 │
-│     ├─ Agent decides WHICH tools to use                                  │
-│     └─ Format: {"tool": "tool_name"} (no commands/args yet)              │
-│                                                                           │
-│  5. PRIMARY CONTENT                                                      │
-│     ├─ REACTIVE: Incoming events to process                              │
-│     ├─ PROACTIVE: Current situation + time context                       │
-│     ├─ REFLECTIVE: Retrieved memories                                    │
-│     └─ Context parts (session files, vision, etc.)                       │
-│                                                                           │
-│  6. SPEAK DECISION RULES                                                 │
-│     ├─ Agent decides via <speak>YES/NO</speak>                           │
-│     ├─ Speak when user input requires response                           │
-│     ├─ Stay silent if thinking internally                                │
-│     └─ Guidelines prevent spam responses                                 │
-│                                                                           │
-│  7. GROUNDING RULES                                                      │
-│     ├─ Base thoughts on provided data only                               │
-│     ├─ Don't invent information                                          │
-│     ├─ Acknowledge uncertainty                                           │
-│     └─ Vision/tool state grounding                                       │
-│                                                                           │
-│  8. OUTPUT FORMAT                                                        │
-│     ├─ Natural thought (1-2 sentences)                                   │
-│     ├─ <speak>YES/NO</speak> tags                                        │
-│     ├─ Tool names only (no commands): [{"tool": "name"}]                 │
-│     └─ No parameters or args at this stage                               │
-│                                                                           │
-└─────────────────────────────────────────────────────────────────────────┘
-
-STAGE 4: ACTION MODE PROMPT ASSEMBLY (If tools identified)
-┌─────────────────────────────────────────────────────────────────────────┐
-│               ActionConstructor Builds Tool Execution Prompt             │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                           │
-│  1. ACTION MODE INSTRUCTIONS                                             │
-│     ├─ Task: Construct complete tool commands                            │
-│     ├─ Input format: Base tool names from cognitive mode                 │
-│     ├─ Output format: tool.command with args                             │
-│     └─ Example: "sound" → "sound.play" + ["squee"]                       │
-│                                                                           │
-│  2. RECENT THOUGHTS                                                      │
-│     ├─ Extract parameters from thought context                           │
-│     ├─ Use natural language in thoughts as args                          │
-│     └─ Ground tool usage in recent thinking                              │
-│                                                                           │
-│  3. PLANNED ACTIONS                                                      │
-│     ├─ Tool names from cognitive mode                                    │
-│     ├─ Current args if any (usually empty at this stage)                 │
-│     └─ Clear list of what needs execution                                │
-│                                                                           │
-│  4. DETAILED TOOL DOCUMENTATION                                          │
-│     ├─ FULL command documentation for planned tools                      │
-│     ├─ Available commands (e.g., sound.play, sound.list)                 │
-│     ├─ Parameter requirements and formats                                │
-│     ├─ Usage examples for each command                                   │
-│     └─ Dynamically retrieved per tool                                    │
-│                                                                           │
-│  5. EXECUTION PRINCIPLES                                                 │
-│     ├─ Command construction rules                                        │
-│     ├─ Parameter extraction guidelines                                   │
-│     ├─ Format matching requirements                                      │
-│     └─ Following documentation exactly                                   │
-│                                                                           │
-│  6. OUTPUT FORMAT                                                        │
-│     ├─ <actions> XML block ONLY                                          │
-│     ├─ Complete: {"tool": "tool.command", "args": [...]}                 │
-│     ├─ No explanations or commentary                                     │
-│     └─ Ready for immediate execution                                     │
-│                                                                           │
-└─────────────────────────────────────────────────────────────────────────┘
-
-STAGE 5: RESPONSIVE MODE PROMPT ASSEMBLY (If <speak>YES</speak>)
-┌─────────────────────────────────────────────────────────────────────────┐
-│            ResponsiveConstructor Builds Spoken Response Prompt           │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                           │
-│  1. PERSONALITY EXAMPLES (Memory-Retrieved)                              │
-│     ├─ Query: Recent thoughts + user input combined                      │
-│     ├─ Retrieves similar past conversation situations                    │
-│     ├─ Matches full context (not just user words)                        │
-│     └─ Primes speaking style and tone                                    │
-│                                                                           │
-│  2. RECENT THOUGHT CHAIN                                                 │
-│     ├─ What agent has been thinking                                      │
-│     ├─ Internal context for response                                     │
-│     └─ Accumulated observations and reasoning                            │
-│                                                                           │
-│  3. CONTEXT (Memory, Session Files, etc.)                                │
-│     ├─ Relevant past interactions                                        │
-│     ├─ Session file context if referenced                                │
-│     └─ Additional background information                                 │
-│                                                                           │
-│  4. CURRENT INPUT                                                        │
-│     ├─ User message to respond to                                        │
-│     ├─ OR live chat messages if chat engagement                          │
-│     └─ Clear indication of what to address                               │
-│                                                                           │
-│  5. RESPONSE GUIDANCE                                                    │
-│     ├─ Chat: Address by name, keep conversational                        │
-│     ├─ Standard: Natural based on thoughts                               │
-│     └─ Maximum 1-2 sentences, 15 words total                             │
-│                                                                           │
-│  6. OUTPUT FORMAT                                                        │
-│     ├─ Direct natural response text                                      │
-│     ├─ No XML tags                                                       │
-│     ├─ No labels or meta-text                                            │
-│     └─ Ready for TTS verbatim                                            │
-│                                                                           │
-└─────────────────────────────────────────────────────────────────────────┘
-
-STAGE 6: SPECIALIZED ENHANCEMENTS
-┌─────────────────────────────────────────────────────────────────────────┐
-│                  Constructor-Specific Optimizations                      │
-└─────────────────────────────────────────────────────────────────────────┘
-
-ReactiveConstructor:
-  • Detects vision/chat data in context
-  • Adds vision-specific grounding rules
-  • Formats events with clear source labels
-  • Minimal tool list (names only)
-
-ReflectiveConstructor:
-  • Detects startup mode (first 3 thoughts)
-  • Loads comprehensive context for startup
-  • Queries memory system for relevant past
-  • Keyword detection for memory triggers
-
-ProactiveConstructor:
-  • Formats time context (minutes since user)
-  • Includes current situation assessment
-  • Anticipatory planning guidelines
-  • Minimal tool list (names only)
-
-ActionConstructor:
-  • Retrieves DETAILED tool docs dynamically
-  • Only for specific tools being used
-  • Command-level documentation with examples
-  • Parameter extraction from thoughts
-
-ResponsiveConstructor:
-  • Memory-based personality example retrieval
-  • Combined context query (thoughts + user input)
-  • Chat engagement detection and formatting
-  • Natural spoken output optimization
-```
-
+<img src="./documentation/flowcharts/prompt_construction_pipeline.png" alt="Prompt Construction Pipeline" style="width: 80%; height: auto;">
 
 ## Constructor Responsibilities
 
@@ -683,21 +172,14 @@ ResponsiveConstructor:
 
 **Prompt Strategy**:
 - Personality injection first (maintain character)
-- Recent thoughts with source labels ([THOUGHT], [USER], [TOOL])
+- Recent thoughts with source labels
 - Mode instructions (process new events)
 - Minimal tool list (names + 1-line descriptions only)
 - Incoming events formatted with clear source tags
 - Speak decision rules (agent controls when to respond)
 - Grounding rules (hallucination prevention, especially for vision/tool state)
 
-**Output Format**:
-```xml
-Natural thought (1-2 sentences)
-
-<speak>YES or NO</speak>
-
-<actions>[{"tool": "tool_name"}]</actions>
-```
+**Output Format**: Structured XML containing natural thought, speak decision tag, and optional actions array with tool invocations.
 
 ### ProactiveConstructor
 **Purpose**: Plan ahead and set goals during quiet periods
@@ -717,14 +199,7 @@ Natural thought (1-2 sentences)
 - Speak decision rules
 - Grounding rules (realistic planning based on context)
 
-**Output Format**:
-```xml
-Forward-looking thought (1-2 sentences)
-
-<speak>YES or NO</speak>
-
-<actions>[{"tool": "tool_name"}]</actions>
-```
+**Output Format**: Forward-looking thought with speak decision and optional tool actions.
 
 ### ReflectiveConstructor
 **Purpose**: Review memories and find patterns during idle time
@@ -754,23 +229,33 @@ Forward-looking thought (1-2 sentences)
 - Speak decision rules
 - Memory grounding (only reference provided memories)
 
-**Output Format**:
-```xml
-Reflective thought (1-2 sentences)
-
-<speak>YES or NO</speak>
-
-<actions>[{"tool": "tool_name"}]</actions>
-```
+**Output Format**: Reflective thought with speak decision and optional tool actions.
 
 ### ActionConstructor
-**Purpose**: Construct complete tool commands with proper parameters
+**Purpose**: Construct complete tool commands with proper parameters using AI
 
-**Critical Design**: ACTION mode is separate from cognitive modes. Cognitive modes decide WHICH tools to use (output: {"tool": "sound"}), then ACTION mode constructs HOW to execute them (output: {"tool": "sound.play", "args": ["squee"]}).
+**Critical Design**: ACTION mode is a **two-stage AI process** that transforms base tool names into complete executable commands:
+
+**Stage 1 - Cognitive Mode**: Agent decides WHICH tools to use
+- Input: User request or situation
+- Output: Base tool names only in a simple JSON array
+- Temperature: 0.6 (cognitive)
+
+**Stage 2 - Action Mode**: AI constructs HOW to execute them
+- Input: Base tool names + recent thoughts + detailed tool docs
+- Output: Complete commands with full tool paths and arguments
+- Temperature: 0.2 (precise)
+
+**Why Two-Stage?**
+1. **Separation of concerns**: Deciding vs. executing
+2. **Context optimization**: Cognitive mode gets minimal tool list, action mode gets detailed docs only for selected tools
+3. **Temperature optimization**: Creative thinking (0.6) vs. precise formatting (0.2)
+4. **Prompt efficiency**: Tool documentation only loaded when needed
 
 **Input Processing**:
 - Recent thought chain (for parameter extraction)
 - Planned tool names from cognitive mode
+- Detailed tool documentation (dynamically retrieved)
 - Action context (why these tools)
 
 **Prompt Strategy**:
@@ -781,27 +266,20 @@ Reflective thought (1-2 sentences)
 - Execution principles (command construction, parameter extraction)
 - Output format rules (complete tool.command + args structure)
 
-**Output Format**:
-```xml
-<actions>
-[
-  {"tool": "tool.command", "args": ["param1", "param2"]},
-  {"tool": "another.command", "args": ["param"]}
-]
-</actions>
-```
+**Output Format**: XML actions tag containing JSON array of complete tool invocations with full paths and arguments.
 
-**Example Flow**:
-1. Cognitive mode output: `{"tool": "sound"}`
-2. ACTION mode reads sound tool documentation
-3. Sees available commands: sound.play, sound.list
-4. Checks thoughts: "that's funny haha"
-5. Constructs: `{"tool": "sound.play", "args": ["laugh"]}`
+**Complete Flow Example**:
+1. **User**: "Play a happy sound"
+2. **Cognitive Mode** (temp=0.6): Thinks about request, outputs base tool name "sound" with speak decision NO
+3. **Action Constructor** builds prompt with recent thoughts, base tool name, and dynamically loaded sound tool documentation
+4. **Action Mode AI** (temp=0.2): Reads docs, identifies sound.play command, extracts "happy" parameter from thoughts, constructs complete command
+5. **Tool Manager**: Executes the complete tool command
+6. **Result**: Injected back as event for cognitive mode
 
 ### ResponsiveConstructor
 **Purpose**: Generate natural verbal responses when agent decides to speak
 
-**Trigger**: Only activated when <speak>YES</speak> in cognitive output
+**Trigger**: Only activated when speak decision is YES in cognitive output
 
 **Context Building**:
 - Recent thought chain (what agent has been thinking)
@@ -811,11 +289,7 @@ Reflective thought (1-2 sentences)
 - Chat context if engaging with stream
 
 **Example Retrieval Innovation**:
-Unlike other constructors, ResponsiveConstructor uses a **combined query approach** for retrieving personality examples:
-```
-Query = Recent Thoughts + User Input + Chat Context
-```
-This ensures examples match the full conversational situation, not just the user's words in isolation. The system searches past conversations for similar **thought states** + **user interactions**, finding responses that fit the agent's current mental context.
+Unlike other constructors, ResponsiveConstructor uses a **combined query approach** for retrieving personality examples. It merges recent thoughts, user input, and chat context into a single query, ensuring examples match the full conversational situation rather than just the user's words in isolation. This finds responses that fit the agent's current mental context.
 
 **Prompt Strategy**:
 - Personality examples FIRST (retrieved from memory, primes style)
@@ -825,100 +299,35 @@ This ensures examples match the full conversational situation, not just the user
 - Response guidance (chat vs. standard, length constraints)
 - Output format (natural text, no XML, max 15 words)
 
-**Output Format**:
-```
-Natural spoken response (1-2 sentences, max 15 words total)
-```
+**Output Format**: Pure natural language text suitable for TTS, with no XML tags or structured data.
 
 **Key Differences**:
 - No XML tags in output
-- No <speak> tags (already decided YES)
+- No speak tags (already decided YES)
 - No tool actions (those came from cognitive modes)
 - Pure natural language for TTS
-Query = Recent Thoughts + User Input + Chat Context
-```
-This ensures examples match the full conversational situation, not just the user's words in isolation. The system searches past conversations for similar **thought states** + **user interactions**, finding responses that fit the agent's current mental context.
-
-**Priority-Based Guidance**:
-- **CRITICAL** (9-10): "Respond immediately and acknowledge urgency"
-- **HIGH** (7-8): "Answer directly and clearly"
-- **MEDIUM** (5-6): "Respond naturally based on thoughts"
-- **CHAT ENGAGEMENT**: "Address chat members by name, keep conversational"
-
-**Prompt Strategy**:
-- Places personality examples BEFORE thoughts (prime the style)
-- Includes thought chain for context
-- Adds user message or chat to address
-- Provides urgency-appropriate guidance
-- Enforces brevity (1-2 sentences)
-- Emphasizes natural conversational tone
-
-**Output Format**:
-```
-Direct natural language response (no XML tags)
-```
 
 ## Tool Instruction Persistence
 
 The system implements **intelligent tool instruction caching** to balance prompt efficiency with capability awareness:
 
 ### When Tool Instructions Are Minimal
-If no tools have been recently used, prompts include only a **brief tool list**:
-```
-## AVAILABLE TOOLS
-- search: Web search
-- reminder: Set reminders
-- vision: Analyze screen
-- [etc...]
-```
+If no tools have been recently used, prompts include only a **brief tool list** showing tool names with one-line descriptions and indicators that instructions must be retrieved before use.
 
 ### When Tool Instructions Are Detailed
-If a tool has been used recently (within persistence window), the **full instruction documentation** is included:
-```
-## TOOL: search
-Purpose: Perform web searches for current information
-Usage: {"tool": "search", "args": ["query"]}
-Parameters:
-  - query: Search terms (string)
-Examples:
-  - Search for recent news: {"tool": "search", "args": ["news today"]}
-  - Find information: {"tool": "search", "args": ["topic details"]}
-Constraints:
-  - Keep queries concise (2-5 words optimal)
-  - Use natural language
-  - One search per action
-```
+If a tool has been used recently (within persistence window), the **full instruction documentation** is included with complete usage format, available commands, parameters, examples, constraints, timeout values, and cooldown periods.
 
 This **dynamic instruction loading** is managed by the InstructionPersistenceManager, which tracks tool usage and determines when detailed guidance is beneficial versus wasteful.
 
 ## Personality Injection System
 
-All prompts begin with a **unified personality definition** from `PersonalityPromptParts.get_unified_personality()`:
+All prompts begin with a **unified personality definition** from the PersonalityPromptParts module that includes:
 
-```markdown
-## Core Identity
-You are [AgentName], a cheerful gaming AI assistant helping [Username].
-
-## Personality Traits
-- Friendly & Enthusiastic: Genuine warmth and excitement
-- Helpful & Proactive: Anticipate needs and offer assistance
-- Curious & Observant: Notice details and make connections
-- Warm & Supportive: Care about user's experience
-
-## Communication Style
-- Use casual gamer language naturally
-- Speak in first person
-- Be enthusiastic when appropriate
-- Stay conversational and genuine
-- Show personality through word choice
-
-## Voice Guidelines
-- Use natural language fillers
-- Be genuinely engaged, not robotic
-- React authentically in your own voice
-- Keep things casual like a gaming buddy
-- Vary expressions - don't repeat phrases
-```
+- Core identity and role
+- Personality traits (friendly, helpful, curious, supportive)
+- Communication style guidelines
+- Voice and expression patterns
+- Natural language usage rules
 
 This single source of truth ensures **personality consistency** across all reasoning modes while allowing constructors to emphasize different aspects (thinking voice vs. speaking voice).
 
@@ -927,44 +336,15 @@ This single source of truth ensures **personality consistency** across all reaso
 Every prompt includes **strict grounding rules** to prevent the agent from inventing information:
 
 ### Universal Grounding Rules
-```
-CRITICAL CONSTRAINTS:
-1. Base thoughts ONLY on explicitly provided data
-2. Never hallucinate or invent information
-3. If data is unclear, acknowledge uncertainty
-4. Think step-by-step about what you observe
-5. Stay factual and grounded in reality
-```
+All modes enforce: base thoughts only on explicitly provided data, never hallucinate or invent information, acknowledge uncertainty when data is unclear, think step-by-step about observations, and stay factual and grounded in reality.
 
 ### Mode-Specific Grounding
 
-**Vision Data Grounding**:
-```
-Vision data contains FACTUAL OBSERVATIONS ONLY.
-- Accept vision descriptions AS-IS
-- Do NOT elaborate beyond what vision states
-- Do NOT invent details not mentioned
-- ACKNOWLEDGE, don't INTERPRET
-```
+**Vision Data Grounding**: Accept vision descriptions as-is without elaboration, don't invent details not mentioned, acknowledge rather than interpret.
 
-**Tool Status Grounding**:
-```
-Tool status events are FACTUAL SYSTEM STATE.
-- "Initiated X" = Command SENT, NOT completed
-- "FAILED: X" = Confirmed error
-- "TIMEOUT: X" = No response
-- NEVER say "I searched" if you only see "Initiated search"
-- ALWAYS distinguish "started" vs "completed"
-```
+**Tool Status Grounding**: Distinguish between initiated, completed, and failed states. Never claim completion when only initiation is confirmed. Always distinguish "started" vs "completed" operations.
 
-**Memory Grounding**:
-```
-When reflecting on memories:
-- Only reference memories explicitly provided
-- Don't invent past events
-- "I remember X" only if X is in memory context
-- If uncertain, say "I think" or "I recall"
-```
+**Memory Grounding**: Only reference memories explicitly provided. Don't invent past events. Use "I think" or "I recall" when uncertain rather than stating false memories.
 
 These grounding rules are **actively enforced** through prompt structure, and violations are caught during response parsing and validation.
 
@@ -973,21 +353,12 @@ These grounding rules are **actively enforced** through prompt structure, and vi
 Each constructor enforces specific output formats optimized for its purpose:
 
 ### Thinking Formats (Reactive, Reflective, Proactive)
-```xml
-<think>Internal thought content</think>
-<actions>[{"tool": "name", "args": [...]}]</actions>
-```
+Structured XML with think tags for internal thought content and actions tags containing JSON arrays of tool invocations.
 
 ### Responsive Format (Natural Language)
-```
-Direct conversational response with no XML tags
-```
+Direct conversational response with no XML tags or structured data, ready for immediate TTS output.
 
-The system **parses** these formats using regex patterns:
-- `<think>(.*?)</think>` extracts internal thoughts
-- `<actions>(.*?)</actions>` extracts tool actions as JSON
-- Actions are validated against enabled tools
-- Invalid actions are rejected with helpful error messages
+The system **parses** these formats using regex patterns to extract thoughts and actions, validates actions against enabled tools, and rejects invalid actions with helpful error messages.
 
 ## Adaptive Prompt Complexity
 
@@ -1013,33 +384,16 @@ This adaptive approach ensures prompts are **information-rich when needed** but 
 The ResponsiveConstructor implements a sophisticated **personality example retrieval system**:
 
 ### Traditional Approach (Avoided)
-```
-User: "What game should I play?"
-Query: "What game should I play?"
-→ Retrieves examples of answering game questions
-```
+Simple query matching based solely on user input text, retrieving examples of answering similar questions without considering the agent's internal state.
 
 ### This System's Approach
-```
-User: "What game should I play?"
-Agent's Recent Thoughts: 
-  - "User seems bored with current game"
-  - "They prefer action games with good stories"
-  - "Haven't played anything new in a week"
-
-Query: "User seems bored with current game. They prefer action games 
-        with good stories. What game should I play? What game should I play?"
-→ Retrieves examples of thoughtful game recommendations
-   considering user's context and preferences
-```
-
-This **context-aware retrieval** finds examples where the agent's **internal cognitive state** matches the current situation, not just where the user's words match. The result is responses that feel more personalized and situationally appropriate.
+Combines user input with the agent's recent thoughts and current cognitive state into a composite query. This retrieves examples where the agent's **internal cognitive state** matches the current situation, not just where the user's words match. The result is responses that feel more personalized and situationally appropriate.
 
 ## Performance Optimization
 
 The modular prompt system includes several performance optimizations:
 
-**Component Caching**: Personality injection and grounding rules are static and could be cached (not currently implemented but architecture supports it)
+**Component Caching**: Personality injection and grounding rules are static and could be cached (architecture supports it)
 
 **Lazy Loading**: Context components are only built when needed based on mode and flags
 
@@ -1055,21 +409,47 @@ These optimizations ensure the system scales efficiently even with large memory 
 
 The modular architecture makes the system highly extensible:
 
-**Adding New Modes**: Create a new Constructor class inheriting from base pattern, implement `build_prompt()` method, register in ResponseDecider
+**Adding New Modes**: Create a new Constructor class inheriting from base pattern, implement build_prompt() method, register in ResponseDecider
 
-**Customizing Personality**: Edit `PersonalityPromptParts.get_unified_personality()` to change agent character across all modes simultaneously
+**Customizing Personality**: Edit PersonalityPromptParts module to change agent character across all modes simultaneously
 
-**Adding Prompt Components**: Create new methods in `*_parts.py` modules, compose into constructor prompts as needed
+**Adding Prompt Components**: Create new methods in prompt parts modules, compose into constructor prompts as needed
 
-**Adjusting Grounding**: Modify grounding rules in `*_parts.py` modules to enforce different constraints
+**Adjusting Grounding**: Modify grounding rules in prompt parts modules to enforce different constraints
 
-**Tool Integration**: Implement `ToolInstructionBuilder` methods to format new tool types
+**Tool Integration**: Implement ToolInstructionBuilder methods to format new tool types
 
 The separation of decision logic, prompt construction, and reusable components makes the system **maintainable and adaptable** to new requirements without cascading changes.
 
 ---
 
-## 🛠️ Tool System
+# Memory System
+
+## Overview
+
+The memory system implements a four-tier architecture for managing conversational context across multiple timescales, from immediate short-term memory to permanent base knowledge.
+
+## Four-Tier Memory System
+
+| Tier | Scope | Storage | Retrieval | Purpose |
+|:-----|:------|:--------|:----------|:--------|
+| **1. Short-Term** | Current session (last few hours) | Recent conversation turns in memory | Chronological, recency-based | Immediate context for responses |
+| **2. Medium-Term** | Earlier today (same session) | Embedded conversation chunks | Semantic similarity search | Earlier context from today's interactions |
+| **3. Long-Term** | Past days/weeks | Daily conversation summaries with embeddings | Semantic similarity search across summaries | Historical context and patterns |
+| **4. Base Knowledge** | Permanent reference material | Static documents chunked and embedded | Semantic search with domain filtering | Instructions, guides, personality examples |
+
+## Enhanced Memory Retrieval
+
+The system uses combined query embedding for memory search:
+
+**Hybrid Query Construction**: Combines user input + recent thoughts into a single query. Weights user input higher (0.7) vs thoughts (0.3) to create a richer semantic representation of current context.
+
+**Benefits**: 
+- Memory retrieval considers what the agent is thinking about, not just explicit queries
+- Finds relevant memories based on cognitive context
+- Improves coherence between thoughts and retrieved information
+
+---
 
 # Tool Handler System
 
@@ -1081,7 +461,9 @@ The tool system is built on the **BaseTool architecture**, where each tool is a 
 
 ## Core Design Principles
 
-**Separation of Concerns**: Tool lifecycle (discovery, start, stop) is managed separately from execution (command processing, result handling). This separation enables hot-swapping of tools without disrupting the cognitive loop.
+**Separation of Concerns**: Tool lifecycle (discovery, start, stop) is managed separately from execution (command processing, result handling). Tool decision (cognitive mode) is separated from tool construction (action mode). This separation enables hot-swapping of tools without disrupting the cognitive loop and optimizes prompt efficiency.
+
+**Two-Stage AI Architecture**: Tool usage follows a two-stage process: (1) Cognitive mode decides WHICH tools to use with minimal context (temp=0.6), (2) Action mode constructs HOW to use them with detailed documentation (temp=0.2). This optimizes both decision quality and execution precision while minimizing prompt bloat.
 
 **Instruction Persistence**: Tools track whether their detailed instructions have been recently retrieved, avoiding prompt bloat by only including full documentation when relevant. Instructions persist for 6 minutes after retrieval, after which they must be requested again.
 
@@ -1095,177 +477,7 @@ The tool system is built on the **BaseTool architecture**, where each tool is a 
 
 ## Tool System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         TOOL SYSTEM HIERARCHY                            │
-└─────────────────────────────────────────────────────────────────────────┘
-
-                    ┌─────────────────────────┐
-                    │     ToolManager         │
-                    │  (Main Orchestrator)    │
-                    └───────────┬─────────────┘
-                                │
-              ┌─────────────────┼─────────────────┐
-              │                 │                 │
-              ▼                 ▼                 ▼
-    ┌──────────────────┐ ┌─────────────┐ ┌──────────────────┐
-    │ ToolLifecycle    │ │ Instruction │ │ ActionState      │
-    │ Manager          │ │ Persistence │ │ Manager          │
-    │                  │ │ Manager     │ │                  │
-    │ - Discovery      │ │             │ │ - Execution      │
-    │ - Loading        │ │ - 6min      │ │   tracking       │
-    │ - Start/Stop     │ │   timers    │ │ - Failure        │
-    │                  │ │ - Flags     │ │   analytics      │
-    └──────────────────┘ └─────────────┘ └──────────────────┘
-              │                                   │
-              │                                   │
-              ▼                                   ▼
-    ┌──────────────────┐              ┌──────────────────┐
-    │  Active Tools    │              │  Execution       │
-    │  Dictionary      │◄─────────────┤  Results         │
-    │  {name: inst}    │              │                  │
-    └──────────────────┘              └──────────────────┘
-              │
-              │
-              ▼
-    ┌──────────────────┐
-    │   BaseTool       │
-    │   Instances      │
-    │                  │
-    │   Each tool:     │
-    │   - initialize() │
-    │   - execute()    │
-    │   - cleanup()    │
-    │   - context_loop │
-    └──────────────────┘
-
-
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         TOOL EXECUTION FLOW                              │
-└─────────────────────────────────────────────────────────────────────────┘
-
-1. AGENT GENERATES ACTION
-   ThoughtProcessor → LLM produces <actions>
-
-2. ACTION VALIDATION
-   ToolManager receives parsed actions
-      ├─ Check tool exists in discovered metadata
-      ├─ Check tool is enabled (in active_tools)
-      ├─ Check instruction persistence (if enforced)
-      └─ Check tool.is_available()
-
-3. ACTION REGISTRATION
-   ActionStateManager.register_action()
-      └─ Assigns unique action_id
-      └─ Records tool, args, timestamp
-
-4. ASYNC EXECUTION
-   ActionStateManager.mark_in_progress()
-   await tool_instance.execute(command, args)
-      ├─ Wrapped in asyncio.wait_for(timeout)
-      ├─ Tool performs operation
-      └─ Returns standardized result dict
-
-5. RESULT HANDLING
-   Success:
-      ├─ ActionStateManager.complete_action()
-      ├─ Inject result into thought_buffer
-      └─ Log success with instruction timing
-
-   Timeout:
-      ├─ ActionStateManager.fail_action(reason='timeout')
-      ├─ Inject timeout notification
-      └─ Log timeout for analytics
-
-   Error:
-      ├─ ActionStateManager.fail_action(reason='error')
-      ├─ Inject error message
-      └─ Log error for debugging
-
-6. FEEDBACK LOOP
-   Tool result → ThoughtBuffer.ingest_raw_data()
-      └─ Result queued as RawDataEvent
-      └─ ThoughtProcessor interprets result
-      └─ Agent's next thought considers outcome
-
-
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    INSTRUCTION PERSISTENCE FLOW                          │
-└─────────────────────────────────────────────────────────────────────────┘
-
-INITIAL STATE: Agent has minimal tool list
-┌──────────────────────────────────────────────────────────────────────────┐
-│ ## AVAILABLE TOOLS                                                       │
-│ - search [ENABLED - RETRIEVE INSTRUCTIONS TO USE]: Web search           │
-│ - reminder [ENABLED - RETRIEVE INSTRUCTIONS TO USE]: Set reminders      │
-│ - vision [ENABLED - RETRIEVE INSTRUCTIONS TO USE]: Screen analysis      │
-│                                                                          │
-│ To use a tool, retrieve instructions first:                             │
-│ {"tool": "instructions", "args": ["tool_name"]}                         │
-└──────────────────────────────────────────────────────────────────────────┘
-
-AGENT DECIDES: Needs search capability
-   └─ Generates: {"tool": "instructions", "args": ["search"]}
-
-INSTRUCTION RETRIEVAL:
-   ToolManager.handle_instruction_retrieval()
-      ├─ Validates "search" is enabled
-      ├─ InstructionPersistenceManager.mark_instructions_retrieved("search")
-      │    └─ Starts 6-minute timer
-      ├─ ToolInstructionBuilder.build_retrieved_tool_instructions(["search"])
-      │    └─ Loads information.json from filesystem
-      │    └─ Formats complete documentation
-      └─ Sets pending_tool_instructions = ["search"]
-
-NEXT PROMPT: Full search instructions included
-┌──────────────────────────────────────────────────────────────────────────┐
-│ ## RETRIEVED TOOL INSTRUCTIONS                                           │
-│                                                                          │
-│ ### TOOL: search                                                         │
-│ Perform web searches for current information                            │
-│                                                                          │
-│ **Usage Format:**                                                        │
-│ {"tool": "search.query", "args": ["search terms"]}                      │
-│                                                                          │
-│ **Available Commands:**                                                  │
-│ - query: Execute web search                                              │
-│                                                                          │
-│ **Parameters:**                                                          │
-│ - search terms (string): Query to search for                            │
-│                                                                          │
-│ **Examples:**                                                            │
-│ {"tool": "search.query", "args": ["Python tutorials"]}                  │
-│ {"tool": "search.query", "args": ["weather Seattle"]}                   │
-│                                                                          │
-│ **Constraints:**                                                         │
-│ - Keep queries concise (2-5 words)                                      │
-│ - One search per action                                                  │
-│ - Results limited to 10 items                                            │
-└──────────────────────────────────────────────────────────────────────────┘
-
-AGENT USES TOOL:
-   └─ Generates: {"tool": "search.query", "args": ["latest AI news"]}
-
-PERSISTENCE CHECK:
-   ToolManager._execute_single_action()
-      ├─ InstructionPersistenceManager.has_active_instructions("search")
-      │    └─ Checks if timer valid (< 6 minutes elapsed)
-      │    └─ Returns True
-      ├─ Validation passes
-      └─ Executes search
-
-AFTER 6 MINUTES: Instructions expire
-   InstructionPersistenceManager auto-cleanup
-      └─ Removes "search" from active instructions
-
-NEXT PROMPT: Back to minimal list (instructions expired)
-   └─ Must retrieve again to use
-
-AGENT ATTEMPTS USE WITHOUT RETRIEVAL:
-   ToolManager enforcement kicks in:
-      └─ Injects error: "Instructions for search expired. Retrieve again to use"
-      └─ Agent learns to retrieve instructions first
-```
+<img src="./documentation/flowcharts/tool_orchestration.png" alt="Tool Orchestration Pipeline" style="width: 100%; height: auto;">
 
 ## BaseTool Architecture
 
@@ -1274,89 +486,24 @@ Every tool inherits from the `BaseTool` abstract base class, which defines the s
 ### Required Properties and Methods
 
 **name** (property): Unique tool identifier matching the control variable
-```python
-@property
-def name(self) -> str:
-    return "search"
-```
 
 **initialize()**: Setup connections, load config, verify availability
-```python
-async def initialize(self) -> bool:
-    self.api_key = self._config.SEARCH_API_KEY
-    self.connected = await self._connect_to_service()
-    return self.connected
-```
 
 **cleanup()**: Teardown resources, close connections, save state
-```python
-async def cleanup(self):
-    await self._disconnect_from_service()
-    self._cache.clear()
-```
 
 **is_available()**: Runtime availability check
-```python
-def is_available(self) -> bool:
-    return self._connected and self._api_key is not None
-```
 
 **execute()**: Command execution with standardized result format
-```python
-async def execute(self, command: str, args: List[Any]) -> Dict[str, Any]:
-    if command == 'query':
-        query = args[0]
-        results = await self._search(query)
-        return self._success_result(results)
-    return self._error_result(f'Unknown command: {command}')
-```
 
 ### Optional Methods
 
 **has_context_loop()**: Indicates need for background updates
-```python
-def has_context_loop(self) -> bool:
-    return True  # This tool needs periodic context injection
-```
 
-**context_loop()**: Background task for autonomous behavior
-```python
-async def context_loop(self, thought_buffer):
-    while self._running:
-        status = await self._get_status()
-        thought_buffer.add_processed_thought(
-            content=f"[{self.name}] Status: {status}",
-            source='tool_context',
-            priority_override='LOW'
-        )
-        await asyncio.sleep(5.0)
-```
+**context_loop()**: Background task for autonomous behavior providing periodic status updates or environmental observations
 
 ### Standardized Result Format
 
-All tool executions return a consistent dictionary structure:
-
-**Success Result**:
-```python
-{
-    'success': True,
-    'content': 'Operation completed successfully',
-    'source': 'tool_name',
-    'metadata': {'key': 'value'},
-    'guidance': 'Tool executed successfully'
-}
-```
-
-**Error Result**:
-```python
-{
-    'success': False,
-    'content': 'Error message explaining what went wrong',
-    'source': 'tool_name',
-    'metadata': {'error_type': 'validation'},
-    'guidance': 'Try different arguments or check tool status'
-}
-```
+All tool executions return a consistent dictionary structure containing success status, content message, source identifier, optional metadata, and guidance text. Success results indicate completion with relevant data, while error results provide diagnostic information and corrective guidance.
 
 This standardization enables the ToolManager to handle all tool results uniformly, regardless of the specific tool or operation.
 
@@ -1366,85 +513,27 @@ This standardization enables the ToolManager to handle all tool results uniforml
 
 Tools are automatically discovered at system startup:
 
-1. **Scan Directory**: `BASE/tools/installed/` is scanned for tool folders
-2. **Validate Structure**: Each folder must contain `tool.py` and `information.json`
-3. **Load Metadata**: Parse `information.json` for tool configuration
+1. **Scan Directory**: Tools directory is scanned for tool folders
+2. **Validate Structure**: Each folder must contain tool.py and information.json
+3. **Load Metadata**: Parse information.json for tool configuration
 4. **Cache Information**: Store complete metadata for runtime access
 5. **Log Results**: Report discovered tools with control variables
 
-**Required File Structure**:
-```
-BASE/tools/installed/
-├── search/
-│   ├── tool.py              # Contains SearchTool class
-│   └── information.json     # Metadata and documentation
-├── reminder/
-│   ├── tool.py              # Contains ReminderTool class
-│   └── information.json     # Metadata and documentation
-└── vision/
-    ├── tool.py              # Contains VisionTool class
-    └── information.json     # Metadata and documentation
-```
+**Required File Structure**: Each tool must be in its own folder containing a tool.py file with the tool class implementation and an information.json file with metadata and documentation.
 
-**information.json Structure**:
-```json
-{
-    "tool_name": "search",
-    "control_variable_name": "USE_SEARCH",
-    "tool_description": "Perform web searches for current information",
-    "available_commands": [
-        {
-            "command": "query",
-            "description": "Execute web search",
-            "parameters": [
-                {
-                    "name": "search terms",
-                    "type": "string",
-                    "description": "Query to search for"
-                }
-            ],
-            "examples": [
-                {"tool": "search.query", "args": ["Python tutorials"]},
-                {"tool": "search.query", "args": ["weather Seattle"]}
-            ]
-        }
-    ],
-    "timeout_seconds": 30,
-    "cooldown_seconds": 0,
-    "metadata": {
-        "display_name": "Web Search",
-        "version": "1.0",
-        "author": "System"
-    }
-}
-```
+**information.json Structure**: Contains tool name, control variable, description, available commands with parameters and examples, timeout settings, cooldown periods, and metadata like display name, version, and author.
 
 ### Lifecycle Management
 
-**Tool Startup**:
-1. Control variable set to True (e.g., `USE_SEARCH = True`)
-2. ToolManager.handle_control_update() triggered
-3. ToolLifecycleManager.start_tool() called
-4. Dynamic class loading from tool.py
-5. Tool instantiation with (config, controls, logger)
-6. tool.start() calls initialize()
-7. Context loop started if needed
-8. Tool added to active_tools dict
+**Tool Startup**: Control variable set to True triggers ToolManager to start the tool. ToolLifecycleManager dynamically loads the class, instantiates with config/controls/logger, calls initialize(), starts context loop if needed, and adds to active tools.
 
-**Tool Shutdown**:
-1. Control variable set to False
-2. ToolManager.handle_control_update() triggered
-3. ToolLifecycleManager.stop_tool() called
-4. Context loop cancelled if running
-5. tool.end() calls cleanup()
-6. Tool removed from active_tools dict
-7. Instruction persistence cleared
+**Tool Shutdown**: Control variable set to False triggers shutdown. Context loop is cancelled, cleanup() is called, tool is removed from active tools, and instruction persistence is cleared.
 
 **Runtime State**:
 - **Discovered**: Tool exists in metadata cache
 - **Enabled**: Control variable is True
 - **Active**: Tool instance running in active_tools
-- **Available**: tool.is_available() returns True
+- **Available**: Tool reports it can execute commands
 - **Instructions Retrieved**: Persistence manager has valid timer
 
 ## Instruction Persistence System
@@ -1453,37 +542,15 @@ The instruction persistence system implements a **6-minute rolling window** for 
 
 ### Persistence States
 
-**No Instructions**: Default state - tool appears in minimal list only
-```
-- search [ENABLED - RETRIEVE INSTRUCTIONS TO USE]: Web search
-```
+**No Instructions**: Default state - tool appears in minimal list with "RETRIEVE INSTRUCTIONS TO USE" indicator
 
-**Instructions Retrieved**: Agent requests instructions explicitly
-```
-Agent: {"tool": "instructions", "args": ["search"]}
-System: Starts 6-minute timer, includes full documentation in next prompt
-```
+**Instructions Retrieved**: Agent explicitly requests instructions, starting a 6-minute timer and including full documentation in subsequent prompts
 
-**Instructions Active**: Within 6-minute window - full docs in every prompt
-```
-Prompt includes:
-  ## RETRIEVED TOOL INSTRUCTIONS
-  ### TOOL: search
-  [complete documentation...]
-```
+**Instructions Active**: Within 6-minute window - full documentation included in every prompt
 
-**Instructions Expired**: Timer exceeds 6 minutes
-```
-System: Auto-removes from active instructions
-Next prompt: Back to minimal list
-Agent attempts use: "Instructions expired. Retrieve again to use"
-```
+**Instructions Expired**: Timer exceeds 6 minutes, auto-removes from active instructions, reverts to minimal list
 
-**Instructions Refreshed**: Agent retrieves again before expiration
-```
-System: Resets 6-minute timer
-Effect: Continues including full documentation
-```
+**Instructions Refreshed**: Agent retrieves again before expiration, resetting the 6-minute timer
 
 ### Benefits of Persistence
 
@@ -1497,25 +564,7 @@ Effect: Continues including full documentation
 
 ### Persistence Manager API
 
-```python
-# Mark instructions as retrieved (starts 6-minute timer)
-manager.mark_instructions_retrieved(tool_name)
-
-# Check if instructions are still valid
-has_active = manager.has_active_instructions(tool_name)
-
-# Get remaining time before expiration
-remaining_seconds = manager.get_time_remaining(tool_name)
-
-# Get all tools with active instructions
-active_tools = manager.get_active_tool_names()
-
-# Manual cleanup (optional - auto-cleanup happens naturally)
-manager.clear_instructions(tool_name)
-
-# Get complete status for monitoring
-status = manager.get_all_status()
-```
+The manager provides methods to mark instructions as retrieved (starting timers), check if instructions are still valid, get remaining time before expiration, list all tools with active instructions, manually clear instructions, and get complete status for monitoring.
 
 ## Action State Management
 
@@ -1523,152 +572,39 @@ The ActionStateManager tracks complete execution history for analytics and failu
 
 ### State Transitions
 
-```
-REGISTERED → IN_PROGRESS → COMPLETED (success)
-                         → FAILED (timeout/error)
-```
+Actions move from REGISTERED to IN_PROGRESS to either COMPLETED (success) or FAILED (timeout/error).
 
 ### Tracked Information
 
-**Per Action**:
-- Unique action_id
-- Tool name and command
-- Arguments provided
-- Registration timestamp
-- Status (registered/in_progress/completed/failed)
-- Completion timestamp
-- Result data
-- Error messages (if failed)
-- Failure type (timeout/error)
+**Per Action**: Unique action ID, tool name and command, provided arguments, registration timestamp, current status, completion timestamp, result data, error messages if failed, and failure type.
 
 ### Failure Analytics
 
 The system maintains failure history enabling:
 
-**Failure Summaries**: Recent failures grouped by tool
-```
-## RECENT TOOL FAILURES
-- search: 3 timeouts in last hour
-- reminder: 1 validation error
-```
+**Failure Summaries**: Recent failures grouped by tool showing patterns like multiple timeouts or validation errors
 
-**Failure Patterns**: Detect systematic issues
-```
-If search.query fails 3+ times:
-  → Inject HIGH priority thought: "Search tool experiencing issues"
-```
+**Failure Patterns**: Detect systematic issues and inject high-priority thoughts alerting the agent
 
-**Adaptive Behavior**: Agent learns from failures
-```
-After search timeout:
-  Next prompt includes: "Previous search timed out - consider simpler query"
-```
+**Adaptive Behavior**: Agent learns from failures with contextual guidance in subsequent prompts
 
 ### State Manager API
 
-```python
-# Register new action
-action_id = manager.register_action(
-    tool_name='search',
-    args=['query'],
-    context={'user_request': 'find news'}
-)
-
-# Update state during execution
-manager.mark_in_progress(action_id)
-
-# Complete successfully
-manager.complete_action(action_id, result_dict)
-
-# Or record failure
-manager.fail_action(action_id, error_message, failure_type)
-
-# Get analytics
-pending = manager.get_pending_actions()
-failures = manager.get_recent_failures_summary(max_failures=5)
-stats = manager.get_statistics()
-```
+Provides methods to register new actions, update state during execution, mark completion with results, record failures with diagnostic info, retrieve pending actions, generate failure summaries, and calculate execution statistics.
 
 ## Tool Integration Patterns
 
 ### Pattern 1: Simple Query Tool
 
-Tools that execute one-off queries without persistent state:
-
-```python
-class SearchTool(BaseTool):
-    @property
-    def name(self) -> str:
-        return "search"
-    
-    async def initialize(self) -> bool:
-        self.api_key = self._config.SEARCH_API_KEY
-        return self.api_key is not None
-    
-    async def cleanup(self):
-        pass  # No persistent connections
-    
-    def is_available(self) -> bool:
-        return self.api_key is not None
-    
-    async def execute(self, command: str, args: List[Any]) -> Dict:
-        if command == 'query':
-            results = await self._perform_search(args[0])
-            return self._success_result(
-                f"Found {len(results)} results",
-                metadata={'count': len(results)}
-            )
-        return self._error_result('Unknown command')
-```
+Tools that execute one-off queries without persistent state. These perform operations like web searches with no maintained connections between executions.
 
 ### Pattern 2: Stateful Connection Tool
 
-Tools that maintain persistent connections:
-
-```python
-class DatabaseTool(BaseTool):
-    async def initialize(self) -> bool:
-        self.connection = await self._connect_to_db()
-        return self.connection is not None
-    
-    async def cleanup(self):
-        if self.connection:
-            await self.connection.close()
-    
-    def is_available(self) -> bool:
-        return self.connection and self.connection.is_alive()
-    
-    async def execute(self, command: str, args: List[Any]) -> Dict:
-        if command == 'query':
-            result = await self.connection.execute(args[0])
-            return self._success_result(result)
-        return self._error_result('Unknown command')
-```
+Tools that maintain persistent connections to external services. These establish connections during initialization, keep them alive during operation, and properly close during cleanup.
 
 ### Pattern 3: Context-Injecting Tool
 
-Tools that provide autonomous background updates:
-
-```python
-class MonitorTool(BaseTool):
-    def has_context_loop(self) -> bool:
-        return True
-    
-    async def context_loop(self, thought_buffer):
-        while self._running:
-            # Check system status
-            cpu_usage = await self._get_cpu_usage()
-            
-            # Inject if noteworthy
-            if cpu_usage > 80:
-                thought_buffer.add_processed_thought(
-                    content=f"System CPU at {cpu_usage}%",
-                    source='monitor_alert',
-                    priority_override='MEDIUM'
-                )
-            
-            await asyncio.sleep(10.0)
-```
+Tools that provide autonomous background updates through periodic monitoring. These implement context loops that check system status and inject observations into the agent's thought stream when noteworthy events occur.
 
 ## Tool Instruction Documentation
 
@@ -1676,60 +612,11 @@ The ToolInstructionBuilder dynamically generates documentation from information.
 
 ### Minimal Tool List
 
-When no instructions are active, prompts contain a brief enumeration:
-
-```markdown
-## AVAILABLE TOOLS
-
-You have access to **3** enabled tool(s).
-
-**Tool List:**
-- `search` [ENABLED - RETRIEVE INSTRUCTIONS TO USE]: Web search
-- `reminder` [ENABLED - RETRIEVE INSTRUCTIONS TO USE]: Set reminders  
-- `vision` [ENABLED - RETRIEVE INSTRUCTIONS TO USE]: Screen analysis
-
-## TOOL INSTRUCTION RETRIEVAL
-
-To use a tool, first retrieve its instructions using:
-
-{"tool": "instructions", "args": ["tool_name"]}
-
-**Guidelines:**
-- You must retrieve instructions before using any tool
-- Retrieve up to 3 tool instructions at a time
-```
+When no instructions are active, prompts contain a brief enumeration showing tool names with retrieval indicators and one-line descriptions, plus instructions on how to retrieve full documentation.
 
 ### Full Tool Documentation
 
-After retrieval, complete documentation is included:
-
-```markdown
-## RETRIEVED TOOL INSTRUCTIONS
-
-### TOOL: search
-Perform web searches for current information
-
-**Usage Format:**
-{"tool": "search.query", "args": ["search terms"]}
-
-**Available Commands:**
-- query: Execute web search
-
-**Parameters:**
-- search terms (string): Query to search for
-
-**Examples:**
-{"tool": "search.query", "args": ["Python tutorials"]}
-{"tool": "search.query", "args": ["weather Seattle"]}
-
-**Constraints:**
-- Keep queries concise (2-5 words)
-- One search per action
-- Results limited to 10 items
-
-**Timeout:** 30 seconds
-**Cooldown:** None
-```
+After retrieval, complete documentation is included with tool name and description, usage format, available commands, parameter specifications, concrete examples, operational constraints, timeout limits, and cooldown periods.
 
 This documentation is automatically generated from information.json, ensuring consistency between implementation and documentation.
 
@@ -1739,50 +626,11 @@ The tool system implements comprehensive error handling with informative guidanc
 
 ### Validation Errors
 
-**Unknown Tool**:
-```
-Tool 'unknown_tool' not found.
-Available: search, reminder, vision
-```
-
-**Disabled Tool**:
-```
-Tool 'search' is currently DISABLED.
-Cannot execute search.query.
-Enable via USE_SEARCH=True
-```
-
-**Missing Instructions**:
-```
-Cannot use search: Instructions not retrieved.
-Use: {"tool": "instructions", "args": ["search"]}
-```
-
-**Expired Instructions**:
-```
-Instructions for search expired.
-Retrieve again to use: {"tool": "instructions", "args": ["search"]}
-```
+Covers unknown tools with available alternatives, disabled tools with enable instructions, missing instructions with retrieval commands, and expired instructions with re-retrieval guidance.
 
 ### Execution Errors
 
-**Timeout**:
-```
-[search] Timeout after 30s
-Consider: Simplify query or check network
-```
-
-**Tool Unavailable**:
-```
-[search] Tool not available
-Reason: API key not configured
-```
-
-**Command Error**:
-```
-[search] Error: Invalid command 'unknown'
-Available commands: query
-```
+Handles timeouts with suggestions to simplify requests, unavailable tools with diagnostic reasons, and command errors with available command lists.
 
 All errors are injected as HIGH priority thoughts, ensuring the agent is aware of issues and can adapt its approach.
 
@@ -1808,7 +656,7 @@ The tool system is designed for easy extension:
 
 **Adding New Tools**: Create tool folder with tool.py and information.json. Tool is automatically discovered on next startup.
 
-**Custom Base Classes**: Create specialized base classes inheriting from BaseTool for specific tool categories (e.g., WebAPITool, DatabaseTool).
+**Custom Base Classes**: Create specialized base classes inheriting from BaseTool for specific tool categories.
 
 **Instruction Formats**: Modify ToolInstructionBuilder to change documentation formatting or add new metadata fields.
 
@@ -1844,125 +692,7 @@ The GUI serves as both a control center for system configuration and a live wind
 
 ## GUI Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          GUI ARCHITECTURE                                │
-└─────────────────────────────────────────────────────────────────────────┘
-
-                         ┌────────────────┐
-                         │  OllamaGUI     │
-                         │  (Main Entry)  │
-                         └────────┬───────┘
-                                  │
-                ┌─────────────────┼─────────────────┐
-                │                 │                 │
-                ▼                 ▼                 ▼
-        ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-        │  UIBuilder   │  │ThemeManager  │  │MessageProcessor│
-        │              │  │              │  │              │
-        │ - Menu       │  │ - Themes     │  │ - Async      │
-        │ - Views      │  │ - Styling    │  │   Processing │
-        │ - Switching  │  │ - Updates    │  │ - TTS        │
-        └──────┬───────┘  └──────────────┘  └──────────────┘
-               │
-               │
-    ┌──────────┼────────────┬──────────────┬──────────────┐
-    │          │            │              │              │
-    ▼          ▼            ▼              ▼              ▼
-┌────────┐ ┌────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
-│Config  │ │Controls│ │  Chat    │ │  Tools   │ │   Info   │
-│  View  │ │  View  │ │  View    │ │  View    │ │  View    │
-└────────┘ └────────┘ └──────────┘ └──────────┘ └──────────┘
-
-
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          MESSAGE FLOW                                    │
-└─────────────────────────────────────────────────────────────────────────┘
-
-USER TYPES MESSAGE IN GUI
-         │
-         ▼
-ChatView.send_message()
-         ├─ Content filtering
-         ├─ Display in chat
-         └─ Forward to handler
-         │
-         ▼
-GUIMessageHandler.handle_user_message()
-         ├─ Save to memory
-         └─ Spawn processing thread
-         │
-         ▼
-MessageProcessor.process_message()
-         ├─ Call AICore.process_user_message()
-         ├─ Get response
-         └─ Queue for GUI display
-         │
-         ▼
-Message Queue (thread-safe)
-         │
-         ▼
-queue_processor() [main thread]
-         ├─ Extract queued messages
-         ├─ Update chat display
-         ├─ Trigger TTS if enabled
-         └─ Update processing indicators
-
-
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      THEME SYSTEM FLOW                                   │
-└─────────────────────────────────────────────────────────────────────────┘
-
-User Selects Theme
-         │
-         ▼
-ThemeManager.set_theme(theme_name)
-         │
-         ▼
-Apply theme colors and fonts
-         ├─ Update Tkinter styles (ttk)
-         ├─ Configure text widgets
-         ├─ Update custom widgets
-         └─ Recreate menu with new styling
-         │
-         ▼
-Update all active view elements
-         ├─ ChatView color tags
-         ├─ System log colors
-         ├─ Button appearances
-         └─ Tab styling
-
-
-┌─────────────────────────────────────────────────────────────────────────┐
-│                   DYNAMIC TOOL PANEL LOADING                             │
-└─────────────────────────────────────────────────────────────────────────┘
-
-ToolsView.create_tools_view()
-         │
-         ▼
-DynamicToolPanelLoader.discover_tool_panels()
-         ├─ Scan BASE/tools/installed/
-         ├─ Find tools with component.py
-         └─ Load information.json metadata
-         │
-         ▼
-For each tool with component:
-         │
-         ▼
-DynamicToolPanelLoader.load_component()
-         ├─ Import component.py dynamically
-         ├─ Call create_component(parent, ai_core, logger)
-         └─ Return component instance
-         │
-         ▼
-ToolsView._create_tool_tab()
-         ├─ Create dedicated tab for tool
-         ├─ Add scrollable container
-         └─ Mount component panel
-         │
-         ▼
-Tool Component Rendered in GUI
-```
+<img src="./documentation/flowcharts/gui_architecture.png" alt="GUI Architecture" style="width: 100%; height: auto;">
 
 ## View Components
 
@@ -2063,29 +793,13 @@ Tool Component Rendered in GUI
 - Error handling for failed components
 
 **Discovery Process**:
-1. Scan `BASE/tools/installed/` directory
-2. Check for `component.py` files
-3. Load `information.json` metadata
+1. Scan tools directory for installed tools
+2. Check for component.py files
+3. Load information.json metadata
 4. Filter to tools with GUI components
 5. Create dedicated tab for each tool
 
-**Component Requirements**:
-Tools must provide:
-```python
-def create_component(parent_gui, ai_core, logger):
-    """
-    Factory function to create GUI component
-    
-    Args:
-        parent_gui: Main GUI instance
-        ai_core: AI Core instance
-        logger: Logger instance
-    
-    Returns:
-        Component instance with create_panel() method
-    """
-    return ToolComponent(parent_gui, ai_core, logger)
-```
+**Component Requirements**: Tools must provide a factory function that creates a GUI component instance with a create_panel() method. The factory receives parent GUI, AI core, and logger instances.
 
 **Tab Structure**:
 - Icon + tool display name as tab label
@@ -2106,13 +820,7 @@ def create_component(parent_gui, ai_core, logger):
 - Refresh functionality
 - Scrollable content
 
-**Markdown Support**:
-- Headers: `#`, `##`, `###`
-- Bold: `**text**`
-- Inline code: `` `code` ``
-- Code blocks: ` ```language ```  `
-- Lists: `- item` or `* item`
-- Links: `[text](url)`
+**Markdown Support**: Headers at multiple levels, bold text, inline code, code blocks with language specification, bulleted and numbered lists, and hyperlinks.
 
 **Layout**:
 - Header with title and refresh button
@@ -2125,11 +833,7 @@ The GUI supports three comprehensive themes with consistent styling across all c
 
 ### DarkTheme (Default)
 
-**Color Palette**:
-- **Backgrounds**: Deep blacks (#141414, #1e1e1e, #2a2a2a)
-- **Foregrounds**: Light grays (#d4d4d4, #9a9a9a, #6a6a6a)
-- **Accents**: Purple (#8b5cf6), Green (#10b981), Blue (#3b82f6)
-- **Borders**: Dark gray (#2a2a2a)
+**Color Palette**: Deep blacks for backgrounds, light grays for foregrounds, purple/green/blue accents, and dark gray borders.
 
 **Characteristics**:
 - Modern, professional appearance
@@ -2139,11 +843,7 @@ The GUI supports three comprehensive themes with consistent styling across all c
 
 ### LightTheme
 
-**Color Palette**:
-- **Backgrounds**: Light grays (#f8f9fa, #e9ecef, #ffffff)
-- **Foregrounds**: Dark grays (#212529, #6c757d, #adb5bd)
-- **Accents**: Purple (#6f42c1), Green (#198754), Blue (#0d6efd)
-- **Borders**: Light gray (#dee2e6)
+**Color Palette**: Light grays for backgrounds, dark grays for foregrounds, purple/green/blue accents (darker shades), and light gray borders.
 
 **Characteristics**:
 - Clean, professional appearance
@@ -2153,11 +853,7 @@ The GUI supports three comprehensive themes with consistent styling across all c
 
 ### CyberTheme
 
-**Color Palette**:
-- **Backgrounds**: Ultra-deep purples (#050008, #0a0015, #1a0a2e)
-- **Foregrounds**: Neon green (#00ff88), Purple (#8a2be2)
-- **Accents**: Neon green, Cyan (#00d4ff), Pink (#ff006e)
-- **Borders**: Neon accents with glow effects
+**Color Palette**: Ultra-deep purples for backgrounds, neon green/purple for foregrounds, neon green/cyan/pink accents, and glowing neon borders.
 
 **Characteristics**:
 - Cyberpunk/hacker aesthetic
@@ -2168,28 +864,11 @@ The GUI supports three comprehensive themes with consistent styling across all c
 
 ### Theme Application
 
-**Styled Elements**:
-- Window background and borders
-- All ttk widgets (buttons, frames, labels, checkboxes)
-- Text widgets (chat, system log, input)
-- Scrollbars (vertical and horizontal)
-- Notebook tabs
-- Menu/tab buttons
-- LabelFrames (standard and accent variants)
-- Comboboxes (theme selector)
+**Styled Elements**: Window backgrounds, all ttk widgets (buttons, frames, labels, checkboxes), text widgets, scrollbars, notebook tabs, menu/tab buttons, label frames, and comboboxes.
 
-**Dynamic Updates**:
-When theme changes:
-1. All ttk styles reconfigured
-2. Text widget colors updated
-3. Custom widgets refreshed
-4. Menu recreated with new styling
-5. Active tab highlighting updated
-6. Color tags in text displays reconfigured
+**Dynamic Updates**: When theme changes, all ttk styles are reconfigured, text widget colors updated, custom widgets refreshed, menu recreated with new styling, active tab highlighting updated, and color tags in text displays reconfigured.
 
-**Font Selection**:
-- Light/Dark themes: Segoe UI (modern, readable)
-- Cyber theme: Courier New (monospace, tech aesthetic)
+**Font Selection**: Light/Dark themes use Segoe UI (modern, readable), while Cyber theme uses Courier New (monospace, tech aesthetic).
 
 ## Message Processing
 
@@ -2197,56 +876,19 @@ When theme changes:
 
 All message processing happens asynchronously to keep the GUI reactive:
 
-**User Input Path**:
-1. User types in input text widget
-2. ChatView validates and filters input
-3. Message displayed immediately in chat
-4. Background thread spawned for processing
-5. AICore processes message
-6. Response queued to message_queue
-7. Main thread extracts from queue
-8. Response displayed in chat
-9. TTS triggered if enabled
+**User Input Path**: User types in input widget, ChatView validates and filters, message displayed immediately, background thread spawned for processing, AICore processes message, response queued to message queue, main thread extracts from queue and displays, TTS triggered if enabled.
 
-**Autonomous Response Path**:
-1. Cognitive loop generates autonomous response
-2. Response sent via callback to GUI
-3. Message queued to message_queue
-4. Main thread extracts and displays
-5. TTS triggered if enabled
+**Autonomous Response Path**: Cognitive loop generates autonomous response, response sent via callback to GUI, message queued to message queue, main thread extracts and displays, TTS triggered if enabled.
 
-**Processing Indicators**:
-- "Processing..." label shown during message handling
-- Send button disabled during processing
-- Cleared on completion
-- Error messages displayed for failures
+**Processing Indicators**: "Processing..." label shown during message handling, send button disabled during processing, cleared on completion, error messages displayed for failures.
 
 ### Thread Safety
 
-**Queue-Based Updates**:
-All GUI updates go through thread-safe queues:
-- `message_queue`: Chat messages and system notifications
-- `input_queue`: Voice input (if voice features enabled)
+**Queue-Based Updates**: All GUI updates go through thread-safe queues for messages and voice input.
 
-**Queue Processor**:
-Runs in main thread at 100ms intervals:
-```python
-while not message_queue.empty():
-    msg_type, sender, content = message_queue.get()
-    if msg_type == "user":
-        display_user_message(sender, content)
-    elif msg_type == "agent":
-        display_agent_message(sender, content)
-    elif msg_type == "system":
-        display_system_message(content)
-    # ... handle other types
-```
+**Queue Processor**: Runs in main thread at 100ms intervals, extracting messages and routing them to appropriate display methods based on message type.
 
-**TTS Management**:
-- Speech played in background thread
-- Stop event for interruption
-- New speech cancels previous
-- No blocking of GUI or message processing
+**TTS Management**: Speech played in background thread, stop event for interruption, new speech cancels previous, no blocking of GUI or message processing.
 
 ## Voice Manager
 
@@ -2278,30 +920,13 @@ Manages feature toggles and configuration:
 
 **Toggle Categories**:
 
-**Core Features**:
-- Memory System
-- Cognitive Loop
-- Chat Engagement
-- Response Rate Limiting
+**Core Features**: Memory System, Cognitive Loop, Chat Engagement, Response Rate Limiting
 
-**Tools**:
-- Dynamically generated from discovered tools
-- Individual enable/disable per tool
-- Real-time lifecycle management
-- Status indicators
+**Tools**: Dynamically generated from discovered tools, individual enable/disable per tool, real-time lifecycle management, status indicators
 
-**Logging**:
-- System Information
-- Tool Execution
-- Response Processing
-- Prompt Construction
-- Chat Messages
+**Logging**: System Information, Tool Execution, Response Processing, Prompt Construction, Chat Messages
 
-**Integration Patterns**:
-- Checkbox bound to config attribute
-- OnChange callback updates config
-- Config change triggers system update
-- Status reflected immediately
+**Integration Patterns**: Checkbox bound to config attribute, onChange callback updates config, config change triggers system update, status reflected immediately.
 
 ## Dynamic Tool Panel System
 
@@ -2309,116 +934,21 @@ Enables tools to provide custom GUI interfaces:
 
 ### Discovery Process
 
-**Scan Phase**:
-1. Check `BASE/tools/installed/` directory
-2. For each tool directory:
-   - Look for `component.py` file
-   - Load `information.json` metadata
-   - Extract display name, icon, category
+**Scan Phase**: Check tools directory, look for component.py files in each tool directory, load information.json metadata, extract display name, icon, and category.
 
-**Loading Phase**:
-1. Import component.py dynamically
-2. Find `create_component()` factory function
-3. Call factory with (parent_gui, ai_core, logger)
-4. Store component instance
+**Loading Phase**: Import component.py dynamically, find create_component() factory function, call factory with parent GUI/AI core/logger parameters, store component instance.
 
-**Mounting Phase**:
-1. Create dedicated tab for tool
-2. Add scrollable container
-3. Call `component.create_panel(parent)`
-4. Mount returned frame in tab
+**Mounting Phase**: Create dedicated tab for tool, add scrollable container, call component's create_panel() method, mount returned frame in tab.
 
 ### Component Interface
 
-**Required Factory Function**:
-```python
-def create_component(parent_gui, ai_core, logger):
-    """
-    Create tool GUI component
-    
-    Args:
-        parent_gui: Main GUI instance (OllamaGUI)
-        ai_core: AI Core instance (for tool access)
-        logger: Logger instance (for debugging)
-    
-    Returns:
-        Component instance with:
-        - create_panel(parent) method
-        - Optional cleanup() method
-    """
-    return MyToolComponent(parent_gui, ai_core, logger)
-```
+**Required Factory Function**: Must create tool GUI component that accepts parent GUI, AI core, and logger as arguments and returns a component instance with create_panel() method and optional cleanup() method.
 
-**Required Component Method**:
-```python
-class MyToolComponent:
-    def create_panel(self, parent):
-        """
-        Create GUI panel for this tool
-        
-        Args:
-            parent: Tkinter parent frame
-        
-        Returns:
-            Frame containing tool interface
-        """
-        frame = ttk.Frame(parent)
-        # Build interface...
-        return frame
-    
-    def cleanup(self):
-        """Optional: Called when component unloaded"""
-        pass
-```
+**Required Component Method**: create_panel() accepts parent frame and returns a frame containing the tool's interface.
 
 ### Example Tool Component
 
-```python
-# BASE/tools/installed/my_tool/component.py
-
-def create_component(parent_gui, ai_core, logger):
-    return MyToolPanel(parent_gui, ai_core, logger)
-
-class MyToolPanel:
-    def __init__(self, parent_gui, ai_core, logger):
-        self.parent_gui = parent_gui
-        self.ai_core = ai_core
-        self.logger = logger
-        self.active = False
-    
-    def create_panel(self, parent):
-        """Build the tool's GUI interface"""
-        from tkinter import ttk
-        
-        frame = ttk.LabelFrame(
-            parent,
-            text="My Tool Controls",
-            style="Dark.TLabelframe"
-        )
-        frame.pack(fill="both", expand=True, padx=5, pady=5)
-        
-        # Add controls...
-        ttk.Button(
-            frame,
-            text="Execute Tool",
-            command=self.execute_tool
-        ).pack(pady=10)
-        
-        return frame
-    
-    def execute_tool(self):
-        """Handle tool execution"""
-        self.logger.tool("Executing my_tool via GUI")
-        # Access tool through ai_core
-        tool = self.ai_core.tool_manager._active_tools.get('my_tool')
-        if tool:
-            # Execute tool action...
-            pass
-    
-    def cleanup(self):
-        """Cleanup when panel closed"""
-        self.logger.system("MyToolPanel cleanup")
-```
+Tool components typically initialize with references to parent GUI, AI core, and logger. They build custom interfaces in create_panel() with controls specific to the tool's functionality, handle tool execution through AI core integration, and optionally implement cleanup for resource management.
 
 ## Session Files Panel
 
@@ -2432,51 +962,17 @@ Manages temporary reference files for the agent:
 - Clear all files
 - Automatic file parsing and indexing
 
-**Supported File Types**:
-- Python (.py)
-- JavaScript/TypeScript (.js, .ts)
-- Java (.java)
-- C/C++ (.c, .cpp, .h, .hpp)
-- C# (.cs)
-- Go (.go)
-- Rust (.rs)
-- Markdown (.md)
-- Text (.txt)
-- JSON (.json)
-- XML (.xml)
+**Supported File Types**: Python, JavaScript/TypeScript, Java, C/C++, C#, Go, Rust, Markdown, Text, JSON, XML
 
-**File Display**:
-- Type emoji icon
-- Filename with extension
-- File metadata (type, lines, sections, size)
-- Remove button per file
-- Color-coded by type
+**File Display**: Type emoji icon, filename with extension, file metadata (type, lines, sections, size), remove button per file, color-coded by type
 
-**Integration**:
-- Files loaded into SessionFileManager
-- Parsed into sections/functions
-- Available to agent for reference
-- Cleared when session ends
+**Integration**: Files loaded into SessionFileManager, parsed into sections/functions, available to agent for reference, cleared when session ends
 
 ## Configuration Management
 
 ### Config Singleton
 
-Single Config instance shared across entire GUI:
-
-**Initialization**:
-```python
-self.config = Config()  # Create singleton
-self.logger = Logger(config=self.config)  # Pass to logger
-self.ai_core = AICore(config=self.config)  # Pass to ai_core
-```
-
-**Verification**:
-All components verified to share same instance:
-```python
-assert id(gui.config) == id(gui.logger.config)
-assert id(gui.config) == id(gui.ai_core.config)
-```
+Single Config instance shared across entire GUI, initialized once and passed to logger and AI core, verified to share same instance across all components.
 
 **Benefits**:
 - No configuration drift
@@ -2486,106 +982,47 @@ assert id(gui.config) == id(gui.ai_core.config)
 
 ### Settings Persistence
 
-**Auto-save**:
-- Config changes saved immediately
-- Control toggles update config
-- Theme selection persisted
-- Window geometry saved
+**Auto-save**: Config changes saved immediately, control toggles update config, theme selection persisted, window geometry saved
 
-**Export**:
-- JSON export of all settings
-- Timestamped filename
-- Human-readable format
-- Import functionality (future)
+**Export**: JSON export of all settings, timestamped filename, human-readable format, import functionality (future)
 
 ## Error Handling
 
 ### User-Facing Errors
 
-**Message Processing Errors**:
-- Displayed in chat as ERROR type
-- Red color coding
-- Clear error description
-- Logged to system log
+**Message Processing Errors**: Displayed in chat as ERROR type, red color coding, clear error description, logged to system log
 
-**Tool Loading Errors**:
-- Error panel in tool tab
-- Description of failure
-- Traceback in system log
-- Graceful degradation
+**Tool Loading Errors**: Error panel in tool tab, description of failure, traceback in system log, graceful degradation
 
-**File Upload Errors**:
-- Dialog box with error details
-- Validation before upload
-- Size warnings for large files
-- Type checking
+**File Upload Errors**: Dialog box with error details, validation before upload, size warnings for large files, type checking
 
 ### Internal Errors
 
-**Exception Handling**:
-- Try-catch around all async operations
-- Traceback printed to console
-- Error logged to system log
-- GUI remains reactive
+**Exception Handling**: Try-catch around all async operations, traceback printed to console, error logged to system log, GUI remains reactive
 
-**Recovery Strategies**:
-- Failed tool loads don't crash GUI
-- Message processing errors isolated
-- Theme errors revert to default
-- Component failures show error panels
+**Recovery Strategies**: Failed tool loads don't crash GUI, message processing errors isolated, theme errors revert to default, component failures show error panels
 
 ## Performance Optimizations
 
-**Lazy Loading**:
-- Tool components loaded on-demand
-- View content created only when shown
-- Large text operations batched
+**Lazy Loading**: Tool components loaded on-demand, view content created only when shown, large text operations batched
 
-**Update Throttling**:
-- Queue processor runs at 100ms intervals
-- Text widget updates batched
-- Scroll position maintained
+**Update Throttling**: Queue processor runs at 100ms intervals, text widget updates batched, scroll position maintained
 
-**Memory Management**:
-- Chat display limited to recent messages
-- System log auto-trimmed at length limit
-- Tool components cleaned up when unloaded
-- Old message queue items discarded
+**Memory Management**: Chat display limited to recent messages, system log auto-trimmed at length limit, tool components cleaned up when unloaded, old message queue items discarded
 
-**Thread Efficiency**:
-- Single processing thread per message
-- Queue-based inter-thread communication
-- Background tasks properly cancelled
-- No thread proliferation
+**Thread Efficiency**: Single processing thread per message, queue-based inter-thread communication, background tasks properly cancelled, no thread proliferation
 
 ## Extensibility
 
 The GUI is designed for easy extension:
 
-**Adding New Views**:
-1. Create view class in `gui_*_view.py`
-2. Add view frame to `create_main_frames()`
-3. Add tab button to menu
-4. Implement view creation method
-5. Add to view switching logic
+**Adding New Views**: Create view class in appropriate file, add view frame to main frames method, add tab button to menu, implement view creation method, add to view switching logic
 
-**Adding New Themes**:
-1. Define theme class in `gui_themes.py`
-2. Add to THEMES registry
-3. Define all required color constants
-4. Test with all views and components
+**Adding New Themes**: Define theme class in themes module, add to themes registry, define all required color constants, test with all views and components
 
-**Adding Tool Panels**:
-1. Create `component.py` in tool directory
-2. Implement `create_component()` factory
-3. Build panel interface
-4. Tool auto-discovered on startup
+**Adding Tool Panels**: Create component.py in tool directory, implement create_component() factory, build panel interface, tool auto-discovered on startup
 
-**Custom Widgets**:
-- Inherit from ttk or tk widgets
-- Apply theme colors in constructor
-- Support theme updates via config
-- Register with theme manager if needed
+**Custom Widgets**: Inherit from ttk or tk widgets, apply theme colors in constructor, support theme updates via config, register with theme manager if needed
 
 ## Keyboard Shortcuts
 
@@ -2598,131 +1035,165 @@ The GUI is designed for easy extension:
 - **Tab Navigation**: Switch between views
 - **Mousewheel**: Scroll in focused area
 
-**Future Enhancements**:
-- Configurable keyboard shortcuts
-- Command palette (Ctrl+P style)
-- Quick tool access shortcuts
-- Search functionality
+**Future Enhancements**: Configurable keyboard shortcuts, command palette, quick tool access shortcuts, search functionality
 
 ## Accessibility Features
 
-**Color Accessibility**:
-- High contrast ratios in all themes
-- Color-blind friendly palettes
-- Redundant visual indicators (not just color)
+**Color Accessibility**: High contrast ratios in all themes, color-blind friendly palettes, redundant visual indicators (not just color)
 
-**Text Readability**:
-- Adjustable font sizes (via theme)
-- Clear font choices (Segoe UI, Courier New)
-- Proper line spacing
-- Word wrap in all text areas
+**Text Readability**: Adjustable font sizes (via theme), clear font choices, proper line spacing, word wrap in all text areas
 
-**Keyboard Navigation**:
-- Tab order for all controls
-- Enter key for primary actions
-- Escape for cancel operations
-- Focus indicators on all interactive elements
+**Keyboard Navigation**: Tab order for all controls, Enter key for primary actions, Escape for cancel operations, focus indicators on all interactive elements
 
 The GUI system provides a professional, reactive, and extensible interface for interacting with the agentic framework, balancing sophistication with usability while maintaining clean separation from core agent logic.
 
 ---
 
-## 🗄️ Session Management
+# Session Management
 
-### Session File System
+## Session File System
+
 The `SessionFileManager` handles temporary document context:
-* **File Ingestion:** Loads text, PDFs, code files. Chunks large files for processing. Creates embeddings for semantic search.
-* **Context Integration:** Searches files based on user queries, retrieves relevant sections dynamically, and injects file context into prompts. Supports line-range retrieval.
-* **Lifecycle:** Files are loaded explicitly during the session, persist until manually cleared or the session ends, and do not pollute long-term memory. Optimized for development workflows.
+
+**File Ingestion**: 
+- Loads text, PDFs, code files
+- Chunks large files for processing
+- Creates embeddings for semantic search
+
+**Context Integration**: 
+- Searches files based on user queries
+- Retrieves relevant sections dynamically
+- Injects file context into prompts
+- Supports line-range retrieval
+
+**Lifecycle**: 
+- Files are loaded explicitly during the session
+- Persist until manually cleared or the session ends
+- Do not pollute long-term memory
+- Optimized for development workflows
 
 ---
 
-## 💬 Chat Engagement System
+# Chat Engagement System
 
-### Multi-Platform Chat Integration
+## Multi-Platform Chat Integration
+
 The `ChatHandler` manages live chat from multiple platforms:
-* **Platform Support:** YouTube live chat, Twitch chat, Discord channels.
-* **Unified message format** across platforms.
+- YouTube live chat
+- Twitch chat
+- Discord channels
+- Unified message format across platforms
 
-### Chat Engagement Logic
-* **Message Buffering:** Maintains platform-specific message buffers and tracks metadata.
-* **Engagement Decisions:**
-    * **Critical:** Direct bot mentions $\to$ immediate response
-    * **High:** Questions or multiple unengaged messages
-    * **Medium:** Natural conversation after threshold messages
-* Considers time since last engagement (cooldown).
-* Chat messages are ingested as raw events and processed through the cognitive pipeline.
+## Chat Engagement Logic
+
+**Message Buffering**: 
+- Maintains platform-specific message buffers
+- Tracks metadata
+
+**Engagement Decisions**:
+- **Critical**: Direct bot mentions → immediate response
+- **High**: Questions or multiple unengaged messages
+- **Medium**: Natural conversation after threshold messages
+- Considers time since last engagement (cooldown)
+- Chat messages are ingested as raw events and processed through the cognitive pipeline
 
 ---
 
-## ⚙️ Configuration System
+# Configuration System
 
-### Singleton Architecture
+## Singleton Architecture
+
 `Config` and `Logger` use a singleton pattern to ensure consistent state and prevent configuration drift.
 
-### Dynamic Control Variables
+## Dynamic Control Variables
+
 The `ControlManager` handles runtime feature toggles:
-* **Control Categories:** Feature Flags, Logging Controls, Tool Controls.
-* **Special Handling:**
-    * **Continuous Thinking Toggle:** Starts/stops cognitive loop manager, preserves thought buffer state.
-    * **Logging Control Toggle:** Updates `Config` singleton directly, changes take effect immediately.
-    * **Tool Toggle:** Notifies tool manager of state change, starts/stops tool if supported.
+
+**Control Categories**: 
+- Feature Flags
+- Logging Controls
+- Tool Controls
+
+**Special Handling**:
+- **Continuous Thinking Toggle**: Starts/stops cognitive loop manager, preserves thought buffer state
+- **Logging Control Toggle**: Updates `Config` singleton directly, changes take effect immediately
+- **Tool Toggle**: Notifies tool manager of state change, starts/stops tool if supported
 
 ---
 
-## 🛡️ Content Filtering
+# Content Filtering
 
-### Centralized Filtering Architecture
+## Centralized Filtering Architecture
+
 All content filtering occurs at single entry/exit points:
 
-* **Input Filtering (`AICore.process_user_message`):** Applied before any cognitive processing. Removes harmful patterns, spam, exploits, and normalizes empty messages.
-* **Output Filtering (`AICore.process_user_message`):** Applied after response generation is complete. Removes emoji, filters inappropriate content, and cleans formatting artifacts.
+**Input Filtering** (`AICore.process_user_message`): 
+- Applied before any cognitive processing
+- Removes harmful patterns, spam, exploits
+- Normalizes empty messages
 
-> **Critical Design:** No filtering in intermediate stages. Response generators and thought processors work with clean, filtered data.
+**Output Filtering** (`AICore.process_user_message`): 
+- Applied after response generation is complete
+- Removes emoji, filters inappropriate content
+- Cleans formatting artifacts
+
+[Warning] **Critical Design**: No filtering in intermediate stages. Response generators and thought processors work with clean, filtered data.
 
 ---
 
-## 📝 Logging System
+# Logging System
 
-### Centralized Logging Controls
+## Centralized Logging Controls
+
 All logging decisions are made in the `Logger` singleton based on control variables in `Config`:
-* `LOG_TOOL_EXECUTION`
-* `LOG_PROMPT_CONSTRUCTION`
-* `LOG_RESPONSE_PROCESSING`
-* `LOG_SYSTEM_INFORMATION`
-* `SHOW_CHAT`
-* **Message Categorization:** Each log call is tagged with a `MessageType` which determines if the message logs.
-* **Critical Feature:** Logger checks the `Config` singleton at log time, enabling real-time logging control without restart.
+- `LOG_TOOL_EXECUTION`
+- `LOG_PROMPT_CONSTRUCTION`
+- `LOG_RESPONSE_PROCESSING`
+- `LOG_SYSTEM_INFORMATION`
+- `SHOW_CHAT`
+
+**Message Categorization**: Each log call is tagged with a `MessageType` which determines if the message logs.
+
+**Critical Feature**: Logger checks the `Config` singleton at log time, enabling real-time logging control without restart.
 
 ---
 
-## 🔄 Data Flow Summary
+# Data Flow Summary
 
-### Typical Processing Flow
-1.  **Input Arrives:** User message, chat activity, tool result, or timer event. Filtered through input filter and ingested into `ThoughtBuffer` as a raw event.
-2.  **Cognitive Processing:** Cognitive loop detects pending event. `ThoughtProcessor` generates interpretation, which is added to the buffer with priority. Tool actions are identified and queued.
-3.  **Tool Execution:** `ToolManager` validates and `ActionStateManager` registers. Tool executes asynchronously. Result is injected back into `ThoughtBuffer`.
-4.  **Response Decision:** `ThoughtBuffer` evaluates accumulated state (priority, unresponsive count, timing). If `should_speak` is `True`, proceeds to generation.
-5.  **Response Generation:** `ResponseGenerator` synthesizes responsive output using the thought chain and memory context.
-6.  **Output Processing:** Response is filtered through the output filter, added to `ThoughtBuffer` as a response echo, and routed to the TTS system.
+## Typical Processing Flow
 
----
+1. **Input Arrives**: User message, chat activity, tool result, or timer event. Filtered through input filter and ingested into `ThoughtBuffer` as a raw event.
 
-## ✨ Key Design Principles
-* **Separation of Concerns:** Thoughts are internal, responses are external. Memory retrieval/storage and tool execution/instruction are isolated.
-* **Event-Driven Architecture:** Raw events trigger thought generation. Tool results feed back as events. Asynchronous execution.
-* **State Immutability:** Thought buffer is append-only. Thoughts are never modified after creation, ensuring a clear audit trail.
-* **Prompt Construction Philosophy:** Modular, context-aware, token budget management, and personality consistency.
-* **Continuous Operation:** Processing happens as fast as hardware allows with natural pacing; rate limiting only for external outputs (speech).
+2. **Cognitive Processing**: Cognitive loop detects pending event. `ThoughtProcessor` generates interpretation, which is added to the buffer with priority. Tool actions are identified and queued.
+
+3. **Tool Execution**: `ToolManager` validates and `ActionStateManager` registers. Tool executes asynchronously. Result is injected back into `ThoughtBuffer`.
+
+4. **Response Decision**: `ThoughtBuffer` evaluates accumulated state (priority, unresponsive count, timing). If `should_speak` is `True`, proceeds to generation.
+
+5. **Response Generation**: `ResponseGenerator` synthesizes responsive output using the thought chain and memory context.
+
+6. **Output Processing**: Response is filtered through the output filter, added to `ThoughtBuffer` as a response echo, and routed to the TTS system.
 
 ---
 
-## 🌐 Integration Points
+# Key Design Principles
+
+- **Separation of Concerns**: Thoughts are internal, responses are external. Memory retrieval/storage and tool execution/instruction are isolated.
+- **Event-Driven Architecture**: Raw events trigger thought generation. Tool results feed back as events. Asynchronous execution.
+- **State Immutability**: Thought buffer is append-only. Thoughts are never modified after creation, ensuring a clear audit trail.
+- **Prompt Construction Philosophy**: Modular, context-aware, token budget management, and personality consistency.
+- **Continuous Operation**: Processing happens as fast as hardware allows with natural pacing; rate limiting only for external outputs (speech).
+
+---
+
+# Integration Points
 
 | External System | Agent Interaction |
-| :--- | :--- |
+|:----------------|:------------------|
 | **Text-to-Speech (TTS)** | Receives final response text. Agent marks response echo in buffer immediately. TTS plays asynchronously, non-blocking. |
 | **GUI Interface** | Receives log callbacks. Updates control states via `ControlManager`. Loads session files via `SessionFileManager`. Displays statistics. |
 | **Discord/Twitch/YouTube** | Chat messages flow through `ChatHandler` with a unified message format. Response routing handled by the integration layer. |
+
+---
 
 This system represents a sophisticated agentic architecture balancing continuous autonomous cognition with selective, natural communication—designed for coherent, context-aware AI assistants that think continuously but speak purposefully.

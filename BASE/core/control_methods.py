@@ -114,10 +114,10 @@ class ControlManager:
                 self.logger.system(
                     f"[Control Manager] Tool controls: {', '.join(sorted(self._tool_control_vars))}"
                 )
-            else:
-                self.logger.warning(
-                    "[Control Manager] No tool controls discovered - tools won't start on toggle"
-                )
+            # else:
+            #     self.logger.warning(
+            #         "[Control Manager] No tool controls discovered - tools won't start on toggle"
+            #     )
         
         except Exception as e:
             self.logger.error(f"[Control Manager] Failed to discover tool controls: {e}")

@@ -24,6 +24,8 @@ class Pyttsx3Backend(TTSInterface):
     
     FIXED: Imports controls module directly to read live VOICE_VOLUME value
     """
+
+    __slots__ = ('_pyttsx3_available',)
     
     def __init__(self, controls_module=None):
         """
