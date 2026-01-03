@@ -1,7 +1,23 @@
 # Agentic AI System Architecture
 
 ## Overview
-This is a sophisticated agentic AI system built on Ollama that implements a two-stage cognitive architecture separating internal thinking from external communication. The agent maintains continuous autonomous thought, manages multiple memory tiers, executes tools dynamically, and generates natural responsive (spoken) responses.
+This is a sophisticated agentic AI system built on Ollama that implements a two-stage cognitive architecture separating internal thinking from external communication. The agent maintains continuous autonomous thought, manages multiple memory tiers, executes tools dynamically, and generates natural spoken responses when it decides to speak. 
+
+**Features of this agentic system:**
+- Completely and easily customizable personality
+- Persistent memory similar to a human's that can recall a day's events even after years have passed.
+- Agent's cognition runs continuously, with or without input and decides when to speak
+- Interact with either text or voice
+- Modular tools can be added or removed without modifying the agent, simply drop the new tool directory in or remove an existing one
+- Flexible architecture can run on many types of devices and hardware configurations with little modification (mobile version runs on smartphone/tablet)
+- Memory can persist between devices using a private GitHub repo to sync agent memory
+- Content filters replace profanity or undesired words with [FILTERED], but do not block the rest of the content
+- Universal kill command key phrase (immediately shuts down entire system when it finds this phrase in ANY source of incoming data)
+
+**Example of use:**
+The agent's avatar lives in the corner of the screen while the user is gaming, coding, or doing other tasks. When left alone, the agent may occasionally speak to see if anyone is listening or run background tasks like researching topics related to interactions with the user. When engaged, the agent observes what is happening on the screen and uses any available tool results to form thoughts and responses to the users. When tools are installed and enabled (internet search, file uploads, coding tool, reminders, calendar, etc.) the agent automatically uses these however and whenever it decides to. The user has complete control over these features and may toggle individual tools, agent voice, voice input, background processing, memory retention, and content filters at any time. The user may toggle these features, modify agent prompts, limit the agent's processing speed, adjust the agent's voice volume, and edit the system files all while the agent runs without having to restart the agent and the system updates automatically.
+
+**Important note:** This agent learns and becomes better over time as it retains memories of interactions with the user. On first uses, the agent will have all functionality, but its true use and behavior emerges after a while interacting with the user; recalling relationships, important events, and others it has interacted with over time and setting reminders and making plans for the future.
 
 **This system was created by @KryptykBioz**
 
@@ -12,7 +28,7 @@ This is a sophisticated agentic AI system built on Ollama that implements a two-
 - YouTube: [@KryptykBioz](https://www.youtube.com/@KryptykBioz)
 - Twitch: [Kryptykbioz](https://www.twitch.tv/kryptykbioz)
 
-**This framework was created in my free time without formal training. As I am self-taught, self-funded, and created this for the public, any contribution to my work is greatly appreciated (and much needed!). Consider making a small donation, subscribing to my channels, or liking some of my videos to keep me going as I continue creating these kinds of agents for others to use. Thank you!**
+**This framework was created in my free time without formal training (current college student). As I am self-taught when it comes to AI, self-funded, and created this for the public, any contribution to my work is greatly appreciated (and much needed!). Consider making a small donation, subscribing to my channels, or liking some of my videos to keep me going as I continue creating these kinds of agents for others to use. Thank you!**
 
 ---
 
@@ -36,6 +52,9 @@ This is a sophisticated agentic AI system built on Ollama that implements a two-
 11. [Data Flow Summary](#data-flow-summary)
 12. [Key Design Principles](#key-design-principles-1)
 13. [Integration Points](#integration-points)
+
+### Usage Instructions
+14. [General Instructions](#usage-guide)
 
 ---
 
@@ -1193,6 +1212,16 @@ All logging decisions are made in the `Logger` singleton based on control variab
 | **Text-to-Speech (TTS)** | Receives final response text. Agent marks response echo in buffer immediately. TTS plays asynchronously, non-blocking. |
 | **GUI Interface** | Receives log callbacks. Updates control states via `ControlManager`. Loads session files via `SessionFileManager`. Displays statistics. |
 | **Discord/Twitch/YouTube** | Chat messages flow through `ChatHandler` with a unified message format. Response routing handled by the integration layer. |
+
+---
+
+# Usage Guide
+
+- **Starting the Agent**: Read the SETUP.md file in the project root for installation and setup instructions
+- **Personalizing Your Agent**: Modify the personality and controls of your agent in the following files: bot_info.py, config.json, controls.py, personality_prompt_parts.py
+- **Personalizing the system behavior**: If you are more familiar with prompting or would just like to experiment with your agent's behavior, the prompts are constructed of modular prompt parts stored in separate mode directories in the BASE/core directory. Each different mode of this system has its own _parts file and constructor, so modes may be modified without affecting the others.
+- **Updating**: As the agent is personalized exclusively in the personality/ directory and this is where all of your agents memories are stored, simply replace the BASE/ directory when updating to newer released versions. The personality/ directory of the project is only modified when absolutely necessary to avoid breaking changes. When updates are made to the project's personality/ directory, either compare to the old and transfer the changes over or reimplement your old files back in. This ensures your agent's memories and configuration remain intact and are not overwritten.
+- **Important!!!**: If you are unfamiliar with programming or Python in general, only modify the files in the Personality/ directory. Always remember to back up your files to be able to revert back easily!
 
 ---
 

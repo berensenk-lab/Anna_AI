@@ -83,19 +83,26 @@ python copy_gpu_packages.py
 
 # 7. Configure .env file
 copy .env.example .env
-# Edit .env with your settings
-# Ensure TTS_OUTPUT_DEVICE=CABLE Input (VB-Audio Virtual Cable)
+# Edit .env with Ollama optimization settings (see Environment Configuration section)
 
-# 8. Launch
+# 8. Configure agent
+# Edit personality/bot_info.py with your settings:
+#   - agentname = "Anna"
+#   - vb_cable_name = "CABLE Input"
+#   - group_chat_port = 54321 (unique for each agent)
+# Edit config.json for advanced settings
+
+# 9. Launch
 .\gui_start.bat
 
-# 9. Configure Warudo for lip sync
+# 10. Configure Warudo for lip sync
 # Warudo → Settings → Audio → Lip Sync Input: CABLE Output (VB-Audio)
+# Warudo → Settings → Network → WebSocket Server: Enable (Port 19190)
 
-# 10. Optional: Load Anna.vrm into Warudo
+# 11. Optional: Load Anna.vrm into Warudo
 # File location: Anna_AI\personality\avatar\Anna.vrm
 
-# 11. Optional: Install additional tools
+# 12. Optional: Install additional tools
 # Repository: https://github.com/KryptykBioz/AI_Agent_Tools
 git clone https://github.com/KryptykBioz/AI_Agent_Tools.git
 # Follow tool-specific installation instructions
@@ -105,11 +112,88 @@ Continue reading for detailed step-by-step instructions.
 
 ---
 
+## ENVIRONMENT CONFIGURATION
+
+### .env File Setup
+
+The agent uses a `.env` file for Ollama performance optimization and system configuration.
+
+**Create .env file**:
+
+```batch
+cd Anna_AI
+copy .env.example .env
+```
+
+**Edit .env with optimized settings**:
+
+```bash
+# Ollama Performance Optimization for Autonomous Agent
+OLLAMA_NUM_PARALLEL=1
+OLLAMA_CONTEXT_LENGTH=8192
+OLLAMA_FLASH_ATTENTION=true
+CUDA_VISIBLE_DEVICES=0
+OLLAMA_GPU_OVERHEAD=1024
+OLLAMA_KEEP_ALIVE=24h                # Keep models loaded for 24 hours
+OLLAMA_LOAD_TIMEOUT=5m               # Increased for initial load
+OLLAMA_MAX_QUEUE=128
+OLLAMA_NUM_THREADS=6
+
+OLLAMA_MAX_LOADED_MODELS=2           # Allow both models
+OLLAMA_CONCURRENT_REQUESTS=1         # But only one request at a time
+
+# Additional optimizations
+OLLAMA_ORIGINS=*                     # Allow API access
+OLLAMA_DEBUG=false                   # Disable unless debugging
+
+# Temperature settings for different cognitive modes
+OLLAMA_TEMPERATURE_ACTION=0.2        # More deterministic for actions
+OLLAMA_TEMPERATURE_COGNITIVE=0.6     # Balanced for thinking
+OLLAMA_TEMPERATURE_RESPONSE=0.9      # More creative for responses 
+```
+
+**Key Settings Explained**:
+
+| Setting | Value | Purpose |
+|---------|-------|---------|
+| `OLLAMA_KEEP_ALIVE` | 24h | Keeps models loaded in memory for fast responses |
+| `OLLAMA_NUM_PARALLEL` | 1 | Single request processing for autonomous agent |
+| `OLLAMA_CONTEXT_LENGTH` | 8192 | Maximum context window size |
+| `OLLAMA_FLASH_ATTENTION` | true | Enables faster attention computation |
+| `CUDA_VISIBLE_DEVICES` | 0 | Use first GPU (change if multi-GPU setup) |
+| `OLLAMA_MAX_LOADED_MODELS` | 2 | Load multiple models simultaneously |
+
+**Performance Tuning**:
+
+For lower VRAM GPUs (8GB):
+```bash
+OLLAMA_CONTEXT_LENGTH=4096           # Reduce context window
+OLLAMA_GPU_OVERHEAD=512              # Reduce GPU overhead
+OLLAMA_MAX_LOADED_MODELS=1           # Load one model at a time
+```
+
+For high-end GPUs (16GB+):
+```bash
+OLLAMA_CONTEXT_LENGTH=16384          # Increase context window
+OLLAMA_GPU_OVERHEAD=2048             # Increase GPU overhead
+OLLAMA_MAX_LOADED_MODELS=3           # Load multiple models
+```
+
+**Apply .env Changes**:
+
+```batch
+# Restart Ollama service to apply changes
+net stop ollama
+net start ollama
+```
+
+---
+
 ## PYTHON INSTALLATION
 
 ### Step 1: Download Python 3.11.9
 
-**[Warning] Critical Version Requirement**: This system requires Python **3.11.9** specifically. Newer versions may have compatibility issues with TTS and transformers.
+[Warning] Critical Version Requirement: This system requires Python **3.11.9** specifically. Newer versions may have compatibility issues with TTS and transformers.
 
 1. Visit: https://www.python.org/downloads/release/python-3119/
 2. Scroll to "Files" section
@@ -119,7 +203,7 @@ Continue reading for detailed step-by-step instructions.
 ### Step 2: Install Python
 
 1. Run the installer as Administrator
-2. **[Critical]** Check "Add Python 3.11 to PATH"
+2. [Critical] Check "Add Python 3.11 to PATH"
 3. Click "Customize installation"
 4. Ensure these options are selected:
    - pip
@@ -241,7 +325,7 @@ After restart:
 
 ### Step 2: Install Tala Virtual Audio Cables (Optional)
 
-**[Note]**: Only install if running multiple agents simultaneously. Single agent users can skip this step.
+[Note]: Only install if running multiple agents simultaneously. Single agent users can skip this step.
 
 **Download Tala Cables**:
 
@@ -298,534 +382,190 @@ Anna_AI will programmatically route audio to virtual cables. Manual configuratio
 ```
 1. Open "App volume and device preferences"
 2. Find "Anna_AI" or "python.exe" (when agent is running)
-3. Output: Select "CABLE Input (VB-Audio Virtual Cable)"
-4. Keep input as physical microphone
+3. Set Output: CABLE Input (VB-Audio Virtual Cable)
+4. Agent will automatically handle routing
 ```
 
-**Warudo Audio Input**:
+### Step 4: Configure Agent Audio Settings
 
-Configure Warudo to receive from virtual cable:
+**Edit bot_info.py**:
 
-```
-1. Open Warudo
-2. Settings → Audio
-3. Lip Sync Input Device: "CABLE Output (VB-Audio Virtual Cable)"
-4. Enable "Lip Sync"
-5. Adjust sensitivity (start with 50%)
+```python
+# VB-Cable for audio output (use exact device name)
+vb_cable_name = "CABLE Input"
 ```
 
-### Step 4: Test Virtual Cable Setup
+**For multiple agents**:
+```python
+# Agent 1 (Anna_AI)
+vb_cable_name = "CABLE Input"
 
-**Test Cable Routing**:
+# Agent 2
+vb_cable_name = "CABLE-A Input"
 
+# Agent 3
+vb_cable_name = "CABLE-B Input"
+```
+
+**Verify cable names match Windows settings**:
 ```batch
-# Activate Anna_AI environment
-cd C:\Projects\Anna_AI
-.\venv\Scripts\activate
-
-# Run audio test script (if available)
-python test_audio_routing.py
-
-# Or test manually with TTS
-python -c "from TTS.api import TTS; import sounddevice as sd; tts = TTS('tts_models/en/ljspeech/tacotron2-DDC'); wav = tts.tts('Testing virtual cable'); sd.play(wav, 22050, device='CABLE Input'); sd.wait()"
+# List all audio devices
+python -c "import sounddevice as sd; print(sd.query_devices())"
 ```
-
-**Expected Behavior**:
-- No audio plays through speakers
-- Warudo's VU meter shows audio input
-- Avatar's mouth moves with speech
-- No errors in console
-
-**Troubleshooting Test**:
-
-If audio plays through speakers:
-```python
-# List audio devices
-import sounddevice as sd
-print(sd.query_devices())
-
-# Find CABLE Input index
-# Set as output device
-sd.default.device = [None, CABLE_INDEX]
-```
-
-### Virtual Cable Configuration in Agent
-
-**Agent Audio Configuration**:
-
-Anna_AI should have virtual cable settings in config file. Check `personality/config.py` or `.env`:
-
-```python
-# Audio device configuration
-AUDIO_OUTPUT_DEVICE = "CABLE Input (VB-Audio Virtual Cable)"
-AUDIO_INPUT_DEVICE = None  # Use default microphone
-
-# Alternative: Use device index
-AUDIO_OUTPUT_INDEX = 5  # Find with sounddevice.query_devices()
-```
-
-**Environment Variables** (`.env`):
-
-```env
-# Virtual Cable Settings
-TTS_OUTPUT_DEVICE=CABLE Input (VB-Audio Virtual Cable)
-TTS_SAMPLE_RATE=22050
-ENABLE_LIP_SYNC=true
-
-# Warudo Integration
-WARUDO_LIP_SYNC_SOURCE=CABLE Output (VB-Audio Virtual Cable)
-```
-
-**Manual Device Selection**:
-
-If agent doesn't auto-detect cable:
-
-```python
-import sounddevice as sd
-
-# List all devices
-devices = sd.query_devices()
-for i, device in enumerate(devices):
-    print(f"{i}: {device['name']}")
-
-# Set output to CABLE Input
-cable_index = 5  # Your CABLE Input index
-sd.default.device = [None, cable_index]
-```
-
-### Multiple Agent Setup
-
-**Cable Assignment Strategy**:
-
-```
-Agent Directory          Virtual Cable              Warudo Instance
-────────────────────────────────────────────────────────────────────
-Anna_AI/                 CABLE Input/Output         Warudo (Port 7890)
-SecondAgent_AI/          CABLE-A Input/Output       Warudo (Port 7891)
-ThirdAgent_AI/           CABLE-B Input/Output       Warudo (Port 7892)
-```
-
-**Configure Each Agent**:
-
-**Anna_AI (`.env`)**:
-```env
-TTS_OUTPUT_DEVICE=CABLE Input (VB-Audio Virtual Cable)
-WARUDO_PORT=7890
-```
-
-**SecondAgent_AI (`.env`)**:
-```env
-TTS_OUTPUT_DEVICE=CABLE-A Input (Tala Virtual Cable)
-WARUDO_PORT=7891
-```
-
-**ThirdAgent_AI (`.env`)**:
-```env
-TTS_OUTPUT_DEVICE=CABLE-B Input (Tala Virtual Cable)
-WARUDO_PORT=7892
-```
-
-**Configure Each Warudo Instance**:
-
-```
-Warudo Instance 1:
-- Port: 7890
-- Lip Sync Input: CABLE Output (VB-Audio)
-- Character: Anna.vrm
-
-Warudo Instance 2:
-- Port: 7891
-- Lip Sync Input: CABLE-A Output (Tala)
-- Character: SecondAgent.vrm
-
-Warudo Instance 3:
-- Port: 7892
-- Lip Sync Input: CABLE-B Output (Tala)
-- Character: ThirdAgent.vrm
-```
-
-**Launch Multiple Agents**:
-
-```batch
-# Terminal 1: Anna_AI
-cd C:\Projects\Anna_AI
-.\venv\Scripts\activate
-python main.py
-
-# Terminal 2: SecondAgent_AI
-cd C:\Projects\SecondAgent_AI
-.\venv\Scripts\activate
-python main.py
-
-# Terminal 3: ThirdAgent_AI
-cd C:\Projects\ThirdAgent_AI
-.\venv\Scripts\activate
-python main.py
-```
-
-### Virtual Cable Management
-
-**View Active Cables**:
-
-```
-Control Panel → Sound → Playback (tab)
-Should show:
-- CABLE Input (VB-Audio Virtual Cable)
-- CABLE-A Input (Tala Virtual Cable)
-- CABLE-B Input (Tala Virtual Cable)
-
-Control Panel → Sound → Recording (tab)
-Should show:
-- CABLE Output (VB-Audio Virtual Cable)
-- CABLE-A Output (Tala Virtual Cable)
-- CABLE-B Output (Tala Virtual Cable)
-```
-
-**Disable Unused Cables**:
-
-To reduce system overhead when not using multiple agents:
-
-```
-1. Control Panel → Sound
-2. Right-click unused cable
-3. Select "Disable"
-4. Re-enable when needed
-```
-
-**Uninstall Cables**:
-
-**VB-Audio Cable**:
-```
-1. Navigate to installation folder
-2. Run VBCABLE_Setup_x64.exe as Administrator
-3. Click "Remove Driver"
-4. Restart computer
-```
-
-**Tala Cables**:
-```
-1. Control Panel → Programs → Uninstall a program
-2. Find "Tala Virtual Audio Cables"
-3. Click "Uninstall"
-4. Restart computer
-```
-
-### Common Virtual Cable Issues
-
-**Issue**: No audio in Warudo, avatar doesn't lip sync
-
-**Solutions**:
-1. Verify cable installation:
-   ```
-   Control Panel → Sound → Playback
-   Ensure CABLE Input shows "Working"
-   ```
-
-2. Check agent output device:
-   ```python
-   import sounddevice as sd
-   print(sd.query_devices())
-   # Verify CABLE Input is listed
-   ```
-
-3. Verify Warudo input setting:
-   ```
-   Warudo → Settings → Audio → Lip Sync Input Device
-   Must match agent's output cable
-   ```
-
-4. Test cable directly:
-   ```
-   Play audio to CABLE Input in system settings
-   Should see activity in CABLE Output
-   ```
-
-**Issue**: Audio plays through speakers instead of cable
-
-**Solution**: Force device selection in code:
-```python
-import sounddevice as sd
-
-# Find CABLE Input index
-devices = sd.query_devices()
-cable_idx = None
-for i, dev in enumerate(devices):
-    if "CABLE Input" in dev['name'] and dev['max_output_channels'] > 0:
-        cable_idx = i
-        break
-
-# Set as default output
-sd.default.device = [None, cable_idx]
-```
-
-**Issue**: Multiple agents conflict or audio cuts out
-
-**Solution**: Ensure each agent uses different cable:
-```
-Agent 1 → CABLE Input/Output
-Agent 2 → CABLE-A Input/Output
-Agent 3 → CABLE-B Input/Output
-```
-
-**Issue**: Crackling or distorted audio through virtual cable
-
-**Solutions**:
-1. Increase buffer size:
-   ```python
-   sd.default.latency = 'high'
-   sd.default.blocksize = 2048
-   ```
-
-2. Match sample rates:
-   ```
-   Agent TTS: 22050 Hz
-   Virtual Cable: 22050 Hz (set in Windows)
-   Warudo Input: 22050 Hz
-   ```
-
-3. Reduce CPU load:
-   - Lower Whisper model size
-   - Reduce Ollama context window
-   - Lower Warudo graphics quality
-
-**Issue**: Virtual cable not detected after Windows update
-
-**Solution**: Reinstall driver:
-```
-1. Uninstall current cable driver
-2. Restart computer
-3. Reinstall from original installer
-4. Restart again
-```
-
-### Performance Considerations
-
-**CPU Impact**:
-- Each virtual cable: ~1-2% CPU overhead
-- Negligible for modern CPUs
-- Impact increases with number of active cables
-
-**Latency**:
-- Virtual cable latency: <10ms
-- Total lip sync latency: 50-100ms (acceptable)
-- Lower buffer size = less latency, higher CPU usage
-
-**Optimization Tips**:
-- Disable unused cables when not needed
-- Use single cable for single agent
-- Match sample rates across chain
-- Increase buffer for stability over latency
-
-### Alternative Audio Routing
-
-**VoiceMeeter** (Advanced Users):
-
-VoiceMeeter provides more routing options but is more complex:
-- Download: https://vb-audio.com/Voicemeeter/
-- Supports mixing multiple sources
-- Requires manual configuration
-- Recommended only for advanced setups
-
-**Not Recommended**:
-- Windows Stereo Mix (insufficient isolation)
-- Third-party screen recorders (high latency)
-- Hardware loopback cables (defeats purpose)
 
 ---
 
 ## AGENT INSTALLATION
 
-### Project Source
+### Step 1: Clone Repository
 
-Anna_AI is available on GitHub: **https://github.com/KryptykBioz/Anna_AI**
-
-The repository includes:
-- Complete agent framework code
-- Pre-configured personality system
-- Anna character avatar files (`personality/avatar/`)
-- Warudo integration blueprints
-- Example configurations and scripts
-
-**Optional Tools Repository**: https://github.com/KryptykBioz/AI_Agent_Tools
-- Additional functionality and integrations
-- Extended features and utilities
-- Community-contributed extensions
-- Installed separately (see [Optional Tools and Extensions](#optional-tools-and-extensions))
-
-### Step 1: Obtain Agent Files
-
-**Method 1: Download ZIP** (Recommended)
 ```batch
-# Download ZIP from GitHub
-# https://github.com/KryptykBioz/Anna_AI/archive/refs/heads/main.zip
-
-# Extract to C:\Projects\Anna_AI\
-# Verify directory structure is intact
-```
-
-**Method 2: Git Clone**
-```batch
-# Navigate to your projects directory
-cd C:\Projects
-
-# Clone from GitHub
+cd C:\
 git clone https://github.com/KryptykBioz/Anna_AI.git
 cd Anna_AI
-
-# Verify avatar files are present
-dir personality\avatar
-# Should show: anna_model.vroid, Anna.vrm, and JSON files
 ```
 
 ### Step 2: Create Virtual Environment
 
 ```batch
-# Ensure you're in the agent directory
-cd Anna_AI
-
-# Create virtual environment
 python -m venv venv
-
-# Activate virtual environment
 .\venv\Scripts\activate
-
-# Your prompt should now show (venv)
 ```
 
-**[Note]**: Always activate the virtual environment before running the agent (automatic with START.bat) or installing packages.
+Expected output:
+```
+(venv) C:\Anna_AI>
+```
 
-### Step 3: Upgrade Pip
+### Step 3: Install Dependencies
 
 ```batch
+# Upgrade pip
 python -m pip install --upgrade pip
-```
 
-### Step 4: Install Base Dependencies
-
-```batch
-# Install all requirements except GPU packages
+# Install requirements
 pip install -r requirements.txt
-```
 
-This installs:
-- Core AI/ML packages (numpy, pillow)
-- Audio processing (sounddevice, soundfile, pyttsx3)
-- Speech recognition (faster-whisper, vosk)
-- TTS system (TTS package)
-- Discord integration (discord.py)
-- Web utilities (requests, beautifulsoup4)
-- GUI components (pygame, PyAutoGUI)
-- Utilities (colorama, python-dotenv)
-
-**Installation time**: 5-10 minutes depending on internet speed.
-
-**Optional Tools**: Additional functionality (screen capture, automation, etc.) can be installed from the AI_Agent_Tools repository. See [Optional Tools and Extensions](#optional-tools-and-extensions) for details.
-
-### Step 5: Install Locked Transformers Version
-
-```batch
-# [Critical] Install specific transformers version
+# Install specific transformers version
 pip install transformers==4.38.2
 ```
 
-**[Warning]**: Do NOT upgrade transformers beyond 4.38.2. Newer versions break XTTS compatibility due to BeamSearchScorer API changes.
+Installation time: 10-20 minutes depending on internet speed.
 
-### Step 6: Configure Environment Variables
+### Step 4: Configure Agent
 
-```batch
-# Copy example environment file
-copy .env.example .env
+**Primary Configuration (personality/bot_info.py)**:
 
-# Edit .env with your preferred text editor
-notepad .env
+```python
+# Bot and User Information
+agentname = "Anna"  # Change to your agent's name
+username = "Sir"  # How the agent addresses you
+game_username = "Player"  # In-game username reference
+
+# Model Configuration (using Ollama)
+thoughtmodel = "gemma3:12b-it-q4_K_M"
+responsemodel = "gemma3:12b-it-q4_K_M"
+toolmodel = "gemma3:12b-it-q4_K_M"
+actionmodel = "gemma3:12b-it-q4_K_M"
+visionmodel = "gemma3:12b-it-q4_K_M"
+embedmodel = "nomic-embed-text:latest"
+
+# Voice settings
+voiceIndex = 1  # TTS voice selection
+
+# VB-Cable configuration
+vb_cable_name = "CABLE Input"  # Must match Windows device name exactly
+
+# Group chat port (unique for each agent)
+group_chat_port = 54321  # Change to 54322, 54323, etc. for additional agents
 ```
 
-Required configurations in `.env`:
-```env
-# Discord Bot Token (if using Discord integration)
-DISCORD_TOKEN=your_discord_bot_token_here
+**Advanced Configuration (config.json)**:
 
-# API Keys (if using external services)
-OPENAI_API_KEY=your_key_here
-ANTHROPIC_API_KEY=your_key_here
+Key sections to configure:
 
-# Agent Settings
-AGENT_NAME=Anna
-VOICE_MODEL=tts_models/multilingual/multi-dataset/xtts_v2
-WHISPER_MODEL=medium
-
-# Virtual Audio Cable (REQUIRED for lip sync)
-TTS_OUTPUT_DEVICE=CABLE Input (VB-Audio Virtual Cable)
-ENABLE_LIP_SYNC=true
-TTS_SAMPLE_RATE=22050
-
-# GPU Settings
-CUDA_VISIBLE_DEVICES=0
-TORCH_CUDA_ARCH_LIST=12.0
-
-# Performance
-MAX_MEMORY_GB=8
-ENABLE_GPU=true
+```json
+{
+  "ollama": {
+    "endpoint": "http://localhost:11434",
+    "temperature": 0.85,
+    "max_tokens": 1000,
+    "num_ctx": 3000
+  },
+  "bot": {
+    "name": "Anna",
+    "username": "Master"
+  },
+  "warudo": {
+    "websocket_url": "ws://127.0.0.1:19190",
+    "enabled": true,
+    "auto_connect": true
+  },
+  "features": {
+    "use_warudo": true,
+    "use_sound_effects": true
+  }
+}
 ```
 
-### Understanding Anna's Avatar Files
+**Control Variables (personality/controls.py)**:
 
-Anna_AI includes pre-configured avatar assets in `personality\avatar\`:
+Basic settings:
 
-**Character Files**:
-```
-anna_model.vroid
-├── Purpose: Editable VRoid Studio project
-├── Use: Open in VRoid Studio to modify appearance
-├── Contains: Hair, face, outfit, expression configurations
-└── Size: ~50-100MB
+```python
+# Core functionality
+ENABLE_CONTINUOUS_THINKING = True
+AUTO_RESPOND = False
+USE_STREAMING = True
 
-Anna.vrm
-├── Purpose: Exported VRM ready for Warudo
-├── Use: Import directly into Warudo (no modification needed)
-├── Contains: Optimized 3D model with expressions and physics
-└── Size: ~20-50MB
-```
+# Memory systems
+USE_BASE_MEMORY = True
+USE_LONG_MEMORY = True
+USE_SHORT_MEMORY = True
+SAVE_MEMORY = True
+MEMORY_LENGTH = 25
 
-**Warudo Configuration Files** (if included):
-```
-warudo_blueprint.json
-├── Purpose: Scene logic and behavior programming
-├── Use: Import into Warudo Blueprints tab
-├── Contains: Animation triggers, expression mappings, event handlers
-└── Configuration: Pre-set for Anna's personality
+# Avatar features
+AVATAR_SPEECH = True
+USE_CUSTOM_VOICE = True
 
-warudo_animations.json
-├── Purpose: Animation sequences and timings
-├── Use: Import into Character Animations tab
-├── Contains: Idle behaviors, gestures, reaction animations
-└── Optimization: Tuned for natural movement
+# Volume controls
+VOICE_VOLUME = 1.0
+SOUND_EFFECT_VOLUME = 1.0
 ```
 
-**File Workflow**:
-```
-1. Want to modify appearance?
-   → Open anna_model.vroid in VRoid Studio
-   → Make changes
-   → Export new VRM
-   → Import to Warudo
+### Step 5: Multiple Agent Setup
 
-2. Want to use existing avatar?
-   → Import Anna.vrm directly to Warudo
-   → Skip VRoid Studio entirely
+For running multiple agents simultaneously:
 
-3. Want optimized animations?
-   → Load warudo_blueprint.json in Warudo
-   → Load warudo_animations.json in Warudo
-   → Animations sync with agent code
+**Agent 1 (Anna_AI)**:
+```python
+# bot_info.py
+agentname = "Anna"
+vb_cable_name = "CABLE Input"
+group_chat_port = 54321
 ```
 
-**Integration with Agent Code**:
-The Anna_AI agent references these configurations:
-- Expression IDs match Anna.vrm blend shapes
-- Animation names match warudo_animations.json
-- Blueprint triggers match agent event system
-- All pre-tested and calibrated together
+**Agent 2 (SecondAgent_AI)**:
+```python
+# bot_info.py
+agentname = "SecondAgent"
+vb_cable_name = "CABLE-A Input"
+group_chat_port = 54322
+```
+
+**Agent 3 (ThirdAgent_AI)**:
+```python
+# bot_info.py
+agentname = "ThirdAgent"
+vb_cable_name = "CABLE-B Input"
+group_chat_port = 54323
+```
+
+Each agent must have:
+- Unique `agentname`
+- Unique `vb_cable_name`
+- Unique `group_chat_port`
 
 ---
 
@@ -833,1161 +573,533 @@ The Anna_AI agent references these configurations:
 
 ### AI Agent Tools Repository
 
-Anna_AI supports optional tools and extensions that enhance functionality. These are maintained in a separate repository to keep the base installation lightweight.
+Extended functionality for specialized tasks.
 
-**Repository**: https://github.com/KryptykBioz/AI_Agent_Tools
-
-### What's Included
-
-The AI Agent Tools repository contains:
-Modular tool packages for additional API connectors and service integrations
-
-### Installation
-
-**Step 1: Clone Tools Repository**
+**Installation**:
 
 ```batch
-# Navigate to your projects directory
-cd C:\Projects
-
-# Clone the tools repository
+cd C:\
 git clone https://github.com/KryptykBioz/AI_Agent_Tools.git
-
-# Verify download
-dir AI_Agent_Tools
-```
-
-**Step 2: Review Available Tools**
-
-```batch
 cd AI_Agent_Tools
-
-# List available tools
-dir /b
-
-# Read the tools README
-type README.md
 ```
 
-### Tool Integration
+**Available Tools**:
+- Game integration modules
+- Advanced chat platform connectors
+- Custom voice models
+- Extended memory systems
+- Specialized vision models
 
-**Method 1: Direct Import**
+**Integration**:
 
-Copy tool modules to Anna_AI's tools/installed directory:
-```batch
-# Example: Copy screen capture tool
-xcopy "C:\Projects\AI_Agent_Tools\screen_capture" "C:\Projects\Anna_AI\BASE\tools\installed\screen_capture" /E /I /H /Y
+Follow tool-specific README files in each subdirectory. Most tools integrate by copying files to:
 ```
-
-### Tool Configuration
-
-Most tool-specific configuration is located in their internal config and information files
-
-
-### Updating Tools
-
-Keep tools repository updated separately from Anna_AI:
-
-```batch
-cd C:\Projects\AI_Agent_Tools
-git pull origin main
-
-# Review changelog
-type CHANGELOG.md
-
-# Update dependencies if needed
-pip install -r requirements.txt --upgrade
+Anna_AI/tools/installed/[tool_name]/
 ```
-
-### Tool Dependencies
-
-Some tools may require additional system packages
-
-### Tool Development
-
-To create custom tools:
-
-1. **Fork AI_Agent_Tools repository**
-2. **Create tool directory**:
-   ```
-   AI_Agent_Tools/
-   └── my_custom_tool/
-       ├── __init__.py
-       ├── tool_module.py
-       ├── requirements.txt
-       └── README.md
-   ```
-
-3. **Document tool**:
-   - Purpose and functionality
-   - Installation instructions
-   - Dependencies
-   - Configuration options
-   - Usage examples
-
-4. **Test with Anna_AI**:
-   ```batch
-   cd C:\Projects\Anna_AI
-   .\venv\Scripts\activate
-   python test_custom_tool.py
-   ```
-
-5. **Submit pull request** to share with community
-
-### Tool Support
-
-For tool-specific issues:
-- Check tool's README.md
-- Review AI_Agent_Tools repository issues
-- Ensure tool version compatibility with Anna_AI
-- Verify all dependencies installed
-
-For Anna_AI integration issues:
-- Check Anna_AI repository issues
-- Verify tool configuration in .env
-- Test tool in isolation before integration
 
 ---
 
 ## GPU PACKAGE SETUP (RTX 50-SERIES)
 
-### Understanding the RTX 50-Series Challenge
+[Critical] RTX 50-series GPUs require special PyTorch and transformers packages not available on PyPI.
 
-**Why can't we use pip for GPU packages?**
+### Option A: Copy from Working Installation (Recommended)
 
-The NVIDIA RTX 50-series (Blackwell architecture, compute capability sm_120) was released after most PyPI packages were built. Standard PyTorch wheels from PyPI only support up to sm_89 (RTX 40-series). Installing via pip will give you:
-- CPU-only PyTorch, OR
-- GPU build without sm_120 support (won't utilize your 50-series GPU)
-
-**Solutions**:
-1. **For derivative agents**: Copy pre-built packages from working Anna_AI installation
-2. **For first Anna_AI installation**: 
-   - Use Method 2 (Manual Copy) from another working 50-series system
-   - OR build PyTorch from source with sm_120 support
-   - OR use standard PyPI packages (RTX 40-series and older will work)
-
-**[Important]**: If this is your first Anna_AI installation on an RTX 50-series GPU and you don't have access to another working installation, you'll need to either:
-- Build PyTorch from source with CUDA 12.8+ and sm_120 support
-- Use a pre-built PyTorch wheel from community sources
-- Temporarily use CPU mode and upgrade GPU packages later
-
-For RTX 40/30-series users, skip to "RTX 40/30-Series Users" section below.
-
-### What Packages Need Copying?
-
-**Critical GPU Packages**:
-1. `torch/` and `torch-*.dist-info/` - Custom PyTorch with sm_120 support
-2. `torchaudio/` and `torchaudio-*.dist-info/` - Audio processing on GPU
-3. `torchvision/` and `torchvision-*.dist-info/` - Vision models support
-4. `ctranslate2/` and `ctranslate2-*.dist-info/` - **[Critical]** Enables Whisper int8 GPU inference
-5. All `nvidia-*` folders - CUDA runtime libraries (cublas, cudnn, etc.)
-6. `pyaudio/` and `PyAudio-*.dist-info/` - Custom Windows wheel (if available)
-
-### Method 1: Automated Copy Script (Recommended)
-
-**[Note]**: The `copy_gpu_packages.py` script may be included in Anna_AI repository. If not present, use Method 2 (Manual Copy) below.
+If you have another Anna_AI instance with working GPU packages:
 
 ```batch
-# Verify script exists
-dir copy_gpu_packages.py
+# From working installation
+cd C:\WorkingAnna_AI
+python copy_gpu_packages.py
 
-# If present, ensure source Anna_AI venv is activated and working
-cd C:\Projects\Anna_AI
+# This creates: gpu_packages.zip
+
+# Copy to new installation
+copy gpu_packages.zip C:\NewAnna_AI\
+cd C:\NewAnna_AI
 .\venv\Scripts\activate
-python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}')"
-# Should print: CUDA: True
-deactivate
-
-# For new agent installations based on Anna_AI:
-# If creating a derivative agent, copy GPU packages from working Anna_AI
-# Switch to new agent and run copy script
-cd C:\Projects\YourNewAgent_AI
-.\venv\Scripts\activate
-python path\to\copy_gpu_packages.py
-
-# For first-time Anna_AI installation:
-# Follow Method 2 (Manual Copy) or build from source
+python -c "import zipfile; zipfile.ZipFile('gpu_packages.zip').extractall('venv/Lib/site-packages')"
 ```
 
-The script will:
-1. Locate source site-packages directory
-2. Identify all GPU-related packages
-3. Copy them to target venv
-4. Verify integrity
-5. Test CUDA availability
+### Option B: Manual Installation (First-Time Setup)
 
-### Method 2: Manual Copy
-
-If the script fails or is unavailable:
+**Step 1: Install PyTorch Nightly with CUDA 12.6**
 
 ```batch
-# Define paths (adjust to your installation)
-set SOURCE=C:\Projects\Anna_AI\venv\Lib\site-packages
-set DEST=C:\Projects\YourAgent_AI\venv\Lib\site-packages
-
-# Copy PyTorch packages
-xcopy "%SOURCE%\torch" "%DEST%\torch" /E /I /H /Y
-xcopy "%SOURCE%\torch-*.dist-info" "%DEST%\" /E /I /H /Y
-
-xcopy "%SOURCE%\torchaudio" "%DEST%\torchaudio" /E /I /H /Y
-xcopy "%SOURCE%\torchaudio-*.dist-info" "%DEST%\" /E /I /H /Y
-
-xcopy "%SOURCE%\torchvision" "%DEST%\torchvision" /E /I /H /Y
-xcopy "%SOURCE%\torchvision-*.dist-info" "%DEST%\" /E /I /H /Y
-
-# Copy CTranslate2 (CRITICAL for Whisper)
-xcopy "%SOURCE%\ctranslate2" "%DEST%\ctranslate2" /E /I /H /Y
-xcopy "%SOURCE%\ctranslate2-*.dist-info" "%DEST%\" /E /I /H /Y
-
-# Copy ALL NVIDIA packages
-for /d %i in ("%SOURCE%\nvidia*") do xcopy "%i" "%DEST%\%~nxi" /E /I /H /Y
-
-# Copy PyAudio if custom-built
-xcopy "%SOURCE%\pyaudio" "%DEST%\pyaudio" /E /I /H /Y
-xcopy "%SOURCE%\PyAudio-*.dist-info" "%DEST%\" /E /I /H /Y
+pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126
 ```
 
-**[Note]**: This copies ~8-10GB of data. Ensure you have sufficient disk space.
-
-### Verification Steps
-
-After copying, verify GPU support:
+**Step 2: Verify CUDA Support**
 
 ```batch
-# Test PyTorch CUDA
-python -c "import torch; print(f'PyTorch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}'); print(f'CUDA version: {torch.version.cuda}'); print(f'GPU name: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"N/A\"}')"
+python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}'); print(f'CUDA Version: {torch.version.cuda}'); print(f'GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"None\"}')"
 ```
 
 Expected output:
 ```
-PyTorch version: 2.10.0a0+gitd4493c5
-CUDA available: True
-CUDA version: 12.8
-GPU name: NVIDIA GeForce RTX 5060 Ti
+CUDA Available: True
+CUDA Version: 12.6
+GPU: NVIDIA GeForce RTX 5070
 ```
+
+**Step 3: Install Transformers with Custom Build**
+
+[Note] If transformers 4.38.2 fails on RTX 50-series, use development version:
 
 ```batch
-# Test CTranslate2 (critical for Whisper)
-python -c "from faster_whisper import WhisperModel; print('CTranslate2: OK')"
+pip install git+https://github.com/huggingface/transformers.git
 ```
 
-Expected output:
-```
-CTranslate2: OK
+**Step 4: Test GPU Acceleration**
+
+```python
+import torch
+from transformers import AutoTokenizer, AutoModel
+
+# Verify GPU
+print(f"GPU Available: {torch.cuda.is_available()}")
+print(f"GPU Name: {torch.cuda.get_device_name(0)}")
+
+# Test model loading
+model = AutoModel.from_pretrained("bert-base-uncased").to("cuda")
+print("Model loaded on GPU successfully")
 ```
 
+### Troubleshooting GPU Issues
+
+**Problem**: CUDA not detected
+
+**Solution 1**: Update GPU drivers
 ```batch
-# Test TorchAudio
-python -c "import torchaudio; print(f'TorchAudio version: {torchaudio.__version__}')"
+# Download from: https://www.nvidia.com/Download/index.aspx
+# Minimum version: 566.03
 ```
 
-If any test fails, see [Troubleshooting](#troubleshooting) section.
-
-### RTX 40/30-Series Users
-
-If you have RTX 40-series or earlier, you can use standard PyPI packages:
-
+**Solution 2**: Reinstall PyTorch with correct CUDA version
 ```batch
-# Install PyTorch with CUDA 12.1 support
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip uninstall torch torchvision torchaudio
+pip cache purge
+pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126
+```
 
-# CTranslate2 should work from PyPI
-pip install ctranslate2
+**Problem**: Out of memory errors
 
-# Verify
-python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}')"
+**Solution**: Reduce batch size and context window
+```python
+# config.json
+"ollama": {
+  "num_ctx": 2000  # Reduce from 3000
+}
 ```
 
 ---
 
 ## OLLAMA INSTALLATION
 
-Ollama provides local LLM inference for advanced reasoning and conversational capabilities.
-
 ### Step 1: Download Ollama
 
-1. Visit: https://ollama.com/download
-2. Download "Ollama for Windows"
-3. File size: ~500MB
+1. Visit: https://ollama.ai/download
+2. Download Windows installer
+3. Run installer as Administrator
+4. Default installation: `C:\Users\YourUsername\AppData\Local\Programs\Ollama`
 
-### Step 2: Install Ollama
+### Step 2: Start Ollama Service
 
-1. Run `OllamaSetup.exe` as Administrator
-2. Follow installation wizard
-3. Default installation path: `C:\Users\YourUsername\AppData\Local\Programs\Ollama`
-4. Ollama will start automatically after installation
-
-### Step 3: Verify Ollama Service
+Ollama starts automatically after installation. To manually control:
 
 ```batch
-# Check if Ollama is running
-ollama --version
+# Start service
+net start ollama
+
+# Stop service
+net stop ollama
+
+# Check status
+sc query ollama
 ```
 
-Expected output:
-```
-ollama version 0.x.x
-```
+### Step 3: Download Models
 
-### Step 4: Download Models
-
-Recommended models for VTuber agents:
-
-**For General Use (8GB+ VRAM)**:
-```batch
-# Llama 3.1 8B - Excellent balance of speed and quality
-ollama pull llama3.1:8b
-
-# Mistral 7B - Fast inference, good for real-time responses
-ollama pull mistral:7b
-
-# Phi-3 Mini - Lightweight option for lower VRAM
-ollama pull phi3:mini
-```
-
-**For High-End GPUs (16GB+ VRAM)**:
-```batch
-# Llama 3.1 70B - Best quality for roleplay and reasoning
-ollama pull llama3.1:70b
-
-# Mixtral 8x7B - Excellent for complex tasks
-ollama pull mixtral:8x7b
-```
-
-**Model Storage**:
-- Default location: `C:\Users\YourUsername\.ollama\models`
-- Each model: 4-40GB depending on size
-
-### Step 5: Test Model
+Download models specified in bot_info.py:
 
 ```batch
-# Interactive test
-ollama run llama3.1:8b
+# Core models for Anna_AI
+ollama pull gemma3:12b-it-q4_K_M
+ollama pull nomic-embed-text:latest
 
-# Type a message to test
-> Hello! How are you?
-
-# Exit with /bye
-> /bye
+# Alternative models (optional)
+ollama pull qwen3-vl:8b-instruct-q4_K_M
+ollama pull qwen3-vl:8b-thinking-q4_K_M
 ```
 
-### Step 6: Configure Agent to Use Ollama
+Model download sizes:
+- gemma3:12b-it-q4_K_M: ~7GB
+- nomic-embed-text: ~275MB
+- qwen3-vl models: ~5GB each
 
-Edit your agent's configuration file (e.g., `personality/config.py`):
-
-```python
-OLLAMA_CONFIG = {
-    "enabled": True,
-    "base_url": "http://localhost:11434",
-    "model": "llama3.1:8b",
-    "temperature": 0.8,
-    "max_tokens": 2048,
-    "stream": True
-}
-```
-
-### Ollama Management Commands
+### Step 4: Verify Ollama Configuration
 
 ```batch
+# Test connection
+curl http://localhost:11434/api/version
+
 # List installed models
 ollama list
 
-# Remove a model
-ollama rm modelname:tag
+# Test model
+ollama run gemma3:12b-it-q4_K_M "Hello, how are you?"
+```
 
-# Update Ollama
-# Download latest installer and reinstall
+### Step 5: Configure Agent for Ollama
 
-# Stop Ollama service
+Agent is pre-configured in config.json and .env:
+
+**config.json** (Application-level settings):
+
+```json
+{
+  "ollama": {
+    "endpoint": "http://localhost:11434",
+    "temperature": 0.85,
+    "max_tokens": 1000,
+    "num_ctx": 3000
+  }
+}
+```
+
+**.env** (Ollama server optimization):
+
+```bash
+OLLAMA_CONTEXT_LENGTH=8192
+OLLAMA_KEEP_ALIVE=24h
+OLLAMA_FLASH_ATTENTION=true
+OLLAMA_NUM_PARALLEL=1
+OLLAMA_MAX_LOADED_MODELS=2
+```
+
+**Adjust config.json for performance**:
+
+```json
+{
+  "ollama": {
+    "num_ctx": 2000,  // Lower for faster responses
+    "num_predict": 500,  // Shorter responses
+    "temperature": 0.7  // More focused responses
+  }
+}
+```
+
+**Adjust .env for different GPU capabilities**:
+
+For 8GB VRAM:
+```bash
+OLLAMA_CONTEXT_LENGTH=4096
+OLLAMA_GPU_OVERHEAD=512
+OLLAMA_MAX_LOADED_MODELS=1
+```
+
+For 16GB+ VRAM:
+```bash
+OLLAMA_CONTEXT_LENGTH=16384
+OLLAMA_GPU_OVERHEAD=2048
+OLLAMA_MAX_LOADED_MODELS=3
+```
+
+**Apply changes**:
+```batch
+# Restart Ollama after .env changes
 net stop ollama
-
-# Start Ollama service
 net start ollama
 
-# View logs
-type "%USERPROFILE%\.ollama\logs\server.log"
+# Restart agent after config.json changes
+# (Stop and restart gui_start.bat)
 ```
-
-### Ollama API Usage in Agent
-
-Example integration code:
-
-```python
-import requests
-import json
-
-def query_ollama(prompt, model="llama3.1:8b"):
-    url = "http://localhost:11434/api/generate"
-    payload = {
-        "model": model,
-        "prompt": prompt,
-        "stream": False,
-        "options": {
-            "temperature": 0.8,
-            "top_p": 0.9,
-            "max_tokens": 2048
-        }
-    }
-    
-    response = requests.post(url, json=payload)
-    if response.status_code == 200:
-        return response.json()["response"]
-    else:
-        raise Exception(f"Ollama error: {response.status_code}")
-```
-
-### Performance Optimization
-
-**For RTX 50-Series**:
-```batch
-# Enable flash attention (if supported by model)
-ollama run llama3.1:8b --flash-attention
-
-# Adjust context window
-ollama run llama3.1:8b --ctx-size 8192
-
-# Set GPU layers (offload entire model to GPU)
-ollama run llama3.1:8b --gpu-layers 999
-```
-
-**Memory Management**:
-- Models load on first use and stay in VRAM
-- Automatically unload after 5 minutes of inactivity
-- Force unload: `ollama stop modelname:tag`
 
 ---
 
 ## WARUDO INSTALLATION
 
-Warudo is a professional VTuber application for real-time character animation and streaming.
+### Step 1: Download Warudo
 
-### Step 1: System Requirements Check
+1. Visit: https://warudo.app
+2. Create account or sign in
+3. Download Warudo installer
+4. File size: ~500MB
 
-**Minimum**:
-- GPU: NVIDIA GTX 1060 6GB / AMD RX 580 8GB
-- RAM: 8GB
-- CPU: Intel i5-6500 / AMD Ryzen 5 1600
+### Step 2: Install Warudo
 
-**Recommended**:
-- GPU: NVIDIA RTX 3060 12GB or better
-- RAM: 16GB
-- CPU: Intel i7-9700K / AMD Ryzen 7 3700X
+1. Run installer as Administrator
+2. Accept license agreement
+3. Choose installation directory (default: `C:\Program Files\Warudo`)
+4. Install (requires ~5GB disk space)
+5. Launch Warudo after installation
 
-### Step 2: Download Warudo
+### Step 3: Initial Setup
 
-**Official Release**:
-1. Visit: https://warudo.app/
-2. Click "Download"
-3. Choose "Windows" version
-4. File size: ~2-3GB
-
-**Steam Version** (Alternative):
-1. Open Steam
-2. Search "Warudo"
-3. Free to download
-
-### Step 3: Install Warudo
-
-**Standalone Installer**:
-1. Run `WarudoSetup.exe` as Administrator
-2. Choose installation directory (default: `C:\Program Files\Warudo`)
-3. Complete installation (~5GB disk space required)
-4. Launch Warudo from Desktop shortcut
-
-**Steam Version**:
-1. Install through Steam library
-2. Launch from Steam
-
-### Step 4: Initial Setup
-
-1. **First Launch**:
-   - Allow firewall access for network features
-   - Choose graphics quality preset (Ultra for RTX 50-series)
-   - Set resolution (1920x1080 recommended)
-
-2. **Create Profile**:
-   - Click "New Scene"
-   - Name your project (e.g., "Anna_Stream")
-
-3. **Import Anna's Character**:
-   
-   **Method 1: Use Pre-Configured Anna.vrm** (Recommended)
-   ```
-   - Click "Add Asset" → "Character"
-   - Click "Import VRM"
-   - Navigate to: C:\Projects\Anna_AI\personality\avatar\
-   - Select "Anna.vrm"
-   - Click "Open"
-   - Character loads instantly with all settings
-   ```
-
-   **Method 2: Import Custom Character**
-   ```
-   - Click "Add Asset" → "Character"
-   - Choose source:
-     - VRM file (from VRoid Studio export)
-     - Built-in sample characters
-     - Imported FBX/Unity character
-   ```
-
-### Step 4.5: Load Anna's Warudo Configuration (Optional)
-
-Anna_AI includes pre-configured Warudo files for optimal performance:
-
-**Blueprint File** (Scene Logic):
+**Graphics Settings**:
 ```
-Location: Anna_AI\personality\avatar\warudo_blueprint.json
-Purpose: Pre-configured scene behaviors, animations, triggers
-
-To Load:
-1. In Warudo, click "Blueprints" tab
-2. Click "Import Blueprint"
-3. Navigate to: C:\Projects\Anna_AI\personality\avatar\
-4. Select "warudo_blueprint.json"
-5. Click "Open"
-6. Blueprint loads with:
-   - Animation triggers
-   - Expression mappings
-   - Gesture controls
-   - Event handlers
+Settings → Graphics:
+- Quality: High (adjust based on GPU)
+- Resolution: 1920x1080
+- Anti-aliasing: MSAA 2x
+- V-Sync: On
 ```
 
-**Animation Profile** (Movement Settings):
+**Audio Settings**:
 ```
-Location: Anna_AI\personality\avatar\warudo_animations.json
-Purpose: Custom animation sequences and idle behaviors
-
-To Load:
-1. In Warudo, select Anna character
-2. Click "Animations" tab
-3. Click "Import Profile"
-4. Navigate to: C:\Projects\Anna_AI\personality\avatar\
-5. Select "warudo_animations.json"
-6. Animations load:
-   - Idle variations
-   - Gesture library
-   - Transition timings
-   - Reaction animations
+Settings → Audio:
+- Lip Sync Input: CABLE Output (VB-Audio Virtual Cable)
+- Sample Rate: 48000 Hz
+- Buffer Size: 512
 ```
 
-**Configuration Benefits**:
-- Optimized for Anna's personality
-- Pre-tested animation sequences
-- Calibrated expression timings
-- Tested with Anna_AI agent code
+**Network Settings**:
+```
+Settings → Network:
+- Enable WebSocket Server: [x]
+- WebSocket Port: 19190
+- Enable External Connections: [x]
+```
 
-**Manual Setup** (if JSON files not present):
-- Continue to Step 5 for manual configuration
+### Step 4: Load VRM Character
 
-### Step 5: Configure Tracking
+**Import Anna.vrm**:
 
-**Audio Input for Lip Sync** (REQUIRED):
+```
+1. File → Import Model → VRM
+2. Navigate to: Anna_AI\personality\avatar\Anna.vrm
+3. Select Anna.vrm
+4. Click "Import"
+5. Character loads in scene
+```
 
-Before configuring face tracking, set up audio input from virtual cable:
+**Alternative**: Create custom character in VRoid Studio (see next section)
 
-1. Go to Warudo → "Settings" → "Audio"
-2. Configure:
-   ```
-   Lip Sync Enabled: ✓ Check
-   Lip Sync Input Device: CABLE Output (VB-Audio Virtual Cable)
-   Sensitivity: 50% (adjust as needed)
-   Smoothing: 0.3 (adjust for natural movement)
-   ```
-3. Test:
-   - Run Anna_AI agent
-   - Agent speaks through TTS
-   - Warudo's audio VU meter shows activity
-   - Avatar's mouth moves with speech
+### Step 5: Configure Lip Sync
 
-**Troubleshooting Audio**:
-- No VU meter activity → Check cable installation
-- Avatar mouth doesn't move → Increase sensitivity
-- Jittery movement → Increase smoothing
-- Wrong audio source → Verify cable selection matches agent output
+**Audio Routing**:
 
-**Face Tracking**:
-1. Go to "Character" → "Face Tracking"
-2. Choose tracking method:
-   - **Webcam**: Standard webcam tracking
-   - **iPhone/iPad**: ARKit face tracking (requires Warudo Link app)
-   - **Media Pipe**: CPU-based tracking (no special hardware)
-3. Calibrate tracking:
-   - Center face in camera
-   - Click "Calibrate"
-   - Make various expressions to train
+```
+Warudo must capture audio from CABLE Output (VB-Audio)
+Anna_AI outputs to CABLE Input
+Windows routes CABLE Input → CABLE Output
+Warudo listens to CABLE Output for lip sync
+```
 
-**Body Tracking** (Optional):
-1. Options:
-   - **Leap Motion**: Hand tracking controller
-   - **Perception Neuron**: Full-body mocap suit
-   - **Keyboard/Mouse**: Manual animation triggers
-2. Connect device and calibrate in settings
+**Test Lip Sync**:
 
-### Step 6: Scene Setup
+```
+1. Start Anna_AI agent
+2. Agent speaks through TTS
+3. Warudo character lips should move in sync
+4. Adjust Audio → Lip Sync Sensitivity if needed
+```
 
-**Basic Scene Components**:
-1. **Camera**:
-   - Add → "Camera"
-   - Position for desired framing
-   - Set FOV (40-60 typical)
+### Step 6: Optional - Face Tracking
 
-2. **Lighting**:
-   - Add → "Light" → "Directional Light"
-   - Adjust intensity and color
-   - Add rim lighting for depth
+**Webcam Setup**:
 
-3. **Background**:
-   - Add → "Environment" → "Image/Video"
-   - Or use built-in sky boxes
-   - Green screen option for OBS chroma key
+```
+Character → Face Tracking:
+- Enable Face Tracking: [x]
+- Tracking Method: Webcam
+- Camera: [Select your webcam]
+- Calibrate: Follow on-screen instructions
+```
 
-### Step 7: Integrate with Agent
+**Performance Settings**:
 
-**Pre-Configured Integration**:
-
-If using Anna's included avatar files and Warudo configuration, the agent code in `Anna_AI\BASE\` is already configured to work with:
-- Expression IDs from Anna.vrm
-- Animation names from warudo_animations.json
-- Blueprint triggers from warudo_blueprint.json
-
-**WebSocket Connection**:
-
-Warudo supports external control via WebSocket API.
-
-1. Enable API in Warudo:
-   - Settings → "Network" → "Enable WebSocket Server"
-   - Note the port (default: 7890)
-   - Set authentication key (optional)
-
-2. Agent Integration Code:
-
-The Anna_AI agent includes a Warudo controller module. Check the tools directory for the implementation.
-
-### Step 8: OBS Studio Integration
-
-For streaming your VTuber:
-
-1. Open OBS Studio
-2. Add Source → "Game Capture"
-3. Select "Warudo" application
-4. Configure:
-   - Mode: "Capture specific window"
-   - Window: "Warudo"
-   - Allow Transparency: Check (if using green screen)
-5. Resize and position as desired
-
-**Performance Tips**:
-- Run Warudo in "Preview Mode" for lower resource usage
-- Disable shadows if experiencing lag
-- Reduce texture quality for older GPUs
-
-### Warudo Advanced Features
-
-**Blueprints** (Visual Scripting):
-- Create custom behaviors without coding
-- React to chat commands
-- Trigger animations on events
-
-**Props System**:
-- Add objects to scene
-- Attach to character
-- Animate props with timeline
-
-**Post-Processing Effects**:
-- Bloom
-- Color grading
-- Depth of field
-- Custom shaders
+```
+Character → Face Tracking:
+- Tracking Quality: Medium (adjust for FPS)
+- Smoothing: 5 (reduce jitter)
+- Expression Sensitivity: 70%
+```
 
 ---
 
 ## VROID STUDIO INSTALLATION
 
-VRoid Studio is a free character creator for making VTuber avatars.
-
-### Loading Anna's Pre-Configured Avatar
-
-Anna_AI comes with pre-configured avatar files in `Anna_AI\personality\avatar\`:
-- `anna_model.vroid` - Editable VRoid Studio project file
-- `Anna.vrm` - Exported VRM file ready for Warudo
-- Warudo blueprint and animation JSON files
-
-**Quick Setup (Use Existing Avatar)**:
-1. Skip to [Warudo Installation](#warudo-installation)
-2. Import `Anna.vrm` directly into Warudo
-3. Load included blueprint/animation profiles
-
-**Custom Setup (Modify Avatar)**:
-1. Install VRoid Studio (follow steps below)
-2. Open `anna_model.vroid` in VRoid Studio
-3. Customize appearance as desired
-4. Export new VRM file
-5. Import to Warudo
-
 ### Step 1: Download VRoid Studio
 
 1. Visit: https://vroid.com/en/studio
-2. Click "Download for Windows"
-3. Create a Pixiv account (required)
-4. Accept terms and download
-5. File size: ~300MB installer
+2. Click "Download"
+3. Choose Windows version
+4. File size: ~300MB
 
 ### Step 2: Install VRoid Studio
 
-1. Run `vroid_studio_setup.exe`
-2. Choose installation language
-3. Accept license agreement
-4. Choose installation directory (default: `C:\Program Files\VRoid Studio`)
-5. Create desktop shortcut
-6. Launch VRoid Studio
+1. Run installer
+2. Accept license agreement
+3. Choose installation directory
+4. Install (requires ~2GB disk space)
+5. Launch VRoid Studio
 
-### Step 3: First-Time Setup
+### Step 3: Create or Import Character
 
-1. **Login**:
-   - Sign in with Pixiv account
-   - Or use Google/Twitter login
-
-2. **Language Settings**:
-   - Choose "English" (or preferred language)
-
-3. **Project Location**:
-   - Set default project save location
-   - Recommended: `Documents\VRoid\Projects`
-
-### Step 4: Creating Your First Character
-
-**Option A: Load Anna's Pre-Made Character**
-
-Anna_AI includes a fully configured character in `Anna_AI\personality\avatar\anna_model.vroid`.
-
-1. **Open Existing Project**:
-   - Launch VRoid Studio
-   - Click "Open" (not "New")
-   - Navigate to: `C:\Projects\Anna_AI\personality\avatar\`
-   - Select `anna_model.vroid`
-   - Click "Open"
-
-2. **Character Loads with All Settings**:
-   - Hair style and colors pre-configured
-   - Face customization complete
-   - Outfit designed
-   - Expressions calibrated
-   - Physics tuned
-
-3. **Explore the Character**:
-   - Click through tabs to see customizations
-   - Test expressions in preview
-   - View physics simulation
-
-4. **Make Modifications** (Optional):
-   - Change hair color: Hair tab → Color picker
-   - Adjust outfit: Outfit tab → Color/Pattern
-   - Modify face: Face tab → Feature adjustments
-   - Add accessories: Accessories tab
-
-5. **Save Changes**:
-   - File → Save (overwrites anna_model.vroid)
-   - Or File → Save As (create new variant)
-
-**Option B: Create From Scratch**
-
-If you want to create a completely new character:
-
-**Quick Start Method**:
-1. Click "New"
-2. Choose preset:
-   - **Female**: Anime-style female base
-   - **Male**: Anime-style male base
-   - **Customize**: Start from scratch
-3. Name your character
-
-**Character Customization Tabs**:
-
-1. **Face**:
-   - Face shape (round, oval, angular)
-   - Eye shape, size, color
-   - Eyebrow style and position
-   - Nose and mouth shape
-   - Skin tone and makeup
-
-2. **Hair**:
-   - Hairstyle presets
-   - Custom hair drawing
-   - Hair color and highlights
-   - Procedural hair editing
-   - Accessories (clips, ribbons)
-
-3. **Body**:
-   - Height and proportions
-   - Muscle definition
-   - Breast size (female)
-   - Overall body shape
-
-4. **Outfit**:
-   - Top (shirts, jackets, dresses)
-   - Bottom (pants, skirts)
-   - Shoes
-   - Accessories (glasses, jewelry)
-   - Custom textures
-
-5. **Texture Editing**:
-   - Paint directly on model
-   - Import custom textures
-   - Adjust materials (glossiness, metallic)
-
-### Step 5: Advanced Customization
-
-**Hair Editor**:
-```
-1. Click "Hair" → "Edit Procedural Hair"
-2. Select hair group to edit
-3. Adjust parameters:
-   - Thickness
-   - Length
-   - Waviness
-   - Gravity effect
-4. Add highlights:
-   - Click "Add Highlight Layer"
-   - Choose color and blend mode
-5. Physics settings:
-   - Stiffness (how rigid)
-   - Inertia (bounce effect)
-```
-
-**Outfit Design**:
-```
-1. Click "Outfit" → "Customize"
-2. Choose garment to edit
-3. Options:
-   - Preset variations
-   - Color customization
-   - Pattern overlay
-   - Custom texture painting
-4. Save as preset for reuse
-```
-
-**Face Expression Setup**:
-```
-1. Go to "Face" → "Expression Editor"
-2. Create custom expressions:
-   - Happy, sad, angry, surprised
-   - Blush levels
-   - Eye animations (blink, wink)
-3. Adjust blend shape weights
-4. Test expressions with preview
-```
-
-### Step 6: Exporting for Warudo
-
-**Option A: Use Pre-Exported Anna.vrm** (Fastest)
-
-Anna_AI includes a ready-to-use VRM file at `Anna_AI\personality\avatar\Anna.vrm`. You can skip the export process and use this file directly in Warudo.
-
-**Advantages**:
-- Pre-optimized for performance
-- Expressions already configured
-- Physics tuned for Warudo
-- No export wait time
-
-**Proceed to**: [Warudo Installation](#warudo-installation) to load this file.
-
----
-
-**Option B: Export Modified or New Character**
-
-If you modified anna_model.vroid or created a new character, export it:
-
-**Export as VRM**:
-1. Click "Camera/Exporter" tab (camera icon)
-2. Click "Export" → "Export as VRM"
-3. Configure export settings:
+**Create New Character**:
 
 ```
-Model Information:
-- Title: [Your character name]
-- Version: 1.0
-- Author: [Your name]
-- Contact: [Optional email]
-
-Permission Settings:
-- Avatar Personalization: Allow
-- Violent Usage: Disallow
-- Sexual Usage: Disallow
-- Commercial Usage: [Your choice]
-- Redistribution: Disallow (recommended)
-
-Technical Settings:
-- Reduce Polygon Count: Check (for better performance)
-- Export Blend Shapes: Check (required for expressions)
-- Export Shadows: Check
-- Texture Size: 2048x2048 (or 4096x4096 for high quality)
+1. Launch VRoid Studio
+2. File → New Project
+3. Choose base model (Female/Male)
+4. Customize:
+   - Face: Eyes, nose, mouth
+   - Hair: Style, color, length
+   - Body: Height, proportions
+   - Clothes: Outfit selection
+   - Accessories: Optional items
 ```
 
-4. Click "Export"
-5. Choose save location: `Documents\VRoid\Exports\YourCharacter.vrm`
-6. Export time: 30-60 seconds
+**Import Existing Character**:
 
-**File Size**:
-- Typical VRM: 20-50MB
-- High-quality: 50-100MB
-- Optimized: 10-20MB
+```
+1. File → Import
+2. Select .vroid file
+3. Edit as needed
+```
 
-### Step 7: Import to Warudo
+### Step 4: Export for Warudo
 
-**Using Anna's Pre-Exported VRM**:
-1. Open Warudo
-2. Click "Add Asset" → "Character"
-3. Click "Import VRM"
-4. Navigate to: `C:\Projects\Anna_AI\personality\avatar\Anna.vrm`
-5. Click "Open"
-6. Character loads with all customizations
-7. Proceed to load Warudo configuration files (see [Warudo Installation](#warudo-installation))
+**Export Settings**:
 
-**Using Your Custom Export**:
-1. Open Warudo
-2. Click "Add Asset" → "Character"
-3. Click "Import VRM"
-4. Navigate to your exported VRM file location
-5. Click "Open"
-6. Character loads with your customizations
+```
+File → Export:
+- Format: VRM 0.0 (not VRM 1.0)
+- Texture Size: 2048x2048 (recommended)
+- Polygon Reduction: Target 30,000 polygons
+- Include Blend Shapes: [x]
+- Export Expression Morphs: [x]
+- Optimize for Runtime: [x]
+```
 
-**Post-Import Setup**:
-1. Adjust character position and scale
-2. Test facial expressions (should match VRoid setup)
-3. Configure physics (hair, clothes)
-4. Calibrate face tracking for your character
+**Save Location**:
 
-### Step 8: Optimization Tips
+```
+Export to: Anna_AI\personality\avatar\YourCharacter.vrm
+```
 
-**Performance Optimization**:
-- **Polygon Count**: Keep under 50,000 for smooth performance
-  - Go to "Body" → "Polygon Reduction"
-  - Target: 30,000-40,000 polygons
-  
-- **Texture Resolution**: Balance quality and file size
-  - 2048x2048: Good balance
-  - 4096x4096: High quality (larger file)
-  - 1024x1024: Performance mode (lower quality)
+### Step 5: Update Agent Configuration
 
-- **Physics Objects**: Limit for better FPS
-  - Reduce hair groups
-  - Simplify cloth physics
+**Edit bot_info.py**:
 
-**Quality Improvements**:
-- Use high-resolution textures for close-ups
-- Add subsurface scattering for realistic skin
-- Fine-tune expression blend shapes
-- Add custom makeup and details
+```python
+agentname = "YourCharacterName"
+```
 
-### VRoid Studio Tips & Tricks
+**Load in Warudo**:
 
-**Hair Design**:
-- Use multiple layers for depth
-- Mix procedural and custom strands
-- Add highlights for anime effect
-- Adjust physics for natural movement
-
-**Outfit Coordination**:
-- Save favorite combinations as presets
-- Use color theory for pleasing palettes
-- Add accessories sparingly
-- Test in different lighting conditions
-
-**Expression Range**:
-- Create 8-10 core expressions
-- Test with face tracking
-- Adjust blend shape intensities
-- Save expression presets
-
-**Troubleshooting Common Issues**:
-
-**Character looks flat**:
-- Add hair highlights
-- Increase eye shine
-- Add rim lighting in Warudo
-
-**Hair clips through body**:
-- Adjust hair collision settings
-- Reduce hair length
-- Modify hair physics parameters
-
-**Expressions don't work in Warudo**:
-- Re-export with "Export Blend Shapes" checked
-- Verify expression names match standard VRM format
-- Check VRM version compatibility
+```
+Warudo → File → Import Model → VRM
+Select: YourCharacter.vrm
+```
 
 ---
 
 ## VERIFICATION & TESTING
 
-### Complete System Test
-
-Run this comprehensive test script to verify all components:
+### Test 1: Python Environment
 
 ```batch
-# Save as test_system.bat
-@echo off
-echo ====================================
-echo VTUBER AI AGENT SYSTEM TEST
-echo ====================================
-echo.
-
-echo [1/8] Testing Python installation...
-python --version
-if %errorlevel% neq 0 (
-    echo [FAIL] Python not found
-    exit /b 1
-)
-echo [PASS] Python OK
-echo.
-
-echo [2/8] Testing Virtual Audio Cable...
-python -c "import sounddevice as sd; devices = sd.query_devices(); cable_found = any('CABLE Input' in d['name'] for d in devices); assert cable_found, 'Virtual cable not found'; print('Virtual Cable: OK')"
-if %errorlevel% neq 0 (
-    echo [FAIL] Virtual cable not detected
-    exit /b 1
-)
-echo [PASS] Virtual Cable OK
-echo.
-
-echo [3/8] Testing PyTorch GPU support...
-python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}'); assert torch.cuda.is_available(), 'GPU not detected'"
-if %errorlevel% neq 0 (
-    echo [FAIL] GPU not detected
-    exit /b 1
-)
-echo [PASS] PyTorch GPU OK
-echo.
-
-echo [4/8] Testing CTranslate2...
-python -c "from faster_whisper import WhisperModel; print('CTranslate2: OK')"
-if %errorlevel% neq 0 (
-    echo [FAIL] CTranslate2 not working
-    exit /b 1
-)
-echo [PASS] CTranslate2 OK
-echo.
-
-echo [5/8] Testing TTS system...
-python -c "from TTS.api import TTS; print('TTS: OK')"
-if %errorlevel% neq 0 (
-    echo [FAIL] TTS not working
-    exit /b 1
-)
-echo [PASS] TTS OK
-echo.
-
-echo [6/8] Testing Ollama connection...
-curl -s http://localhost:11434/api/tags > nul
-if %errorlevel% neq 0 (
-    echo [WARN] Ollama not running (optional)
-) else (
-    echo [PASS] Ollama OK
-)
-echo.
-
-echo [7/8] Testing audio devices...
-python -c "import sounddevice as sd; print(f'Input devices: {len(sd.query_devices())}'); assert len(sd.query_devices()) > 0"
-if %errorlevel% neq 0 (
-    echo [FAIL] No audio devices found
-    exit /b 1
-)
-echo [PASS] Audio devices OK
-echo.
-
-echo [8/8] Testing Discord integration...
-python -c "import discord; print('Discord.py: OK')"
-if %errorlevel% neq 0 (
-    echo [FAIL] Discord.py not installed
-    exit /b 1
-)
-echo [PASS] Discord.py OK
-echo.
-
-echo ====================================
-echo ALL TESTS PASSED
-echo ====================================
-echo.
-echo System ready to run!
-pause
+cd Anna_AI
+.\venv\Scripts\activate
+python -c "import torch, transformers; print(f'PyTorch: {torch.__version__}'); print(f'Transformers: {transformers.__version__}'); print(f'CUDA: {torch.cuda.is_available()}')"
 ```
 
-### Manual Component Tests
-
-**Test 0: Virtual Audio Cable**
-```python
-import sounddevice as sd
-
-# List all audio devices
-devices = sd.query_devices()
-print("Available Audio Devices:")
-for i, device in enumerate(devices):
-    print(f"{i}: {device['name']}")
-    if "CABLE" in device['name']:
-        print(f"   → Virtual cable detected: {device['name']}")
-
-# Verify CABLE Input exists
-cable_found = any("CABLE Input" in d['name'] for d in devices)
-assert cable_found, "Virtual cable not installed"
-print("\n✓ Virtual cable verified")
+Expected output:
+```
+PyTorch: 2.10.0a0+git...
+Transformers: 4.38.2
+CUDA: True
 ```
 
-**Test 1: Whisper Speech Recognition**
-```python
-from faster_whisper import WhisperModel
+### Test 2: Ollama Service
 
-model = WhisperModel("base", device="cuda", compute_type="int8")
-segments, info = model.transcribe("test_audio.wav")
-
-for segment in segments:
-    print(f"[{segment.start:.2f}s -> {segment.end:.2f}s] {segment.text}")
+```batch
+curl http://localhost:11434/api/version
+ollama list
 ```
 
-**Test 2: XTTS Voice Synthesis**
-```python
-from TTS.api import TTS
+Expected output:
+```
+{"version":"0.x.x"}
 
-tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=True)
-tts.tts_to_file(
-    text="Hello! Testing the text-to-speech system.",
-    file_path="output.wav",
-    speaker_wav="reference_voice.wav",
-    language="en"
-)
+NAME                            ID              SIZE      MODIFIED
+gemma3:12b-it-q4_K_M           abc123          7.2 GB    X days ago
+nomic-embed-text:latest         def456          275 MB    X days ago
 ```
 
-**Test 3: Ollama Integration**
-```python
-import requests
+**Verify .env configuration**:
 
-response = requests.post(
-    "http://localhost:11434/api/generate",
-    json={"model": "llama3.1:8b", "prompt": "Hello!", "stream": False}
-)
-print(response.json()["response"])
+```batch
+# Check if .env exists
+dir .env
+
+# View .env settings (Windows)
+type .env
+
+# Verify Ollama is using settings
+ollama show gemma3:12b-it-q4_K_M --verbose
 ```
 
-**Test 4: GPU Memory Check**
-```python
-import torch
+### Test 3: Virtual Audio Cables
 
-print(f"GPU: {torch.cuda.get_device_name(0)}")
-print(f"VRAM Total: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
-print(f"VRAM Allocated: {torch.cuda.memory_allocated(0) / 1e9:.2f} GB")
-print(f"VRAM Reserved: {torch.cuda.memory_reserved(0) / 1e9:.2f} GB")
+```batch
+python -c "import sounddevice as sd; devices = sd.query_devices(); print([d['name'] for d in devices if 'CABLE' in d['name']])"
 ```
 
-### Performance Benchmarks
+Expected output:
+```
+['CABLE Input (VB-Audio Virtual Cable)', 'CABLE Output (VB-Audio Virtual Cable)']
+```
 
-Expected performance on RTX 5060 Ti (16GB VRAM):
+### Test 4: Warudo Connection
 
-| Component | Metric | Expected Performance |
-|-----------|--------|---------------------|
-| Whisper Medium | Transcription Speed | 5-8x real-time |
-| XTTS Voice Synthesis | Generation Time | 1-2 seconds for 10s audio |
-| Ollama Llama3.1 8B | Tokens/Second | 40-60 tokens/s |
-| Warudo | FPS (1080p) | 60+ FPS |
-| Face Tracking | Latency | <50ms |
+```batch
+curl http://127.0.0.1:19190
+```
+
+Expected output:
+```
+WebSocket server response or connection accepted
+```
+
+### Test 5: Agent Launch
+
+```batch
+cd Anna_AI
+.\gui_start.bat
+```
+
+Expected behavior:
+1. GUI window opens
+2. No error messages in console
+3. Status shows "Ready"
+4. Can send test message
+
+### Test 6: Full Integration Test
+
+**Procedure**:
+
+```
+1. Start Ollama service
+2. Launch Warudo, load character
+3. Configure Warudo audio input: CABLE Output
+4. Launch Anna_AI agent
+5. Send message to agent
+6. Verify:
+   - Agent responds in chat
+   - Voice plays through CABLE
+   - Warudo lips sync to voice
+   - No console errors
+```
+
+**Success Criteria**:
+- [x] Agent processes message within 5 seconds
+- [x] TTS voice is clear and audible
+- [x] Warudo character's lips move in sync
+- [x] No dropped audio packets
+- [x] GPU utilization visible in nvidia-smi
 
 ---
 
@@ -1996,247 +1108,102 @@ Expected performance on RTX 5060 Ti (16GB VRAM):
 ### Python Issues
 
 **Problem**: `python` command not recognized
+
+**Solution**: Add Python to PATH
 ```batch
-# Solution 1: Add Python to PATH manually
+# Add to System Environment Variables
 setx PATH "%PATH%;C:\Python311;C:\Python311\Scripts"
-
-# Solution 2: Use py launcher
-py --version
-py -m pip install package_name
+# Restart Command Prompt
 ```
 
-**Problem**: Permission denied errors
+**Problem**: Virtual environment not activating
+
+**Solution 1**: Use full path
 ```batch
-# Run Command Prompt as Administrator
-# Or install packages with --user flag
-pip install --user package_name
+C:\Anna_AI\venv\Scripts\activate.bat
 ```
 
-**Problem**: SSL certificate errors during pip install
-```batch
-# Update pip and certificates
-python -m pip install --upgrade pip certifi
+**Solution 2**: Check execution policy (PowerShell)
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+.\venv\Scripts\Activate.ps1
+```
+
+**Problem**: `pip install` fails with compiler errors
+
+**Solution**: Install Visual Studio Build Tools
+```
+Follow Step 4 of Python Installation section
 ```
 
 ### GPU Issues
 
-**Problem**: CUDA not available (torch.cuda.is_available() returns False)
+**Problem**: CUDA not available
 
-**Solution 1**: Verify NVIDIA drivers
+**Solution 1**: Update GPU drivers
+```batch
+# Download from NVIDIA website
+# Minimum version: 566.03 for RTX 50-series
+```
+
+**Solution 2**: Reinstall PyTorch
+```batch
+pip uninstall torch torchvision torchaudio
+pip cache purge
+pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126
+```
+
+**Solution 3**: Check GPU visibility
 ```batch
 nvidia-smi
 ```
-Should show driver version 566.03 or newer.
 
-**Solution 2**: Reinstall CUDA toolkit
-```batch
-# Download CUDA 12.8 from NVIDIA website
-# https://developer.nvidia.com/cuda-downloads
-```
+**Problem**: Out of memory errors
 
-**Solution 3**: Check PyTorch installation
-```python
-import torch
-print(torch.__version__)  # Should show 2.10.0a0+gitd4493c5 or similar
-print(torch.version.cuda)  # Should show 12.8 or similar
-```
-
-**Problem**: GPU runs out of memory
-
-**Solution**: Adjust batch sizes and model precision
-```python
-# In your config
-WHISPER_CONFIG = {
-    "compute_type": "int8",  # Use int8 instead of float16
-    "beam_size": 3           # Reduce from default 5
+**Solution**: Reduce model context in config.json
+```json
+{
+  "ollama": {
+    "num_ctx": 2000
+  }
 }
-
-TTS_CONFIG = {
-    "batch_size": 1,         # Process one at a time
-    "precision": "fp16"      # Use half precision
-}
-```
-
-**Problem**: CTranslate2 import error
-
-**Solution**: Ensure proper package copy
-```batch
-# Re-copy from Anna_AI
-xcopy "C:\Projects\Anna_AI\venv\Lib\site-packages\ctranslate2" "C:\Projects\YourAgent_AI\venv\Lib\site-packages\ctranslate2" /E /I /H /Y
-```
-
-### Transformers Version Issues
-
-**Problem**: XTTS fails with BeamSearchScorer error
-
-**Error Message**:
-```
-AttributeError: 'BeamSearchScorer' object has no attribute 'max_length'
-```
-
-**Solution**: Downgrade transformers
-```batch
-pip uninstall transformers
-pip install transformers==4.38.2
-```
-
-**Problem**: Transformers won't downgrade
-
-**Solution**: Force reinstall
-```batch
-pip install --force-reinstall --no-cache-dir transformers==4.38.2
 ```
 
 ### Audio Issues
 
-**Problem**: No microphone detected
+**Problem**: No audio output from agent
 
-**Solution 1**: Check Windows sound settings
+**Solution 1**: Verify VB-Cable installation
 ```
-Settings → System → Sound → Input → Choose device
+Windows Settings → Sound → Check for CABLE Input/Output
 ```
 
-**Solution 2**: List audio devices
+**Solution 2**: Check bot_info.py configuration
 ```python
-import sounddevice as sd
-print(sd.query_devices())
+vb_cable_name = "CABLE Input"  # Must match exactly
 ```
 
-**Solution 3**: Set default device in code
-```python
-import sounddevice as sd
-sd.default.device = 1  # Try different device indices
-```
-
-**Problem**: PyAudio installation fails
-
-**Solution**: Use pre-built wheel
+**Solution 3**: Test audio device
 ```batch
-# Download from: https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio
-# Install local wheel
-pip install PyAudio-0.2.14-cp311-cp311-win_amd64.whl
+python -c "import sounddevice as sd; print(sd.query_devices())"
+# Verify CABLE Input is listed
 ```
 
-**Problem**: Virtual cable not detected
+**Problem**: Audio glitches or stuttering
 
-**Solution 1**: Verify installation
+**Solution 1**: Increase buffer size in Warudo
 ```
-Control Panel → Sound → Playback tab
-Should show: CABLE Input (VB-Audio Virtual Cable)
-
-Control Panel → Sound → Recording tab
-Should show: CABLE Output (VB-Audio Virtual Cable)
-```
-
-**Solution 2**: Reinstall driver
-```batch
-# Navigate to VB-Audio installation folder
-cd C:\Program Files\VB\CABLE
-# Run setup as Administrator
-VBCABLE_Setup_x64.exe
-# Click "Install Driver"
-# Restart computer
-```
-
-**Solution 3**: Check driver status
-```
-Device Manager → Sound, video and game controllers
-Look for: VB-Audio Virtual Cable
-Status should be: "This device is working properly"
-```
-
-**Problem**: TTS audio plays through speakers instead of virtual cable
-
-**Solution 1**: Force device in code
-```python
-import sounddevice as sd
-
-# Find CABLE Input index
-devices = sd.query_devices()
-cable_idx = None
-for i, dev in enumerate(devices):
-    if "CABLE Input" in dev['name'] and dev['max_output_channels'] > 0:
-        cable_idx = i
-        break
-
-# Set as output
-sd.default.device = [None, cable_idx]
-```
-
-**Solution 2**: Verify .env configuration
-```env
-TTS_OUTPUT_DEVICE=CABLE Input (VB-Audio Virtual Cable)
-# Exact name must match device name in Windows
-```
-
-**Solution 3**: Check application audio routing
-```
-Windows Settings → Sound → App volume and device preferences
-Find Python.exe or Anna_AI
-Output: CABLE Input (VB-Audio Virtual Cable)
-```
-
-**Problem**: Warudo doesn't detect lip sync audio
-
-**Solution 1**: Verify Warudo audio input
-```
-Warudo → Settings → Audio
-Lip Sync Input Device: CABLE Output (VB-Audio Virtual Cable)
-Ensure "Lip Sync" is enabled
-```
-
-**Solution 2**: Test cable routing
-```
-Windows Sound Settings → Sound Control Panel
-Playback tab → CABLE Input → Properties → Listen tab
-Check "Listen to this device"
-Playback through this device: [Your speakers]
-Speak through agent → Should hear audio through speakers
-Uncheck when done testing
-```
-
-**Solution 3**: Increase sensitivity
-```
-Warudo → Settings → Audio
-Lip Sync Sensitivity: Increase to 70-80%
-Test with agent speech
-```
-
-**Problem**: Multiple agents audio conflicts
-
-**Solution**: Ensure each agent uses different cable
-```
-Anna_AI .env:
-TTS_OUTPUT_DEVICE=CABLE Input (VB-Audio Virtual Cable)
-
-SecondAgent_AI .env:
-TTS_OUTPUT_DEVICE=CABLE-A Input (Tala Virtual Cable)
-
-ThirdAgent_AI .env:
-TTS_OUTPUT_DEVICE=CABLE-B Input (Tala Virtual Cable)
-
-Each Warudo instance must match:
-Warudo 1 → CABLE Output
-Warudo 2 → CABLE-A Output
-Warudo 3 → CABLE-B Output
-```
-
-**Problem**: Crackling or distorted audio through cable
-
-**Solution 1**: Increase buffer size
-```python
-import sounddevice as sd
-sd.default.latency = 'high'
-sd.default.blocksize = 2048
+Warudo → Settings → Audio → Buffer Size: 1024
 ```
 
 **Solution 2**: Match sample rates
 ```
+Windows Sound Settings:
 Right-click CABLE Input → Properties → Advanced
 Default Format: 2 channel, 16 bit, 22050 Hz
 
-Agent .env:
-TTS_SAMPLE_RATE=22050
+config.json: (if applicable to TTS settings)
+Sample rate: 22050
 ```
 
 **Solution 3**: Reduce system load
@@ -2269,18 +1236,20 @@ type "%USERPROFILE%\.ollama\logs\server.log"
 
 **Problem**: Model download fails
 
-**Solution**: Manually download model
+**Solution**: Check disk space and retry
 ```batch
-# Download from official source
-# Place in: C:\Users\YourUsername\.ollama\models\
+ollama pull gemma3:12b-it-q4_K_M
 ```
 
 **Problem**: Connection refused errors
 
-**Solution**: Check firewall settings
-```batch
-# Add firewall rule for Ollama
-netsh advfirewall firewall add rule name="Ollama" dir=in action=allow protocol=TCP localport=11434
+**Solution**: Check endpoint in config.json
+```json
+{
+  "ollama": {
+    "endpoint": "http://localhost:11434"
+  }
+}
 ```
 
 ### Warudo Issues
@@ -2294,91 +1263,99 @@ netsh advfirewall firewall add rule name="Ollama" dir=in action=allow protocol=T
 - Ensure VRM 0.0 format (not VRM 1.0)
 ```
 
-**Solution 2**: Update Warudo
+**Solution 2**: Check Warudo logs
 ```
-- Check for updates in Warudo
-- Reinstall if necessary
-```
-
-**Problem**: Face tracking not working
-
-**Solution 1**: Camera permissions
-```
-Settings → Privacy → Camera → Allow apps to access camera
+%LOCALAPPDATA%\Warudo\logs\
 ```
 
-**Solution 2**: Recalibrate tracking
-```
-Warudo → Character → Face Tracking → Calibrate
-```
+**Problem**: Lip sync not working
 
-**Solution 3**: Try different tracking method
+**Solution 1**: Verify audio routing
 ```
-Switch from Webcam to Media Pipe (CPU-based)
+Warudo → Settings → Audio → Lip Sync Input: CABLE Output
+Agent → bot_info.py → vb_cable_name = "CABLE Input"
 ```
 
-**Problem**: Low FPS in Warudo
-
-**Solution**: Reduce quality settings
+**Solution 2**: Test audio flow
 ```
-Settings → Graphics:
-- Quality: Medium
-- Shadows: Low
-- Anti-aliasing: Off
-- Post-processing: Minimal
+1. Launch agent
+2. Agent speaks
+3. Check Windows Volume Mixer: CABLE Output should show activity
+4. Warudo should detect audio
 ```
 
-### VRoid Studio Issues
-
-**Problem**: Export fails
-
-**Solution**: Reduce model complexity
+**Solution 3**: Adjust sensitivity
 ```
-Body → Polygon Reduction → Target: 30,000
-Hair → Reduce hair groups to <10
+Warudo → Character → Lip Sync Sensitivity: 70-90%
 ```
 
-**Problem**: Textures look wrong in Warudo
+**Problem**: WebSocket connection fails
 
-**Solution**: Re-export with correct settings
+**Solution**: Verify Warudo WebSocket settings
 ```
-Export → Texture Size: 2048x2048
-Export → Format: VRM 0.0
-```
+Warudo → Settings → Network:
+- Enable WebSocket Server: [x]
+- Port: 19190 (must match config.json)
+- Enable External Connections: [x]
 
-**Problem**: Expressions don't work
-
-**Solution**: Verify blend shape export
-```
-Export → Advanced → Export Blend Shapes: Check
-Export → Include Expression Morphs: Check
-```
-
-### Network Issues
-
-**Problem**: Discord bot won't connect
-
-**Solution 1**: Verify token
-```python
-# In .env file
-DISCORD_TOKEN=your_actual_token_here  # No quotes or extra spaces
+config.json:
+"warudo": {
+  "websocket_url": "ws://127.0.0.1:19190"
+}
 ```
 
-**Solution 2**: Check Discord developer portal
-```
-- Verify bot has required intents enabled
-- Ensure bot is invited to server with correct permissions
-```
+### Environment Configuration Issues
 
-**Problem**: WebSocket connection to Warudo fails
+**Problem**: Ollama not applying .env settings
 
-**Solution**: Check network settings
+**Solution 1**: Verify .env file location
 ```batch
-# Test connection
-curl http://localhost:7890
+# .env must be in Anna_AI root directory
+dir .env
+```
 
-# Verify Warudo WebSocket is enabled
-Warudo → Settings → Network → Enable WebSocket Server
+**Solution 2**: Check for syntax errors
+```bash
+# Common mistakes:
+OLLAMA_KEEP_ALIVE=24h     # Correct
+OLLAMA_KEEP_ALIVE="24h"   # Incorrect (no quotes)
+OLLAMA_KEEP_ALIVE = 24h   # Incorrect (no spaces around =)
+```
+
+**Solution 3**: Restart Ollama service
+```batch
+net stop ollama
+net start ollama
+```
+
+**Problem**: Temperature settings not working
+
+**Solution**: Verify temperature hierarchy
+```
+.env settings (OLLAMA_TEMPERATURE_*) override config.json
+config.json settings override bot_info.py defaults
+Both files must be configured correctly
+```
+
+**Problem**: Models unloading too quickly
+
+**Solution**: Increase keep-alive time
+```bash
+# .env
+OLLAMA_KEEP_ALIVE=24h     # Keep models loaded for 24 hours
+```
+
+**Problem**: Context window errors
+
+**Solution**: Align context settings
+```bash
+# .env
+OLLAMA_CONTEXT_LENGTH=8192
+
+# config.json
+"ollama": {
+  "num_ctx": 3000  # Must be <= OLLAMA_CONTEXT_LENGTH
+}
 ```
 
 ---
@@ -2389,7 +1366,7 @@ Warudo → Settings → Network → Enable WebSocket Server
 
 Always activate virtual environment before running:
 ```batch
-cd YourAgent_AI
+cd Anna_AI
 .\venv\Scripts\activate
 python your_script.py
 ```
@@ -2440,29 +1417,23 @@ rmdir /s /q "%USERPROFILE%\.cache\huggingface"
 
 # Clear Ollama cache
 ollama rm --all
-ollama pull llama3.1:8b
+ollama pull gemma3:12b-it-q4_K_M
 ```
 
 ### Agent Freezes or Crashes
 
-**Enable debug logging**:
+**Enable debug logging in controls.py**:
 ```python
-import logging
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('agent_debug.log'),
-        logging.StreamHandler()
-    ]
-)
+LOG_TOOL_EXECUTION = True
+LOG_PROMPT_CONSTRUCTION = True
+LOG_RESPONSE_PROCESSING = True
+LOG_SYSTEM_INFORMATION = True
 ```
 
 **Check logs**:
-- Python errors: `agent_debug.log`
-- Ollama errors: `%USERPROFILE%\.ollama\logs\server.log`
-- Warudo errors: `%LOCALAPPDATA%\Warudo\logs\`
+- Console output
+- Ollama logs: `%USERPROFILE%\.ollama\logs\server.log`
+- Warudo logs: `%LOCALAPPDATA%\Warudo\logs\`
 
 ---
 
@@ -2487,7 +1458,7 @@ logging.basicConfig(
 ### Community Support
 
 - **Discord**: [Your community Discord server]
-- **GitHub Issues**: [Your repository]/issues
+- **GitHub Issues**: https://github.com/KryptykBioz/Anna_AI/issues
 - **Reddit**: r/VirtualYoutubers, r/VTuberTech
 
 ### Update Policy
@@ -2502,6 +1473,20 @@ logging.basicConfig(
 ---
 
 ## CHANGELOG
+
+### Version 1.1.0 (2025-01-02)
+- Updated configuration instructions to match actual file structure
+- Changed from .env to bot_info.py and config.json configuration
+- Added comprehensive .env file documentation for Ollama optimization
+- Added OLLAMA_KEEP_ALIVE, OLLAMA_CONTEXT_LENGTH, and performance settings
+- Added temperature configuration (ACTION, COGNITIVE, RESPONSE modes)
+- Corrected Warudo WebSocket port from 7890 to 19190
+- Added group_chat_port configuration for multiple agents
+- Clarified VB-Cable configuration syntax
+- Updated Ollama model configuration examples
+- Enhanced multiple agent setup instructions
+- Added .env troubleshooting section
+- Added YouTube integration configuration (optional)
 
 ### Version 1.0.0 (2025-01-02)
 - Initial release
@@ -2524,11 +1509,12 @@ For technical support:
    - Python version: `python --version`
    - PyTorch version: `python -c "import torch; print(torch.__version__)"`
    - GPU info: `nvidia-smi`
+   - Configuration files: bot_info.py, config.json, .env
    - Steps to reproduce
 
 ---
 
-**[Note]**: This setup guide is maintained for RTX 50-series GPU compatibility. For other GPU architectures, standard PyPI packages may be used without the special GPU package copy procedure.
+[Note]: This setup guide is maintained for RTX 50-series GPU compatibility. For other GPU architectures, standard PyPI packages may be used without the special GPU package copy procedure.
 
 **Last Updated**: January 2, 2026
 **Compatible With**: Python 3.11.9, PyTorch 2.10.0a0, Transformers 4.38.2

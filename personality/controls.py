@@ -60,12 +60,12 @@ AUTO_RESTART = True
 # === PROCESSING RATE LIMITING ===
 # Limit how fast the agent can think/process
 LIMIT_PROCESSING = False  # Enable processing rate limiting
-PROCESSING_DELAY = 30     # Seconds between processing cycles when LIMIT_PROCESSING enabled
+PROCESSING_DELAY = 10     # Seconds between processing cycles when LIMIT_PROCESSING enabled
 
 # === SPEAKING RATE LIMITING ===
 # Limit how often the agent can speak (independent of thinking speed)
-LIMIT_SPEAKING = True     # Enable speaking rate limiting
-SPEAKING_DELAY = 60       # Minimum seconds between spoken responses when LIMIT_SPEAKING enabled
+LIMIT_SPEAKING = False     # Enable speaking rate limiting
+SPEAKING_DELAY = 30       # Minimum seconds between spoken responses when LIMIT_SPEAKING enabled
 
 # DEPRECATED: Old combined control (kept for backwards compatibility)
 SLOW_MODE = False
