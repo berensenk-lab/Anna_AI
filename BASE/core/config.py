@@ -64,7 +64,7 @@ class Config:
         # Model configuration
         from personality.bot_info import (
             thoughtmodel, responsemodel, visionmodel, 
-            embedmodel, toolmodel, reasoning_model, actionmodel
+            embedmodel, toolmodel, actionmodel
         )
         
         self.thought_model = thoughtmodel
@@ -73,7 +73,7 @@ class Config:
         self.embed_model = embedmodel
         self.tool_model = toolmodel
         self.action_model = actionmodel
-        self.reasoning_model = reasoning_model
+        # self.reasoning_model = reasoning_model
         
         # Ollama configuration
         self.ollama_endpoint: str = os.getenv("OLLAMA_ENDPOINT", ollama_config["endpoint"])

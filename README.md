@@ -13,6 +13,7 @@ This is a sophisticated agentic AI system built on Ollama that implements a two-
 - Memory can persist between devices using a private GitHub repo to sync agent memory
 - Content filters replace profanity or undesired words with [FILTERED], but do not block the rest of the content
 - Universal kill command key phrase (immediately shuts down entire system when it finds this phrase in ANY source of incoming data)
+- Uncensored agent when using an uncensored LLM for the spoken response mode (still retains all functionality, only affects spoken responses); recommended: llama2-uncensored:7b-chat-q4_K_M
 
 **Example of use:**
 The agent's avatar lives in the corner of the screen while the user is gaming, coding, or doing other tasks. When left alone, the agent may occasionally speak to see if anyone is listening or run background tasks like researching topics related to interactions with the user. When engaged, the agent observes what is happening on the screen and uses any available tool results to form thoughts and responses to the users. When tools are installed and enabled (internet search, file uploads, coding tool, reminders, calendar, etc.) the agent automatically uses these however and whenever it decides to. The user has complete control over these features and may toggle individual tools, agent voice, voice input, background processing, memory retention, and content filters at any time. The user may toggle these features, modify agent prompts, limit the agent's processing speed, adjust the agent's voice volume, and edit the system files all while the agent runs without having to restart the agent and the system updates automatically.
@@ -34,30 +35,41 @@ The agent's avatar lives in the corner of the screen while the user is gaming, c
 
 ## Table of Contents
 
+### Usage Notes
+1. [General Instructions](#usage-guide)
+
 ### Core Systems
-1. [Core Processing Architecture](#core-processing-architecture)
-2. [Modular Prompting System](#modular-prompting-system)
-3. [Memory System](#memory-system)
-4. [Tool Handler System](#tool-handler-system)
-5. [Graphical User Interface System](#graphical-user-interface-system)
+2. [Core Processing Architecture](#core-processing-architecture)
+3. [Modular Prompting System](#modular-prompting-system)
+4. [Memory System](#memory-system)
+5. [Tool Handler System](#tool-handler-system)
+6. [Graphical User Interface System](#graphical-user-interface-system)
 
 ### Supporting Systems
-6. [Session Management](#session-management)
-7. [Chat Engagement System](#chat-engagement-system)
-8. [Configuration System](#configuration-system)
-9. [Content Filtering](#content-filtering)
-10. [Logging System](#logging-system)
+7. [Session Management](#session-management)
+8. [Chat Engagement System](#chat-engagement-system)
+9. [Configuration System](#configuration-system)
+10. [Content Filtering](#content-filtering)
+11. [Logging System](#logging-system)
 
 ### System Overview
-11. [Data Flow Summary](#data-flow-summary)
-12. [Key Design Principles](#key-design-principles-1)
-13. [Integration Points](#integration-points)
+12. [Data Flow Summary](#data-flow-summary)
+13. [Key Design Principles](#key-design-principles-1)
+14. [Integration Points](#integration-points)
 
-### Usage Instructions
-14. [General Instructions](#usage-guide)
 
 ---
 
+# Usage Notes
+
+- **Starting the Agent**: Read the SETUP.md file in the project root for installation and setup instructions
+- **Tools**: All optional tools for this agent are stored in a separate repository and may be downloaded from https://github.com/KryptykBioz/AI_Agent_Tools
+- **Personalizing Your Agent**: Modify the personality and controls of your agent in the following files: bot_info.py, config.json, controls.py, personality_prompt_parts.py
+- **Personalizing the system behavior**: If you are more familiar with prompting or would just like to experiment with your agent's behavior, the prompts are constructed of modular prompt parts stored in separate mode directories in the BASE/core directory. Each different mode of this system has its own _parts file and constructor, so modes may be modified without affecting the others.
+- **Updating**: As the agent is personalized exclusively in the personality/ directory and this is where all of your agents memories are stored, simply replace the BASE/ directory when updating to newer released versions. The personality/ directory of the project is only modified when absolutely necessary to avoid breaking changes. When updates are made to the project's personality/ directory, either compare to the old and transfer the changes over or reimplement your old files back in. This ensures your agent's memories and configuration remain intact and are not overwritten.
+- **Important!!!**: If you are unfamiliar with programming or Python in general, only modify the files in the Personality/ directory. Always remember to back up your files to be able to revert back easily!
+
+---
 # Core Processing Architecture
 
 ## Overview
@@ -1212,16 +1224,6 @@ All logging decisions are made in the `Logger` singleton based on control variab
 | **Text-to-Speech (TTS)** | Receives final response text. Agent marks response echo in buffer immediately. TTS plays asynchronously, non-blocking. |
 | **GUI Interface** | Receives log callbacks. Updates control states via `ControlManager`. Loads session files via `SessionFileManager`. Displays statistics. |
 | **Discord/Twitch/YouTube** | Chat messages flow through `ChatHandler` with a unified message format. Response routing handled by the integration layer. |
-
----
-
-# Usage Guide
-
-- **Starting the Agent**: Read the SETUP.md file in the project root for installation and setup instructions
-- **Personalizing Your Agent**: Modify the personality and controls of your agent in the following files: bot_info.py, config.json, controls.py, personality_prompt_parts.py
-- **Personalizing the system behavior**: If you are more familiar with prompting or would just like to experiment with your agent's behavior, the prompts are constructed of modular prompt parts stored in separate mode directories in the BASE/core directory. Each different mode of this system has its own _parts file and constructor, so modes may be modified without affecting the others.
-- **Updating**: As the agent is personalized exclusively in the personality/ directory and this is where all of your agents memories are stored, simply replace the BASE/ directory when updating to newer released versions. The personality/ directory of the project is only modified when absolutely necessary to avoid breaking changes. When updates are made to the project's personality/ directory, either compare to the old and transfer the changes over or reimplement your old files back in. This ensures your agent's memories and configuration remain intact and are not overwritten.
-- **Important!!!**: If you are unfamiliar with programming or Python in general, only modify the files in the Personality/ directory. Always remember to back up your files to be able to revert back easily!
 
 ---
 

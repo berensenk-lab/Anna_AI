@@ -9,11 +9,11 @@ Complete installation and configuration guide for the VTuber AI Agent system wit
 1. [System Requirements](#system-requirements)
 2. [Quick Start Guide](#quick-start-guide)
 3. [Python Installation](#python-installation)
-4. [Virtual Audio Cable Installation](#virtual-audio-cable-installation)
+4. [Ollama Installation](#ollama-installation)
 5. [Agent Installation](#agent-installation)
 6. [Optional Tools and Extensions](#optional-tools-and-extensions)
 7. [GPU Package Setup (RTX 50-Series)](#gpu-package-setup-rtx-50-series)
-8. [Ollama Installation](#ollama-installation)
+8. [Virtual Audio Cable Installation](#virtual-audio-cable-installation)
 9. [Warudo Installation](#warudo-installation)
 10. [VRoid Studio Installation](#vroid-studio-installation)
 11. [Verification & Testing](#verification--testing)
@@ -58,54 +58,82 @@ Complete installation and configuration guide for the VTuber AI Agent system wit
 ```batch
 # 1. Install Python 3.11.9
 
-# 2. Install Virtual Audio Cables
-# Download and install VB-Audio Cable from https://vb-audio.com/Cable/
-# Run installer as Administrator, restart computer
-# Optional: Install Tala cables for multiple agents from
-# https://github.com/Essence-Platform/TalaVirtualAudioCables-Public
+# 2. Install Ollama
 
 # 3. Clone Anna_AI from GitHub
 git clone https://github.com/KryptykBioz/Anna_AI.git
 cd Anna_AI
 
 # 4. Create virtual environment
-python -m venv venv
+py -3.11 -m venv venv
+
+# 5. Activate the virtual environment
 .\venv\Scripts\activate
 
-# 5. Install dependencies
+# 6. Install dependencies
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 pip install transformers==4.38.2
 
-# 6. Copy GPU packages from working Anna_AI instance (RTX 50-series only)
+# 6.5 (RTX 50-series only). Copy GPU packages from working Anna_AI instance
 # If this is your first Anna_AI install, follow full GPU setup instructions
 python copy_gpu_packages.py
 
-# 7. Configure .env file
-copy .env.example .env
-# Edit .env with Ollama optimization settings (see Environment Configuration section)
-
-# 8. Configure agent
-# Edit personality/bot_info.py with your settings:
+# 7. Configure agent
+# Edit personality/bot_info.py with your settings and preferences:
 #   - agentname = "Anna"
-#   - vb_cable_name = "CABLE Input"
-#   - group_chat_port = 54321 (unique for each agent)
+#   - username = "Sir"
+#   - thoughtmodel = "gemma3:12b-it-q4_K_M"
+#   - responsemodel = "gemma3:12b-it-q4_K_M"
+#   - toolmodel = "gemma3:12b-it-q4_K_M"
+#   - actionmodel = "gemma3:12b-it-q4_K_M"
+#   - visionmodel = "gemma3:12b-it-q4_K_M"
+#   - embedmodel = "nomic-embed-text:latest"
 # Edit config.json for advanced settings
 
-# 9. Launch
-.\gui_start.bat
+# 8. Launch
+.\START.bat
 
-# 10. Configure Warudo for lip sync
+# 8.5. If Ollama is not running in the background already, open a terminal and run:
+ollama start
+
+# Agent should now start with basic text chat functionality ONLY.
+
+# 9. Optional: Install additional tools
+# Repository: https://github.com/KryptykBioz/AI_Agent_Tools
+git clone https://github.com/KryptykBioz/AI_Agent_Tools.git
+# Copy all individual tool directories into BASE/tools/installed/
+# Follow tool-specific installation instructions
+
+# NEXT STEPS:
+
+# Install Virtual Audio Cables
+# Download and install VB-Audio Cable from https://vb-audio.com/Cable/
+# Run installer as Administrator, restart computer
+# Optional: Install Tala cables for multiple agents from
+# https://github.com/Essence-Platform/TalaVirtualAudioCables-Public
+
+# Allow Virtual Cable to play through audio output
+# Open System Settings -> Sound -> More Sound Settings (window opens) -> 
+# Recording tab -> double-click virtual cable (window opens) -> 
+# Check the 'Listen to this device' checkbox, Playback device should be set to default
+# Note: For your agent to speak through a separate output device than the system default, 
+# this can be changed here. The agent's voice can be played through a separate speaker 
+# from all other audio sources
+
+# Agent can now speak using system voice
+
+# Install Warudo (through Steam)
+
+# Configure Warudo for lip sync
 # Warudo → Settings → Audio → Lip Sync Input: CABLE Output (VB-Audio)
 # Warudo → Settings → Network → WebSocket Server: Enable (Port 19190)
 
-# 11. Optional: Load Anna.vrm into Warudo
+# Optional: Load Anna.vrm into Warudo
 # File location: Anna_AI\personality\avatar\Anna.vrm
 
-# 12. Optional: Install additional tools
-# Repository: https://github.com/KryptykBioz/AI_Agent_Tools
-git clone https://github.com/KryptykBioz/AI_Agent_Tools.git
-# Follow tool-specific installation instructions
+# Agent's on-screen avatar now speaks when the agent speaks
+
 ```
 
 Continue reading for detailed step-by-step instructions.
@@ -245,172 +273,125 @@ Required for compiling PyAudio and other C extensions.
 
 ---
 
-## VIRTUAL AUDIO CABLE INSTALLATION
+## OLLAMA INSTALLATION
 
-### Why Virtual Audio Cables Are Required
+### Step 1: Download Ollama
 
-Anna_AI's TTS system and Warudo lip sync animation require virtual audio cables to route audio internally without playing through physical speakers. This enables:
+1. Visit: https://ollama.ai/download
+2. Download Windows installer
+3. Run installer as Administrator
+4. Default installation: `C:\Users\YourUsername\AppData\Local\Programs\Ollama`
 
-**Core Functionality**:
-- **TTS Audio Routing**: Send generated speech to Warudo without external playback
-- **Lip Sync Animation**: Warudo captures TTS audio for real-time lip movement
-- **Silent Operation**: Agent speaks through avatar without disturbing you
-- **Audio Isolation**: Separate agent audio from system sounds
+### Step 2: Start Ollama Service
 
-**Multiple Agent Support**:
-- Each agent requires a dedicated virtual cable
-- Prevents audio conflicts between simultaneous agents
-- Enables running multiple VTuber personalities at once
-
-### Virtual Cable Overview
-
-**VB-Audio Virtual Cable** (Primary):
-- Source: https://vb-audio.com/Cable/
-- Provides: 1 virtual cable (CABLE Input/Output)
-- Use: First agent (Anna_AI)
-- License: Donationware (free to use, donation appreciated)
-
-**Tala Virtual Audio Cables** (Additional):
-- Source: https://github.com/Essence-Platform/TalaVirtualAudioCables-Public
-- Provides: 2 additional cables (CABLE-A, CABLE-B)
-- Use: Second and third agents
-- License: Free
-
-**Cable Assignment**:
-```
-Agent 1 (Anna_AI)    → CABLE Input/Output
-Agent 2 (Second AI)  → CABLE-A Input/Output
-Agent 3 (Third AI)   → CABLE-B Input/Output
-```
-
-### Step 1: Install VB-Audio Virtual Cable
-
-**Download VB-Audio Cable**:
-
-1. Visit: https://vb-audio.com/Cable/
-2. Click "Download" → "VBCABLE_Driver_Pack43.zip"
-3. Extract ZIP file to temporary location
-4. File size: ~2MB
-
-**Install Primary Cable**:
+Ollama starts automatically after installation. To manually control:
 
 ```batch
-# Navigate to extracted folder
-cd C:\Downloads\VBCABLE_Driver_Pack43
+# Start service
+net start ollama
 
-# Run installer as Administrator
-# Right-click VBCABLE_Setup_x64.exe → Run as administrator
+# Stop service
+net stop ollama
+
+# Check status
+sc query ollama
 ```
 
-**Installation Steps**:
-1. Click "Install Driver"
-2. Windows will show driver installation dialog
-3. Click "Install" when prompted
-4. Wait for "Installation successful" message
-5. Click "OK"
-6. **Restart computer** (required for driver activation)
+### Step 3: Download Models
 
-**Verify Installation**:
-
-After restart:
-```
-1. Right-click speaker icon in taskbar
-2. Select "Open Sound settings"
-3. Scroll to "Advanced sound options"
-4. Click "App volume and device preferences"
-5. Check available devices:
-   - Should see "CABLE Input (VB-Audio Virtual Cable)"
-   - Should see "CABLE Output (VB-Audio Virtual Cable)"
-```
-
-### Step 2: Install Tala Virtual Audio Cables (Optional)
-
-[Note]: Only install if running multiple agents simultaneously. Single agent users can skip this step.
-
-**Download Tala Cables**:
-
-1. Visit: https://github.com/Essence-Platform/TalaVirtualAudioCables-Public
-2. Click "Releases" (right side)
-3. Download latest release: `TalaVirtualAudioCables.zip`
-4. Extract to temporary location
-5. File size: ~5MB
-
-**Install Additional Cables**:
+Download models specified in bot_info.py:
 
 ```batch
-# Navigate to extracted folder
-cd C:\Downloads\TalaVirtualAudioCables
+# Core models for Anna_AI
+ollama pull gemma3:12b-it-q4_K_M
+ollama pull nomic-embed-text:latest
 
-# Run installer as Administrator
-# Right-click Install_Cables.exe → Run as administrator
+# Alternative models (optional)
+ollama pull qwen3-vl:8b-instruct-q4_K_M
+ollama pull qwen3-vl:8b-thinking-q4_K_M
 ```
 
-**Installation Steps**:
-1. Installer will add CABLE-A and CABLE-B
-2. Click "Install" for each cable prompt
-3. Wait for completion message
-4. **Restart computer** (required)
+Model download sizes:
+- gemma3:12b-it-q4_K_M: ~7GB
+- nomic-embed-text: ~275MB
+- qwen3-vl models: ~5GB each
 
-**Verify Additional Cables**:
+### Step 4: Verify Ollama Configuration
 
-After restart:
-```
-Windows Settings → Sound → Advanced sound options
-Should now see:
-- CABLE Input/Output (VB-Audio)
-- CABLE-A Input/Output (Tala)
-- CABLE-B Input/Output (Tala)
-```
-
-### Step 3: Configure Windows Audio Settings
-
-**Set Default Devices**:
-
-[Warning] Do NOT set virtual cables as default system devices.
-
-```
-1. Right-click speaker icon → "Open Sound settings"
-2. Output device: Keep as physical speakers/headphones
-3. Input device: Keep as physical microphone
-4. Virtual cables will be assigned per-application
-```
-
-**Application-Specific Audio**:
-
-Anna_AI will programmatically route audio to virtual cables. Manual configuration:
-
-```
-1. Open "App volume and device preferences"
-2. Find "Anna_AI" or "python.exe" (when agent is running)
-3. Set Output: CABLE Input (VB-Audio Virtual Cable)
-4. Agent will automatically handle routing
-```
-
-### Step 4: Configure Agent Audio Settings
-
-**Edit bot_info.py**:
-
-```python
-# VB-Cable for audio output (use exact device name)
-vb_cable_name = "CABLE Input"
-```
-
-**For multiple agents**:
-```python
-# Agent 1 (Anna_AI)
-vb_cable_name = "CABLE Input"
-
-# Agent 2
-vb_cable_name = "CABLE-A Input"
-
-# Agent 3
-vb_cable_name = "CABLE-B Input"
-```
-
-**Verify cable names match Windows settings**:
 ```batch
-# List all audio devices
-python -c "import sounddevice as sd; print(sd.query_devices())"
+# Test connection
+curl http://localhost:11434/api/version
+
+# List installed models
+ollama list
+
+# Test model
+ollama run gemma3:12b-it-q4_K_M "Hello, how are you?"
+```
+
+### Step 5: Configure Agent for Ollama
+
+Agent is pre-configured in config.json and .env:
+
+**config.json** (Application-level settings):
+
+```json
+{
+  "ollama": {
+    "endpoint": "http://localhost:11434",
+    "temperature": 0.85,
+    "max_tokens": 1000,
+    "num_ctx": 3000
+  }
+}
+```
+
+**.env** (Ollama server optimization):
+
+```bash
+OLLAMA_CONTEXT_LENGTH=8192
+OLLAMA_KEEP_ALIVE=24h
+OLLAMA_FLASH_ATTENTION=true
+OLLAMA_NUM_PARALLEL=1
+OLLAMA_MAX_LOADED_MODELS=2
+```
+
+**Adjust config.json for performance**:
+
+```json
+{
+  "ollama": {
+    "num_ctx": 2000,  // Lower for faster responses
+    "num_predict": 500,  // Shorter responses
+    "temperature": 0.7  // More focused responses
+  }
+}
+```
+
+**Adjust .env for different GPU capabilities**:
+
+For 8GB VRAM:
+```bash
+OLLAMA_CONTEXT_LENGTH=4096
+OLLAMA_GPU_OVERHEAD=512
+OLLAMA_MAX_LOADED_MODELS=1
+```
+
+For 16GB+ VRAM:
+```bash
+OLLAMA_CONTEXT_LENGTH=16384
+OLLAMA_GPU_OVERHEAD=2048
+OLLAMA_MAX_LOADED_MODELS=3
+```
+
+**Apply changes**:
+```batch
+# Restart Ollama after .env changes
+net stop ollama
+net start ollama
+
+# Restart agent after config.json changes
+# (Stop and restart gui_start.bat)
 ```
 
 ---
@@ -694,125 +675,172 @@ pip install --pre torch torchvision torchaudio --index-url https://download.pyto
 
 ---
 
-## OLLAMA INSTALLATION
+## VIRTUAL AUDIO CABLE INSTALLATION
 
-### Step 1: Download Ollama
+### Why Virtual Audio Cables Are Required
 
-1. Visit: https://ollama.ai/download
-2. Download Windows installer
-3. Run installer as Administrator
-4. Default installation: `C:\Users\YourUsername\AppData\Local\Programs\Ollama`
+Anna_AI's TTS system and Warudo lip sync animation require virtual audio cables to route audio internally without playing through physical speakers. This enables:
 
-### Step 2: Start Ollama Service
+**Core Functionality**:
+- **TTS Audio Routing**: Send generated speech to Warudo without external playback
+- **Lip Sync Animation**: Warudo captures TTS audio for real-time lip movement
+- **Silent Operation**: Agent speaks through avatar without disturbing you
+- **Audio Isolation**: Separate agent audio from system sounds
 
-Ollama starts automatically after installation. To manually control:
+**Multiple Agent Support**:
+- Each agent requires a dedicated virtual cable
+- Prevents audio conflicts between simultaneous agents
+- Enables running multiple VTuber personalities at once
+
+### Virtual Cable Overview
+
+**VB-Audio Virtual Cable** (Primary):
+- Source: https://vb-audio.com/Cable/
+- Provides: 1 virtual cable (CABLE Input/Output)
+- Use: First agent (Anna_AI)
+- License: Donationware (free to use, donation appreciated)
+
+**Tala Virtual Audio Cables** (Additional):
+- Source: https://github.com/Essence-Platform/TalaVirtualAudioCables-Public
+- Provides: 2 additional cables (CABLE-A, CABLE-B)
+- Use: Second and third agents
+- License: Free
+
+**Cable Assignment**:
+```
+Agent 1 (Anna_AI)    → CABLE Input/Output
+Agent 2 (Second AI)  → CABLE-A Input/Output
+Agent 3 (Third AI)   → CABLE-B Input/Output
+```
+
+### Step 1: Install VB-Audio Virtual Cable
+
+**Download VB-Audio Cable**:
+
+1. Visit: https://vb-audio.com/Cable/
+2. Click "Download" → "VBCABLE_Driver_Pack43.zip"
+3. Extract ZIP file to temporary location
+4. File size: ~2MB
+
+**Install Primary Cable**:
 
 ```batch
-# Start service
-net start ollama
+# Navigate to extracted folder
+cd C:\Downloads\VBCABLE_Driver_Pack43
 
-# Stop service
-net stop ollama
-
-# Check status
-sc query ollama
+# Run installer as Administrator
+# Right-click VBCABLE_Setup_x64.exe → Run as administrator
 ```
 
-### Step 3: Download Models
+**Installation Steps**:
+1. Click "Install Driver"
+2. Windows will show driver installation dialog
+3. Click "Install" when prompted
+4. Wait for "Installation successful" message
+5. Click "OK"
+6. **Restart computer** (required for driver activation)
 
-Download models specified in bot_info.py:
+**Verify Installation**:
+
+After restart:
+```
+1. Right-click speaker icon in taskbar
+2. Select "Open Sound settings"
+3. Scroll to "Advanced sound options"
+4. Click "App volume and device preferences"
+5. Check available devices:
+   - Should see "CABLE Input (VB-Audio Virtual Cable)"
+   - Should see "CABLE Output (VB-Audio Virtual Cable)"
+```
+
+### Step 2: Install Tala Virtual Audio Cables (Optional)
+
+[Note]: Only install if running multiple agents simultaneously. Single agent users can skip this step.
+
+**Download Tala Cables**:
+
+1. Visit: https://github.com/Essence-Platform/TalaVirtualAudioCables-Public
+2. Click "Releases" (right side)
+3. Download latest release: `TalaVirtualAudioCables.zip`
+4. Extract to temporary location
+5. File size: ~5MB
+
+**Install Additional Cables**:
 
 ```batch
-# Core models for Anna_AI
-ollama pull gemma3:12b-it-q4_K_M
-ollama pull nomic-embed-text:latest
+# Navigate to extracted folder
+cd C:\Downloads\TalaVirtualAudioCables
 
-# Alternative models (optional)
-ollama pull qwen3-vl:8b-instruct-q4_K_M
-ollama pull qwen3-vl:8b-thinking-q4_K_M
+# Run installer as Administrator
+# Right-click Install_Cables.exe → Run as administrator
 ```
 
-Model download sizes:
-- gemma3:12b-it-q4_K_M: ~7GB
-- nomic-embed-text: ~275MB
-- qwen3-vl models: ~5GB each
+**Installation Steps**:
+1. Installer will add CABLE-A and CABLE-B
+2. Click "Install" for each cable prompt
+3. Wait for completion message
+4. **Restart computer** (required)
 
-### Step 4: Verify Ollama Configuration
+**Verify Additional Cables**:
 
+After restart:
+```
+Windows Settings → Sound → Advanced sound options
+Should now see:
+- CABLE Input/Output (VB-Audio)
+- CABLE-A Input/Output (Tala)
+- CABLE-B Input/Output (Tala)
+```
+
+### Step 3: Configure Windows Audio Settings
+
+**Set Default Devices**:
+
+[Warning] Do NOT set virtual cables as default system devices.
+
+```
+1. Right-click speaker icon → "Open Sound settings"
+2. Output device: Keep as physical speakers/headphones
+3. Input device: Keep as physical microphone
+4. Virtual cables will be assigned per-application
+```
+
+**Application-Specific Audio**:
+
+Anna_AI will programmatically route audio to virtual cables. Manual configuration:
+
+```
+1. Open "App volume and device preferences"
+2. Find "Anna_AI" or "python.exe" (when agent is running)
+3. Set Output: CABLE Input (VB-Audio Virtual Cable)
+4. Agent will automatically handle routing
+```
+
+### Step 4: Configure Agent Audio Settings
+
+**Edit bot_info.py**:
+
+```python
+# VB-Cable for audio output (use exact device name)
+vb_cable_name = "CABLE Input"
+```
+
+**For multiple agents**:
+```python
+# Agent 1 (Anna_AI)
+vb_cable_name = "CABLE Input"
+
+# Agent 2
+vb_cable_name = "CABLE-A Input"
+
+# Agent 3
+vb_cable_name = "CABLE-B Input"
+```
+
+**Verify cable names match Windows settings**:
 ```batch
-# Test connection
-curl http://localhost:11434/api/version
-
-# List installed models
-ollama list
-
-# Test model
-ollama run gemma3:12b-it-q4_K_M "Hello, how are you?"
-```
-
-### Step 5: Configure Agent for Ollama
-
-Agent is pre-configured in config.json and .env:
-
-**config.json** (Application-level settings):
-
-```json
-{
-  "ollama": {
-    "endpoint": "http://localhost:11434",
-    "temperature": 0.85,
-    "max_tokens": 1000,
-    "num_ctx": 3000
-  }
-}
-```
-
-**.env** (Ollama server optimization):
-
-```bash
-OLLAMA_CONTEXT_LENGTH=8192
-OLLAMA_KEEP_ALIVE=24h
-OLLAMA_FLASH_ATTENTION=true
-OLLAMA_NUM_PARALLEL=1
-OLLAMA_MAX_LOADED_MODELS=2
-```
-
-**Adjust config.json for performance**:
-
-```json
-{
-  "ollama": {
-    "num_ctx": 2000,  // Lower for faster responses
-    "num_predict": 500,  // Shorter responses
-    "temperature": 0.7  // More focused responses
-  }
-}
-```
-
-**Adjust .env for different GPU capabilities**:
-
-For 8GB VRAM:
-```bash
-OLLAMA_CONTEXT_LENGTH=4096
-OLLAMA_GPU_OVERHEAD=512
-OLLAMA_MAX_LOADED_MODELS=1
-```
-
-For 16GB+ VRAM:
-```bash
-OLLAMA_CONTEXT_LENGTH=16384
-OLLAMA_GPU_OVERHEAD=2048
-OLLAMA_MAX_LOADED_MODELS=3
-```
-
-**Apply changes**:
-```batch
-# Restart Ollama after .env changes
-net stop ollama
-net start ollama
-
-# Restart agent after config.json changes
-# (Stop and restart gui_start.bat)
+# List all audio devices
+python -c "import sounddevice as sd; print(sd.query_devices())"
 ```
 
 ---
@@ -835,6 +863,8 @@ net start ollama
 5. Launch Warudo after installation
 
 ### Step 3: Initial Setup
+
+**Skip this initial setup by importing the Anna_Animations_Blueprint.json included in the personality/avatar directory directly into Warudo**
 
 **Graphics Settings**:
 ```
@@ -895,30 +925,9 @@ Warudo listens to CABLE Output for lip sync
 4. Adjust Audio → Lip Sync Sensitivity if needed
 ```
 
-### Step 6: Optional - Face Tracking
-
-**Webcam Setup**:
-
-```
-Character → Face Tracking:
-- Enable Face Tracking: [x]
-- Tracking Method: Webcam
-- Camera: [Select your webcam]
-- Calibrate: Follow on-screen instructions
-```
-
-**Performance Settings**:
-
-```
-Character → Face Tracking:
-- Tracking Quality: Medium (adjust for FPS)
-- Smoothing: 5 (reduce jitter)
-- Expression Sensitivity: 70%
-```
-
 ---
 
-## VROID STUDIO INSTALLATION
+## VROID STUDIO INSTALLATION (optional to edit avatar)
 
 ### Step 1: Download VRoid Studio
 
@@ -1042,29 +1051,7 @@ type .env
 ollama show gemma3:12b-it-q4_K_M --verbose
 ```
 
-### Test 3: Virtual Audio Cables
-
-```batch
-python -c "import sounddevice as sd; devices = sd.query_devices(); print([d['name'] for d in devices if 'CABLE' in d['name']])"
-```
-
-Expected output:
-```
-['CABLE Input (VB-Audio Virtual Cable)', 'CABLE Output (VB-Audio Virtual Cable)']
-```
-
-### Test 4: Warudo Connection
-
-```batch
-curl http://127.0.0.1:19190
-```
-
-Expected output:
-```
-WebSocket server response or connection accepted
-```
-
-### Test 5: Agent Launch
+### Test 3: Agent Launch
 
 ```batch
 cd Anna_AI
@@ -1077,7 +1064,20 @@ Expected behavior:
 3. Status shows "Ready"
 4. Can send test message
 
-### Test 6: Full Integration Test
+### Test 4: Warudo Connection
+
+```batch
+curl http://127.0.0.1:19190
+```
+
+Expected output:
+```
+WebSocket server response or connection accepted
+```
+
+
+
+### Test 5: Full Integration Test
 
 **Procedure**:
 
@@ -1450,22 +1450,21 @@ LOG_SYSTEM_INFORMATION = True
 - **Transformers**: https://huggingface.co/docs/transformers/
 - **Faster Whisper**: https://github.com/SYSTRAN/faster-whisper
 - **Coqui TTS**: https://docs.coqui.ai/en/latest/
-- **Discord.py**: https://discordpy.readthedocs.io/
 - **Ollama**: https://github.com/ollama/ollama/tree/main/docs
 - **Warudo**: https://docs.warudo.app/
 - **VRoid Studio**: https://vroid.com/en/studio
 
 ### Community Support
 
-- **Discord**: [Your community Discord server]
-- **GitHub Issues**: https://github.com/KryptykBioz/Anna_AI/issues
-- **Reddit**: r/VirtualYoutubers, r/VTuberTech
+- **YouTube**: https://www.youtube.com/@KryptykBioz
+- **GitHub**: https://github.com/KryptykBioz
+- **Twitch**: https://www.twitch.tv/kryptykbioz
 
 ### Update Policy
 
-- **Agent Framework**: Check for updates monthly
-- **Python Packages**: Update cautiously, test thoroughly
-- **GPU Drivers**: Update quarterly or when issues arise
+- **Agent Framework**: Check for updates periodically
+- **Python Packages**: Update cautiously, test thoroughly, use venv to ensure package versions remain stable
+- **GPU Drivers**: Update whenever available
 - **Ollama**: Update when new features are needed
 - **Warudo**: Update when stable releases available
 - **VRoid Studio**: Update for new features

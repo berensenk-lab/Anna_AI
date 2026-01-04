@@ -28,7 +28,7 @@ KILL_COMMAND = "shut down sleep now"
 # Single system for all background cognitive processing
 # Handles reactive (responding to events) and proactive (self-initiated) thinking
 
-ENABLE_CONTINUOUS_THINKING = True  # Master toggle for autonomous cognitive loop
+ENABLE_CONTINUOUS_THINKING = False  # Master toggle for autonomous cognitive loop
 
 CHAT_ENGAGEMENT = False
 
@@ -43,7 +43,7 @@ AUTO_RESPOND = False              # Enable automatic responses when no user inpu
 AUTO_RESPOND_INTERVAL = 60        # Time interval (seconds) to trigger auto-response
 
 # Streaming configuration
-USE_STREAMING = True  # Enable streaming response generation
+USE_STREAMING = False  # Enable streaming response generation
 
 # ========================================================================
 # COGNITIVE LOOP CONTROLS
@@ -55,7 +55,7 @@ ENABLE_CONTINUOUS_THINKING = False
 # Auto-restart cognitive loop after crashes
 # - True: Auto-restart up to 3 times with exponential backoff
 # - False: Stop completely on first error, require manual restart
-AUTO_RESTART = True
+AUTO_RESTART = False
 
 # === PROCESSING RATE LIMITING ===
 # Limit how fast the agent can think/process
@@ -96,8 +96,8 @@ MAX_LONG_TERM_MEMORIES = 1
 MAX_BASE_MEMORIES = 1
 
 # === AVATAR ABILITIES ===
-AVATAR_SPEECH = True           # Enable text-to-speech output
-USE_CUSTOM_VOICE = True       # Use custom voice model instead of standard system TTS (requires AVATAR_SPEECH enabled)
+AVATAR_SPEECH = False           # Enable text-to-speech output
+USE_CUSTOM_VOICE = False       # Use custom voice model instead of standard system TTS (requires AVATAR_SPEECH enabled)
 
 # Game State - Master Control (automatically managed by control system)
 PLAYING_GAME = False  # Auto-set to True when ANY game is selected
@@ -173,18 +173,18 @@ opencv_vision_change_threshold = 50000  # Change detection sensitivity
 # - Click reload button on any tool panel
 # - Tool stops, reloads code, restarts with state preserved
 # - Useful for rapid tool development iteration
-ENABLE_TOOL_HOT_RELOAD = True
+ENABLE_TOOL_HOT_RELOAD = False
 
 # Core Hot-Reload: Auto-reload prompt constructors on file save
 # - Watches prompt constructor files for changes
 # - Automatically reloads when you save edits
 # - Useful for rapid prompt engineering iteration
 # - Requires 'watchdog' package: pip install watchdog
-ENABLE_CORE_HOT_RELOAD = True
+ENABLE_CORE_HOT_RELOAD = False
 
 # Hot-reload configuration
-ENABLE_HOT_RELOAD = True  # Master switch
-ENABLE_FILE_WATCHING = True  # Auto-reload on file change (dev mode)
+ENABLE_HOT_RELOAD = False  # Master switch
+ENABLE_FILE_WATCHING = False  # Auto-reload on file change (dev mode)
 HOT_RELOAD_DEBOUNCE = 2.0  # Seconds to wait before reload (prevents spam)
 
 # ========================================================================
@@ -210,3 +210,70 @@ LOG_DISCORD_EXECUTION = False    # Log Discord-specific operations
 LOG_MINECRAFT_EXECUTION = False  # Log Minecraft-specific operations
 # Note: Control methods (toggle_feature, set_feature, etc.) are available in:
 # from BASE.core.control_methods import ControlManager
+
+
+
+
+
+
+# ============================================================================
+# VOICE CONFIGURATION
+# ============================================================================
+
+# Voice volume (0.0 to 1.0)
+VOICE_VOLUME = 1.0
+
+# Sound effects volume (0.0 to 1.0)
+SOUND_EFFECT_VOLUME = 1.0
+
+# Enable avatar speech (TTS)
+AVATAR_SPEECH = False
+
+# Use custom voice (XTTS) instead of system voice (pyttsx3)
+USE_CUSTOM_VOICE = False
+
+# ============================================================================
+# GROUP CHAT CONFIGURATION
+# ============================================================================
+
+# Enable Voice Hub for multi-agent voice interaction
+# When True:
+# - Agent connects to shared Voice Hub for speech recognition
+# - Single GPU instance shared across all agents (memory efficient)
+# - Agents can hear each other speak (injected to thought buffer)
+# - User speech broadcast to all connected agents
+# - First agent to start will spawn the Voice Hub server
+# When False:
+# - Agent uses local voice processing (current behavior)
+# - Each agent loads own Whisper/Vosk instance
+# - No multi-agent voice interaction
+GROUP_CHAT = False
+
+# ============================================================================
+# FEATURE TOGGLES
+# ============================================================================
+
+# Enable thought buffer processing
+USE_THOUGHT_BUFFER = True
+
+# Enable memory system
+USE_MEMORY = True
+
+# Enable auto-prompts (background checks)
+AUTO_PROMPT = False
+
+# Auto-prompt interval in seconds
+AUTO_PROMPT_INTERVAL = 300
+
+# ============================================================================
+# PERFORMANCE SETTINGS
+# ============================================================================
+
+# Maximum tokens for LLM responses
+MAX_TOKENS = 2000
+
+# Temperature for LLM sampling (0.0-2.0)
+TEMPERATURE = 0.7
+
+# Enable streaming responses
+STREAM_RESPONSES = False
