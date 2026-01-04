@@ -23,11 +23,19 @@
 # ============================================================================
 #
 # STEP 1: Create virtual environment
-# cd NewAgent_AI
-# python -m venv venv
+# If Python 3.11 is installed and in PATH:
+# py -3.11 -m venv venv
+# or
+# python3.11 -m venv venv
+# If that doesn't work, use the full path:
+# C:\Python311\python.exe -m venv venv
+# To find your Python 3.11 installation path:
+# py -3.11 -c "import sys; print(sys.executable)"
+#
+# STEP 2: Activate the virtual environment (from project root)
 # .\venv\Scripts\activate
 #
-# STEP 2: Upgrade pip
+# STEP 2.5: Upgrade pip
 # python -m pip install --upgrade pip
 #
 # STEP 3: Install this requirements file
@@ -37,7 +45,7 @@
 # pip install transformers==4.38.2
 # (Newer versions break XTTS - DO NOT upgrade beyond 4.38.2)
 #
-# STEP 5: Copy GPU packages from Anna_AI (DO NOT use pip for these)
+# STEP 5 (Only for 50-series GPU support): Copy GPU packages from Anna_AI (DO NOT use pip for these)
 # Use copy_gpu_packages.py script OR manual copy from SETUP.md
 # Required packages to copy:
 #   - torch/ and torch-*.dist-info/
@@ -47,12 +55,12 @@
 #   - ctranslate2/ and ctranslate2-*.dist-info/ (CRITICAL for Whisper)
 #   - pyaudio/ and PyAudio-*.dist-info/ (if custom-built)
 #
-# STEP 6: Verify GPU support
+# STEP 6 (Only for 50-series GPU support): Verify GPU support
 # python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}')"
 # python -c "from faster_whisper import WhisperModel; print('CTranslate2: OK')"
 #
 # STEP 7: Test with GUI
-# .\gui_start.bat
+# .\START.bat
 #
 # ============================================================================
 # WHY NOT USE PIP FOR GPU PACKAGES?
@@ -64,6 +72,8 @@
 # See SETUP.md for detailed explanation and troubleshooting.
 #
 # ============================================================================
+
+
 
 # Core AI/ML packages
 numpy==1.26.4
@@ -96,12 +106,17 @@ screeninfo==0.8.1
 colorama==0.4.6
 python-dotenv==1.1.1
 
+# File updating
+watchdog==6.0.0
+
+
+
 # ============================================================================
 # OPTIONAL INSTALLS FOR SOME TOOLS/FUNCTIONALITY
 # ============================================================================
 # pip install mss opencv-python numpy --break-system-packages
 # pip install websocket-client
-# pip install watchdog
+# pip install zmq
 
 # ============================================================================
 # GPU PACKAGES (COPY FROM ANNA_AI - DO NOT INSTALL VIA PIP):
