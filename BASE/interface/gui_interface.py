@@ -146,7 +146,8 @@ class OllamaGUI:
         self.voice_manager = VoiceManager(
             self.message_queue,
             self.input_queue,
-            self.logger
+            self.logger,
+            ai_core=self.ai_core  # NEW: Pass ai_core for thought buffer access
         )
 
         # Control panel manager
@@ -270,75 +271,57 @@ class OllamaGUI:
 
     def _setup_tts_tool(self):
         """
-        Initialize TTS tool - ALWAYS initialize, even if disabled
-        FIXED: Corrected to match TTSTool class signature (backend, logger)
+        Initialize TTS tool via internal tool manager
+        REFACTORED: Uses modular internal tool system instead of legacy voice directory
         """
         try:
-            from BASE.tools.internal.voice.tts_tool import TTSTool
-            from BASE.tools.internal.voice.pyttsx3_backend import Pyttsx3Backend
-            from BASE.tools.internal.voice.xtts_backend import XTTSBackend
-            from personality.bot_info import agentname
+            # Check if internal tool manager is available
+            if not hasattr(self.ai_core, 'internal_tool_manager'):
+                self.logger.warning("[TTS] Internal tool manager not available - TTS disabled")
+                self.ai_core.tts_tool = None
+                return
             
-            # Determine which backend to use based on USE_CUSTOM_VOICE
-            if self.controls.USE_CUSTOM_VOICE:
-                self.logger.system("[TTS] Initializing XTTS backend...")
+            if not self.ai_core.internal_tool_manager:
+                self.logger.warning("[TTS] Internal tool manager is None - TTS disabled")
+                self.ai_core.tts_tool = None
+                return
+            
+            # Get active TTS tool from internal tool manager
+            # The tool is already initialized by the internal tool manager
+            tts_tool = self.ai_core.internal_tool_manager.get_active_tts_tool()
+            
+            if tts_tool:
+                # Tool is initialized and available
+                info = tts_tool.get_voice_info()
+                backend_name = info.get('name', 'Unknown')
+                backend_type = info.get('type', 'Unknown')
                 
-                # Try to find voice sample
-                voice_extensions = ['.wav', '.mp3', '.flac']
-                voice_path = None
+                # The ai_core.tts_tool reference is already set by internal tool manager
+                # but we also set it here for clarity
+                self.ai_core.tts_tool = tts_tool
+                self.tts_tool = tts_tool
                 
-                for ext in voice_extensions:
-                    test_path = f"./personality/voice/{agentname}_voice_sample{ext}"
-                    if Path(test_path).exists():
-                        voice_path = test_path
-                        break
-                
-                if not voice_path:
-                    self.logger.warning(f"[TTS] Voice sample not found for {agentname}, falling back to pyttsx3")
-                    backend = Pyttsx3Backend(controls_module=self.controls)
+                # Log status based on AVATAR_SPEECH control
+                if self.controls.AVATAR_SPEECH:
+                    self.logger.success(f"[TTS] Initialized and enabled: {backend_name} ({backend_type})")
                 else:
-                    try:
-                        backend = XTTSBackend(
-                            voice_sample_path=voice_path,
-                            language='en',
-                            speed=1.0,
-                            controls_module=self.controls
-                        )
-                        
-                        if not backend.is_available():
-                            self.logger.warning("[TTS] XTTS backend unavailable, falling back to pyttsx3")
-                            backend = Pyttsx3Backend(controls_module=self.controls)
-                    except Exception as e:
-                        self.logger.warning(f"[TTS] XTTS initialization failed: {e}, falling back to pyttsx3")
-                        backend = Pyttsx3Backend(controls_module=self.controls)
+                    self.logger.system(f"[TTS] Initialized but disabled: {backend_name} ({backend_type})")
+                
+                # Log additional info
+                if 'volume_percent' in info:
+                    self.logger.system(f"[TTS] Volume: {info['volume_percent']}")
+                    
             else:
-                self.logger.system("[TTS] Initializing pyttsx3 backend...")
-                backend = Pyttsx3Backend(controls_module=self.controls)
-            
-            # CRITICAL FIX: TTSTool expects (backend, logger) not keyword args
-            self.tts_tool = TTSTool(backend, self.logger)
-            
-            # Inject into AI Core
-            self.ai_core.tts_tool = self.tts_tool
-            
-            # Log backend info
-            info = self.tts_tool.get_voice_info()
-            backend_type = info.get('type', 'Unknown')
-            backend_name = info.get('name', 'Unknown')
-            
-            if self.controls.AVATAR_SPEECH:
-                self.logger.system(f"[TTS] Tool initialized and enabled ({backend_name})")
-            else:
-                self.logger.system(f"[TTS] Tool initialized but currently disabled ({backend_name})")
-            
-            # Log additional info
-            if 'volume_percent' in info:
-                self.logger.system(f"[TTS] Volume: {info['volume_percent']}")
-            
+                # No TTS tool active
+                self.logger.system("[TTS] No TTS tool active - speech disabled")
+                self.ai_core.tts_tool = None
+                self.tts_tool = None
+                
         except Exception as e:
-            self.logger.error(f"[TTS] Initialization failed: {e}")
+            self.logger.error(f"[TTS] Setup failed: {e}")
             import traceback
             traceback.print_exc()
+            self.ai_core.tts_tool = None
             self.tts_tool = None
 
     def _get_actual_line_count(self):
@@ -643,6 +626,16 @@ class OllamaGUI:
 
             if hasattr(self, 'tts_tool') and self.tts_tool:
                 self.tts_tool.stop()
+            
+            # Disconnect from Voice Hub if connected (NEW)
+            if hasattr(self.voice_manager, 'hub_client') and \
+            self.voice_manager.hub_client and \
+            self.voice_manager.hub_client.is_connected():
+                self.logger.system("[Shutdown] Disconnecting from Voice Hub...")
+                try:
+                    self.voice_manager.hub_client.disconnect()
+                except Exception as e:
+                    self.logger.warning(f"[Shutdown] Hub disconnect error: {e}")
 
             if messagebox.askokcancel("Quit", "Do you want to quit?"):
                 self.ai_core.shutdown()

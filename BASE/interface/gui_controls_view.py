@@ -1,6 +1,7 @@
 # Filename: BASE/interface/gui_controls_view.py
 """
-
+Controls View - REFACTORED for internal tool manager
+Handles control changes that trigger tool switching
 """
 
 import tkinter as tk
@@ -9,47 +10,38 @@ from BASE.interface.gui_themes import DarkTheme
 
 
 class ControlsView:
-    """Manages the Controls view, including control panel and auxiliary panels"""
+    """Manages the Controls view with internal tool integration"""
 
     __slots__ = ('parent',)
     
     def __init__(self, parent):
         self.parent = parent
-        
     
     def create_controls_view(self):
         """Create the Controls view with control panel and auxiliary panels"""
         controls_paned = ttk.PanedWindow(self.parent.controls_view, orient=tk.HORIZONTAL)
         controls_paned.pack(fill=tk.BOTH, expand=True)
         
-        # Left side - Control Panel (wider fixed width)
         left_frame = ttk.Frame(controls_paned, width=460)
         left_frame.pack_propagate(False)
         controls_paned.add(left_frame, weight=0)
         
-        # Right side - Stats, Voice, YouTube, Twitch, Discord, Warudo
         right_frame = ttk.Frame(controls_paned)
         controls_paned.add(right_frame, weight=1)
         
-        # Create control panel
         self.parent.control_panel_manager.create_control_panel(left_frame)
         
-        # Create auxiliary panels (stats, voice, external integrations)
         self.create_auxiliary_panels(right_frame)
 
     def create_auxiliary_panels(self, parent_frame):
         """Create voice, YouTube, Twitch, Discord, and Warudo panels"""
         
-        # Current Context Editor (top position)
         self.create_current_context_panel(parent_frame)
         
-        # Important Reminders Editor (second position)
         self.create_important_reminders_panel(parent_frame)
         
-        # Voice panel
         self.parent.voice_manager.create_voice_panel(parent_frame)
         
-        # External Integrations section
         integrations_frame = ttk.LabelFrame(
             parent_frame, 
             text="External Integrations", 
@@ -59,7 +51,6 @@ class ControlsView:
 
     def create_important_reminders_panel(self, parent_frame):
         """Create important reminders editor panel"""
-        # Panel frame
         reminders_frame = ttk.LabelFrame(
             parent_frame,
             text="Important Reminders (Prompt Addendum)",
@@ -67,11 +58,9 @@ class ControlsView:
         )
         reminders_frame.pack(fill=tk.X, pady=(0, 5))
         
-        # Inner container
         inner_frame = tk.Frame(reminders_frame, bg=DarkTheme.BG_DARK)
         inner_frame.pack(fill=tk.X, padx=10, pady=10)
         
-        # Instructions label
         instructions = tk.Label(
             inner_frame,
             text="Optional reminders appended to end of all cognitive prompts. Leave blank to disable.",
@@ -83,7 +72,6 @@ class ControlsView:
         )
         instructions.pack(anchor=tk.W, pady=(0, 5))
         
-        # Text entry
         text_frame = tk.Frame(inner_frame, bg=DarkTheme.BG_DARK)
         text_frame.pack(fill=tk.X, pady=(0, 5))
         
@@ -105,20 +93,17 @@ class ControlsView:
         )
         self.parent.reminders_text.pack(fill=tk.X)
         
-        # Load current value
         current_value = self.parent.config.important_reminders
         if current_value:
             self.parent.reminders_text.insert(1.0, current_value)
         
-        # Button frame
         button_frame = tk.Frame(inner_frame, bg=DarkTheme.BG_DARK)
         button_frame.pack(fill=tk.X, pady=(5, 0))
         
-        # Save button
         save_btn = tk.Button(
             button_frame,
             text="[Save] Save & Apply",
-            command=self.save_current_context,
+            command=self.save_important_reminders,
             font=("Segoe UI", 9, "bold"),
             bg=DarkTheme.ACCENT_PURPLE,
             fg="white",
@@ -131,11 +116,10 @@ class ControlsView:
         )
         save_btn.pack(side=tk.LEFT, padx=(0, 5))
 
-        # Clear button
         clear_btn = tk.Button(
             button_frame,
             text="[Clear] Clear",
-            command=self.clear_current_context,
+            command=self.clear_important_reminders,
             font=("Segoe UI", 9),
             bg=DarkTheme.BUTTON_BG,
             fg=DarkTheme.FG_PRIMARY,
@@ -148,7 +132,6 @@ class ControlsView:
         )
         clear_btn.pack(side=tk.LEFT, padx=(0, 5))
         
-        # Status label
         self.parent.reminders_status_label = tk.Label(
             button_frame,
             text="",
@@ -161,10 +144,8 @@ class ControlsView:
     def save_important_reminders(self):
         """Save important reminders to config"""
         try:
-            # Get text value
             reminders = self.parent.reminders_text.get(1.0, tk.END).strip()
             
-            # Update config
             if reminders:
                 self.parent.config.important_reminders = reminders
                 self.parent.logger.system(f"[Important Reminders] Updated: {reminders[:50]}...")
@@ -180,7 +161,6 @@ class ControlsView:
                     fg=DarkTheme.ACCENT_GREEN
                 )
             
-            # Clear status after 2 seconds
             self.parent.root.after(2000, lambda: self.parent.reminders_status_label.config(text=""))
             
         except Exception as e:
@@ -197,7 +177,6 @@ class ControlsView:
     
     def create_current_context_panel(self, parent_frame):
         """Create current context editor panel"""
-        # Panel frame
         context_frame = ttk.LabelFrame(
             parent_frame,
             text="Current Context (Prompt Addendum)",
@@ -205,11 +184,9 @@ class ControlsView:
         )
         context_frame.pack(fill=tk.X, pady=(0, 5))
         
-        # Inner container
         inner_frame = tk.Frame(context_frame, bg=DarkTheme.BG_DARK)
         inner_frame.pack(fill=tk.X, padx=10, pady=10)
         
-        # Instructions label
         instructions = tk.Label(
             inner_frame,
             text="Optional context added to all cognitive prompts. Leave blank to disable.",
@@ -221,7 +198,6 @@ class ControlsView:
         )
         instructions.pack(anchor=tk.W, pady=(0, 5))
         
-        # Text entry
         text_frame = tk.Frame(inner_frame, bg=DarkTheme.BG_DARK)
         text_frame.pack(fill=tk.X, pady=(0, 5))
         
@@ -243,16 +219,13 @@ class ControlsView:
         )
         self.parent.context_text.pack(fill=tk.X)
         
-        # Load current value
         current_value = self.parent.config.current_context
         if current_value:
             self.parent.context_text.insert(1.0, current_value)
         
-        # Button frame
         button_frame = tk.Frame(inner_frame, bg=DarkTheme.BG_DARK)
         button_frame.pack(fill=tk.X, pady=(5, 0))
         
-        # Save button
         save_btn = tk.Button(
             button_frame,
             text="Save & Apply",
@@ -269,7 +242,6 @@ class ControlsView:
         )
         save_btn.pack(side=tk.LEFT, padx=(0, 5))
         
-        # Clear button
         clear_btn = tk.Button(
             button_frame,
             text="Clear",
@@ -286,7 +258,6 @@ class ControlsView:
         )
         clear_btn.pack(side=tk.LEFT, padx=(0, 5))
         
-        # Status label
         self.parent.context_status_label = tk.Label(
             button_frame,
             text="",
@@ -299,10 +270,8 @@ class ControlsView:
     def save_current_context(self):
         """Save current context to config"""
         try:
-            # Get text value
             context = self.parent.context_text.get(1.0, tk.END).strip()
             
-            # Update config
             if context:
                 self.parent.config.current_context = context
                 self.parent.logger.system(f"[Current Context] Updated: {context[:50]}...")
@@ -318,7 +287,6 @@ class ControlsView:
                     fg=DarkTheme.ACCENT_GREEN
                 )
             
-            # Clear status after 2 seconds
             self.parent.root.after(2000, lambda: self.parent.context_status_label.config(text=""))
             
         except Exception as e:

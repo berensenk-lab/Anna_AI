@@ -103,77 +103,72 @@ class MessageProcessor:
     def _play_tts(self, text: str):
         """
         Play TTS using centralized AI Core tools
-        FIXED: Proper interruption without race conditions
-        
-        Args:
-            text: Text to speak
+        FIXED: Query active TTS tool from internal tool manager
         """
-        # CRITICAL FIX: Acquire lock BEFORE checking state
         with self._speech_lock:
-            # Stop previous speech if running
             if self._is_speaking:
                 self.logger.speech("New response - interrupting previous speech")
-                
-                # Signal stop to running thread
                 self._speech_stop_event.set()
-                
-                # Set flag to false immediately so new thread can start
                 self._is_speaking = False
             
-            # Stop TTS tool outside lock to avoid deadlock
+            # Stop previous TTS
             if self.ai_core.tts_tool:
                 try:
                     self.ai_core.tts_tool.stop()
                 except Exception as e:
                     self.logger.warning(f"Error stopping previous TTS: {e}")
-            
-            # Wait for previous thread to finish (short timeout)
-            old_thread = self.speech_thread
         
-        # Wait outside the lock
+        # CRITICAL FIX: Get active TTS tool from internal tool manager
+        if not self.ai_core.internal_tool_manager:
+            self.logger.error("No internal tool manager - cannot play TTS")
+            return
+        
+        tts_tool = self.ai_core.internal_tool_manager.get_active_tts_tool()
+        
+        if not tts_tool:
+            self.logger.warning("No active TTS tool")
+            return
+        
+        if not tts_tool.is_available():
+            self.logger.error(f"TTS tool {tts_tool.tool_name} not available")
+            return
+        
+        # Log which tool is being used
+        info = tts_tool.get_voice_info()
+        self.logger.speech(f"Using TTS: {info.get('name')} ({info.get('type')})")
+        
+        # Wait for old thread outside lock
+        old_thread = self.speech_thread
         if old_thread and old_thread.is_alive():
             old_thread.join(timeout=1.0)
         
-        # CRITICAL: Clear stop event BEFORE starting new thread
         self._speech_stop_event.clear()
         
-        # Start new speech thread
         def speak_async():
-            """Async wrapper for TTS"""
-            # Set speaking flag IMMEDIATELY at thread start
             with self._speech_lock:
                 self._is_speaking = True
             
             try:
-                # self.logger.speech(f"Starting TTS: {text}...")
+                # Use the active TTS tool
+                result = tts_tool.speak(text, stream=True)
                 
-                # Use AI Core's TTS tool directly
-                if self.ai_core.tts_tool and self.ai_core.tts_tool.is_available():
-                    result = self.ai_core.tts_tool.speak(text, stream=True)
-                    
-                    # Check if we were interrupted
-                    if self._speech_stop_event.is_set():
-                        self.logger.speech("Speech interrupted by newer response")
-                    elif result == "Interrupted":
-                        self.logger.speech("Speech interrupted by newer response")
-                    elif "error" in result.lower():
-                        self.logger.error(f"TTS error: {result}")
-                    else:
-                        self.logger.speech(f"[COMPLETE] Speech completed")
+                if self._speech_stop_event.is_set():
+                    self.logger.speech("Speech interrupted by newer response")
+                elif result == "Interrupted":
+                    self.logger.speech("Speech interrupted by newer response")
+                elif "error" in result.lower():
+                    self.logger.error(f"TTS error: {result}")
                 else:
-                    self.logger.warning("TTS tool not available")
+                    self.logger.speech(f"[COMPLETE] Speech completed")
                         
             except Exception as e:
                 self.logger.error(f"Speech error: {e}")
                 import traceback
                 traceback.print_exc()
             finally:
-                # CRITICAL: Always clear flags in finally block
                 with self._speech_lock:
                     self._is_speaking = False
-                # Don't clear stop event here - let next call handle it
         
-        # Create and start speech thread
         self.speech_thread = threading.Thread(
             target=speak_async,
             daemon=True,

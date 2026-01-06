@@ -289,7 +289,7 @@ class CoreInitializer:
     def _init_control_system(self):
         """Initialize control manager for dynamic settings"""
         try:
-            from BASE.core.control_methods import ControlManager
+            from BASE.core.control_manager import ControlManager
             
             # Create control manager WITH config reference
             self.control_manager = ControlManager(

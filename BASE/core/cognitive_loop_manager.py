@@ -158,6 +158,15 @@ class CognitiveLoopManager:
                 
                 self.total_cycles += 1
                 
+                # [CRITICAL FIX] Update response interval dynamically each cycle
+                # This allows runtime changes to SPEAKING_DELAY to take effect
+                LIMIT_SPEAKING = getattr(self.controls, 'LIMIT_SPEAKING', False)
+                if LIMIT_SPEAKING:
+                    speaking_delay = getattr(self.controls, 'SPEAKING_DELAY', 60)
+                    self.min_response_interval = speaking_delay
+                else:
+                    self.min_response_interval = 0.0
+                
                 # ============================================================
                 # PROCESS THOUGHTS (reactive or proactive)
                 # Agent outputs <speak>YES/NO</speak> during this
@@ -190,10 +199,28 @@ class CognitiveLoopManager:
                 
                 # ============================================================
                 # CHECK IF AGENT SAID <speak>YES</speak>
-                # Use should_respond() method, not is_set()
+                # CRITICAL FIX: Check rate limit BEFORE attempting response
                 # ============================================================
                 if self.thought_processor.thought_buffer.response_trigger.should_respond():
-                    await self._generate_response()
+                    # Check speaking rate limit
+                    time_since_last_response = time.time() - self.last_response_time
+                    
+                    if LIMIT_SPEAKING and time_since_last_response < self.min_response_interval:
+                        remaining = self.min_response_interval - time_since_last_response
+                        
+                        # Clear trigger - agent wanted to speak but is rate limited
+                        self.thought_processor.thought_buffer.response_trigger.clear()
+                        
+                        self.logger.system(
+                            f"[Rate Limit] Speaking blocked - {remaining:.1f}s remaining "
+                            f"(delay: {self.min_response_interval}s). Agent continues thinking."
+                        )
+                        
+                        # Continue loop - force another thought cycle
+                        # Don't call _generate_response at all
+                    else:
+                        # Rate limit passed or disabled - generate response
+                        await self._generate_response()
                 
                 # Log statistics periodically
                 current_time = time.time()
@@ -258,17 +285,8 @@ class CognitiveLoopManager:
     async def _generate_response(self):
         """
         Generate autonomous spoken response
-        FIXED: Wait for tool to be ready before broadcasting
+        NOTE: Rate limiting handled in cognitive loop before this is called
         """
-        # SPEAKING RATE LIMITING
-        time_since_last_response = time.time() - self.last_response_time
-        LIMIT_SPEAKING = getattr(self.controls, 'LIMIT_SPEAKING', False)
-        
-        if LIMIT_SPEAKING and time_since_last_response < self.min_response_interval:
-            remaining = self.min_response_interval - time_since_last_response
-            self.thought_processor.thought_buffer.response_trigger.clear()
-            return
-        
         # Check AI core
         if not hasattr(self, 'ai_core_ref') or not self.ai_core_ref:
             self.logger.warning("[Autonomous] No AI core - cannot generate")

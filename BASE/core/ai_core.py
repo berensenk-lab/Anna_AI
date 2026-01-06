@@ -1,7 +1,8 @@
 # Filename: BASE/core/ai_core.py
 """
 AI Core - Main Orchestration
-FIXED: Single Config and Logger instances throughout system
+REFACTORED: Integrated internal tool manager for modular voice services
+COMPLETE: All original functionality preserved
 """
 from typing import Optional, Dict, Any, List
 from pathlib import Path
@@ -17,7 +18,7 @@ from BASE.handlers.content_filter import ContentFilter
 from personality.controls import KILL_COMMAND
 
 class AICore:
-    """Main AI backend orchestrator with singleton Config/Logger"""
+    """Main AI backend orchestrator with modular internal tools"""
     
     __slots__ = (
         'config', 'controls', 'project_root', 'gui_logger', 'logger',
@@ -28,23 +29,16 @@ class AICore:
         'last_reminder_cleanup', 'reminder_cleanup_interval', 'initializer',
         'content_filter', 'action_state_manager', 'instruction_persistence_manager',
         'tool_manager', 'streaming_enabled', 'hot_reload_manager',
-        'core_hot_reload', 'tool_hot_reload'
+        'core_hot_reload', 'tool_hot_reload', 'internal_tool_manager'
     )
     
     def __init__(self, config, controls_module, project_root=None, gui_logger=None):
-        """
-        Initialize AI system with singleton Config and Logger
-        
-        CRITICAL: config parameter MUST be the same instance used everywhere
-        """
+        """Initialize AI system with modular internal tools"""
         # ===================================================================
         # STEP 1: Store singleton references
         # ===================================================================
-        self.config = config  # This MUST be the singleton instance
-
-        # Store reference to self on config for tool access
+        self.config = config
         self.config.ai_core = self
-
         self.controls = controls_module
         self.project_root = project_root or Path(__file__).parent.parent.parent
         self.gui_logger = gui_logger
@@ -52,18 +46,15 @@ class AICore:
         # ===================================================================
         # STEP 2: Create Logger WITH config reference immediately
         # ===================================================================
-        # CRITICAL FIX: Pass config at creation, not later
         self.logger = Logger(
             name="Core",
             gui_callback=gui_logger,
-            config=self.config  # Pass singleton config immediately
+            config=self.config
         )
         
-        # Verify config is set correctly
         if not hasattr(self.logger, 'config') or self.logger.config is None:
             raise RuntimeError("CRITICAL: Logger config not set during initialization!")
         
-        # Verify same instance
         if id(self.logger.config) != id(self.config):
             raise RuntimeError(
                 f"CRITICAL: Logger has different config instance!\n"
@@ -78,8 +69,6 @@ class AICore:
         # ===================================================================
         # STEP 2.5: Initialize Dynamic Tool Control Variables
         # ===================================================================
-        # NEW: This must run BEFORE CoreInitializer and GUI
-        # Creates tool control variables from information.json with correct defaults
         from BASE.core.dynamic_control_initializer import DynamicControlInitializer
         
         self.logger.system("[Init] Initializing dynamic tool control variables...")
@@ -90,7 +79,7 @@ class AICore:
             logger=self.logger
         )
         
-        initialized_count = control_initializer.initialize_all_tool_controls()
+        initialized_count = control_initializer.initialize_all_controls()
         
         self.logger.success(
             f"[Init] Dynamic tool controls initialized: {initialized_count} variables"
@@ -102,44 +91,38 @@ class AICore:
         self.shutdown_flag = threading.Event()
         self.speech_stop_flag = threading.Event()
         
-        # Event loop
         self.main_loop = None
         self._loop_thread = None
         self._start_event_loop()
         
-        # External tools (injected later)
         self.tts_tool = None
         
-        # Integration placeholders
         self.discord_integration = None
         self.youtube_chat = None
         self.twitch_chat = None
         self.chat_handler = None
         
-        # State
         self.last_reminder_cleanup = 0
         self.reminder_cleanup_interval = 60
         
         # ===================================================================
-        # STEP 4: Initialize via CoreInitializer with singleton config
+        # STEP 4: Initialize via CoreInitializer
         # ===================================================================
         self.logger.system("Initializing AI Core...")
         self.initializer = CoreInitializer(
             ai_core=self,
-            config=self.config,  # Pass same singleton instance
+            config=self.config,
             controls=controls_module,
             project_root=self.project_root,
-            logger=self.logger,  # Pass logger with config already set
+            logger=self.logger,
             main_loop=self.main_loop
         )
 
-        # Run initialization
         self.initializer.initialize_all_systems()
 
         # ===================================================================
-        # STEP 5: Extract ALL initialized components from initializer
+        # STEP 5: Extract ALL initialized components
         # ===================================================================
-        # CRITICAL: Must happen BEFORE hot-reload systems are initialized
         self.memory_manager = self.initializer.memory_manager
         self.memory_search = self.initializer.memory_search
         self.session_file_manager = self.initializer.session_file_manager
@@ -148,12 +131,16 @@ class AICore:
         self.processing_delegator = self.initializer.processing_delegator
         self.control_manager = self.initializer.control_manager
         self.tool_manager = self.initializer.tool_manager
+        
+        # ===================================================================
+        # STEP 5.5: Initialize Internal Tool Manager (NEW)
+        # ===================================================================
+        self.internal_tool_manager = None
+        self._init_internal_tools()
 
-    # ========================================================================
-    # STEP 6: HOT-RELOAD SYSTEMS (Development Features)
-    # ========================================================================
-
-        # Tool Hot-Reload (existing system - for BaseTool instances)
+        # ===================================================================
+        # STEP 6: HOT-RELOAD SYSTEMS
+        # ===================================================================
         if getattr(controls_module, 'ENABLE_TOOL_HOT_RELOAD', False):
             from BASE.core.tool_hot_reload_manager import HotReloadManager as ToolHotReloadManager
             
@@ -170,7 +157,6 @@ class AICore:
             self.tool_hot_reload = None
             self.logger.system("[Hot Reload] Tool hot-reloading DISABLED")
 
-        # Core Hot-Reload (new system - for prompt constructors)
         if getattr(controls_module, 'ENABLE_CORE_HOT_RELOAD', False):
             from BASE.core.core_hot_reload_manager import CoreHotReloadManager
             
@@ -183,23 +169,19 @@ class AICore:
             
             self.logger.system(f"[Hot Reload] Manager created, enabled={self.core_hot_reload.enabled}")
             
-            # Register components for hot-reloading
             self.logger.system("[Hot Reload] Registering thought processor constructors...")
             self.processing_delegator.thought_processor.set_hot_reload_manager(self.core_hot_reload)
             
             self.logger.system("[Hot Reload] Registering processing delegator constructor...")
             self.processing_delegator.set_hot_reload_manager(self.core_hot_reload)
             
-            # Debug: Check what got registered
             self.logger.system(f"[Hot Reload] Registered modules: {len(self.core_hot_reload.modules)}")
             for name, module in self.core_hot_reload.modules.items():
                 self.logger.system(f"[Hot Reload]   - {name}: {module.file_path.name}")
             
-            # Start file watching
             self.logger.system("[Hot Reload] Starting file watcher...")
             self.core_hot_reload.start_watching()
             
-            # Debug: Check observer status
             if self.core_hot_reload.observer:
                 self.logger.system("[Hot Reload] Observer started successfully")
             else:
@@ -210,7 +192,6 @@ class AICore:
             self.core_hot_reload = None
             self.logger.system("[Hot Reload] Core hot-reloading DISABLED")
 
-        # Log combined hot-reload status
         if self.tool_hot_reload or self.core_hot_reload:
             systems = []
             if self.tool_hot_reload:
@@ -221,8 +202,6 @@ class AICore:
         
         self.logger.system("[Init] AI Core initialization complete")
 
-
-        # Initialize content filter ONCE
         self.content_filter = ContentFilter(
             ollama_endpoint=config.ollama_endpoint,
             use_ai_filter=controls_module.USE_AI_CONTENT_FILTER
@@ -230,11 +209,85 @@ class AICore:
         
         self.logger.system("[Init] AI Core initialization complete")
     
+    # ========================================================================
+    # INTERNAL TOOL MANAGER (NEW)
+    # ========================================================================
+    
+    def _init_internal_tools(self):
+        """Initialize internal tool manager for modular voice services"""
+        try:
+            from BASE.handlers.internal_tool_manager import InternalToolManager
+            
+            self.logger.system("[Internal Tools] Initializing modular tool system...")
+            
+            self.internal_tool_manager = InternalToolManager(
+                project_root=self.project_root,
+                config=self.config,
+                controls=self.controls,
+                logger=self.logger
+            )
+            
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(
+                    self.internal_tool_manager.discover_and_initialize()
+                )
+            finally:
+                loop.close()
+            
+            self._setup_tts_from_internal_tools()
+            
+            status = self.internal_tool_manager.get_status()
+            self.logger.success(
+                f"[Internal Tools] System ready - "
+                f"{status['active_tools']} active tools"
+            )
+            
+            for category, tool_name in status['active_by_category'].items():
+                self.logger.system(f"[Internal Tools]   {category}: {tool_name}")
+        
+        except Exception as e:
+            self.logger.error(f"[Internal Tools] Initialization failed: {e}")
+            import traceback
+            traceback.print_exc()
+            self.internal_tool_manager = None
+    
+    def _setup_tts_from_internal_tools(self):
+        """Setup TTS tool reference from internal tool manager"""
+        if not self.internal_tool_manager:
+            return
+        
+        tts_tool = self.internal_tool_manager.get_active_tts_tool()
+        
+        if tts_tool:
+            self.tts_tool = tts_tool
+            info = tts_tool.get_voice_info()
+            self.logger.success(
+                f"[TTS] Active: {info.get('name')} ({info.get('type')})"
+            )
+        else:
+            self.logger.warning("[TTS] No TTS tool active")
+    
+    async def handle_control_change(self, control_name: str, new_value):
+        """Handle control variable changes for internal tools"""
+        if self.internal_tool_manager:
+            await self.internal_tool_manager.handle_control_change(control_name, new_value)
+            
+            if control_name in ['USE_CUSTOM_VOICE', 'USE_GPU_VOICE']:
+                self._setup_tts_from_internal_tools()
+    
+    def setup_tts_tool(self, tts_tool):
+        """DEPRECATED: For backwards compatibility only"""
+        self.logger.warning("[TTS] setup_tts_tool() is deprecated - use internal tool manager")
+        self.tts_tool = tts_tool
+    
+    # ========================================================================
+    # CONFIG VERIFICATION
+    # ========================================================================
+    
     def _verify_config_propagation(self):
-        """
-        Verify all components reference the same config instance
-        CRITICAL: This catches initialization bugs early
-        """
+        """Verify all components reference the same config instance"""
         base_config_id = id(self.config)
         
         checks = {
@@ -248,7 +301,8 @@ class AICore:
                 self.logger.warning(f"[Config Check] {display_name} has no config reference")
                 continue
             
-            if id(component_config) != base_config_id:
+            component_id = id(component_config)
+            if component_id != base_config_id:
                 failures.append(
                     f"  - {display_name}: {id(component_config)} != {base_config_id}"
                 )
@@ -262,6 +316,10 @@ class AICore:
             raise RuntimeError(error_msg)
         
         self.logger.system("[Config Check] [SUCCESS] All components share same config instance")
+    
+    # ========================================================================
+    # EVENT LOOP MANAGEMENT
+    # ========================================================================
     
     def _start_event_loop(self):
         """Start dedicated event loop for async processing"""
@@ -289,45 +347,6 @@ class AICore:
             if self._loop_thread:
                 self._loop_thread.join(timeout=2.0)
             self.logger.system("Event loop stopped")
-    
-    # ========================================================================
-    # DEPENDENCY INJECTION API
-    # ========================================================================
-    
-    def setup_tts_tool(self, tts_tool):
-        """
-        Inject TTS tool into AI core
-        
-        COMPLETE METHOD - Replace existing setup_tts_tool with this
-        """
-        self.tts_tool = tts_tool
-        
-        if tts_tool and tts_tool.is_available():
-            info = tts_tool.get_voice_info()
-            self.logger.system(f"TTS configured: {info.get('name')} ({info.get('type')})")
-            
-            # NEW: Initialize streaming if enabled
-            streaming_enabled = getattr(self.controls, 'USE_STREAMING', False)
-            
-            if streaming_enabled:
-                self.logger.system("[Streaming] Streaming mode enabled - initializing handler...")
-                
-                # Initialize streaming in processing_delegator
-                if hasattr(self, 'processing_delegator'):
-                    try:
-                        self.processing_delegator.initialize_streaming(tts_tool)
-                        self.logger.system("[SUCCESS] [Streaming] Streaming handler initialized")
-                    except Exception as e:
-                        self.logger.error(f"[Streaming] Initialization failed: {e}")
-                        import traceback
-                        traceback.print_exc()
-                else:
-                    self.logger.warning("[Streaming] No processing_delegator - cannot initialize streaming")
-            else:
-                self.logger.system("[Streaming] Streaming disabled - using non-streaming mode")
-        
-        else:
-            self.logger.error("TTS not available")
     
     # ========================================================================
     # INTEGRATION LIFECYCLE
@@ -385,7 +404,16 @@ class AICore:
             except Exception as e:
                 self.logger.warning(f"Error stopping Discord: {e}")
         
-        # Stop TTS
+        # Stop internal tools
+        if self.internal_tool_manager:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(self.internal_tool_manager.cleanup_all())
+            finally:
+                loop.close()
+        
+        # Stop TTS (legacy)
         if self.tts_tool:
             try:
                 self.tts_tool.stop()
@@ -406,14 +434,13 @@ class AICore:
         is_image_message: bool = False, image_path: Optional[Path] = None,
         timestamp: Optional[float] = None, username_override: Optional[str] = None
     ) -> Optional[str]:
-        """Main entry point - FIXED to not duplicate memory saves"""
+        """Main entry point for processing user messages"""
         
         # Kill command check
         if message and isinstance(message, str):
             if self._check_kill_command(message):
                 self.logger.system("[Kill Command] Initiating shutdown")
                 self.shutdown_flag.set()
-                # ... shutdown logic ...
                 return "Shutting down immediately..."
         
         if self.shutdown_flag.is_set():
@@ -423,7 +450,7 @@ class AICore:
         if message and not message.strip():
             message = ""
         
-        # Input filtering (already done in GUI)
+        # Input filtering
         if message and message.strip() and getattr(self.controls, 'ENABLE_CONTENT_FILTER', True):
             cleaned_message, was_filtered, reason = self.content_filter.filter_incoming(
                 message, log_callback=self.logger.system
@@ -458,7 +485,7 @@ class AICore:
                     self.logger.system(f"[Filter Output] {reason}")
                 reply = cleaned_reply
             
-            # CRITICAL: Save to memory HERE (only once)
+            # Save to memory
             if reply and self.controls.SAVE_MEMORY:
                 self.memory_manager.save_bot_response(reply)
                 self.logger.memory("Saved bot response to memory")
@@ -466,7 +493,6 @@ class AICore:
             # Broadcast to group chat if enabled
             if reply and getattr(self.controls, 'IN_GROUP_CHAT', False):
                 if hasattr(self, 'tool_manager') and self.tool_manager:
-                    # CRITICAL FIX: Wait for tool to be ready
                     import asyncio
                     
                     tool_ready = await self.tool_manager.wait_for_tool_ready(

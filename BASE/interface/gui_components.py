@@ -1,8 +1,8 @@
 # Filename: BASE/interface/gui_components.py
 """
 Component managers for control panel functionality.
-REFACTORED: Dynamic tool discovery from new modular system
-Works with BASE/tools/installed/ filesystem-based tool discovery
+ENHANCED: Dynamic internal tool discovery with mutual exclusivity
+Automatically discovers and creates toggles for all tools in tools/internal/
 """
 
 import tkinter as tk
@@ -21,12 +21,12 @@ except ImportError as e:
 
 class ControlPanelManager:
     """
-    Manages the control panel GUI with dynamic tool discovery
-    All control logic delegated to AI Core's ControlManager
-    Tool system updates delegated to ToolManager (modular system)
+    Manages the control panel GUI with dynamic internal tool discovery
+    Handles mutual exclusivity for TTS and voice input tools
     """
-    __slots__ = ('ai_core', 'control_manager', 'logger', 'control_vars', 'status_labels', 
-                 'tts_backend_switcher', 'proc_delay_var', 'speak_delay_var', 'tts_status_label')
+    __slots__ = ('ai_core', 'control_manager', 'logger', 'control_vars', 'status_labels',
+                 'proc_delay_var', 'speak_delay_var', 'internal_tool_widgets',
+                 'internal_tool_metadata', 'category_status_labels')
 
     def __init__(self, ai_core, logger):
         """Initialize control panel manager"""
@@ -37,266 +37,173 @@ class ControlPanelManager:
         self.control_vars = {}
         self.status_labels = {}
         
-        # Initialize TTS backend switcher
-        self.tts_backend_switcher = None
-        self._init_tts_backend_switcher()
-
-    def _init_tts_backend_switcher(self):
-        """Initialize TTS backend switcher with diagnostics"""
-        try:
-            
-            self.logger.system("TTS BACKEND SWITCHER INITIALIZATION")
-            
-            
-            self.logger.system("[1/4] Importing TTSBackendSwitcher...")
-            from BASE.tools.internal.voice.tts_backend_switcher import TTSBackendSwitcher
-            self.logger.system("  Import successful")
-            
-            self.logger.system("[2/4] Verifying AI Core controls module...")
-            if not hasattr(self.ai_core, 'controls'):
-                raise RuntimeError("AI Core missing 'controls' attribute")
-            if self.ai_core.controls is None:
-                raise RuntimeError("AI Core controls is None")
-            self.logger.system(f"  Controls module present: {id(self.ai_core.controls)}")
-            
-            self.logger.system("[3/4] Creating TTSBackendSwitcher instance...")
-            self.tts_backend_switcher = TTSBackendSwitcher(self.ai_core, self.logger)
-            
-            self.logger.system("[4/4] Verifying controls capture...")
-            if not self.tts_backend_switcher.controls_module:
-                raise RuntimeError("Switcher failed to capture controls module")
-            
-            if id(self.tts_backend_switcher.controls_module) != id(self.ai_core.controls):
-                self.logger.warning("Controls module IDs don't match (may be OK)")
-            
-            self.logger.system(f"  Switcher controls: {id(self.tts_backend_switcher.controls_module)}")
-            
-            
-            self.logger.speech("TTS backend switcher initialized successfully")
-            
-                
-        except Exception as e:
-            
-            self.logger.error(f"TTS backend switcher initialization FAILED")
-            self.logger.error(f"Error: {e}")
-            
-            
-            import traceback
-            traceback.print_exc()
-            
-            self.tts_backend_switcher = None
+        # Track internal tool toggle widgets for mutual exclusivity UI updates
+        # Structure: {service_type: {control_var: (checkbutton, status_label)}}
+        self.internal_tool_widgets = {}
+        
+        # Store internal tool metadata
+        # Structure: {control_var: {'tool_name': ..., 'service_type': ..., ...}}
+        self.internal_tool_metadata = {}
+        
+        # Category status labels showing active tool
+        # Structure: {service_type: status_label_widget}
+        self.category_status_labels = {}
 
     def toggle_control(self, var_name):
-            """Toggle a control via AI Core"""
-            
-            # ====================================================================
-            # SPECIAL CASE 1: AVATAR_SPEECH Toggle
-            # ====================================================================
-            if var_name == "AVATAR_SPEECH":
-                # Toggle the control
-                new_value = self.ai_core.control_manager.toggle_feature(var_name)
-                
-                if new_value is None:
-                    self.logger.error("Failed to toggle AVATAR_SPEECH")
-                    return
-                
-                # Update GUI immediately
-                self.control_vars[var_name].set(new_value)
-                self.status_labels[var_name].config(
-                    text="ON" if new_value else "OFF",
-                    foreground=DarkTheme.ACCENT_GREEN if new_value else DarkTheme.FG_MUTED,
-                )
-                
-                # If enabling, check if TTS tool exists and is available
-                if new_value:
-                    if not hasattr(self.ai_core, 'tts_tool') or not self.ai_core.tts_tool:
-                        self.logger.error("[FAILED] TTS tool not initialized")
-                        self.logger.error("   Recommendation: Restart application with AVATAR_SPEECH enabled")
-                        self.logger.error("   Or ensure _setup_tts_tool() initializes even when disabled")
-                        
-                        # Revert GUI change
-                        self.control_vars[var_name].set(False)
-                        self.status_labels[var_name].config(
-                            text="OFF",
-                            foreground=DarkTheme.FG_MUTED,
-                        )
-                        setattr(controls, var_name, False)
-                        return
-                    
-                    # Check TTS availability
-                    if not self.ai_core.tts_tool.is_available():
-                        self.logger.error("[FAILED] TTS tool exists but is not available")
-                        
-                        # Revert
-                        self.control_vars[var_name].set(False)
-                        self.status_labels[var_name].config(
-                            text="OFF",
-                            foreground=DarkTheme.FG_MUTED,
-                        )
-                        setattr(controls, var_name, False)
-                        return
-                    
-                    # Success - TTS enabled
-                    info = self.ai_core.tts_tool.get_voice_info()
-                    self.logger.speech(f"[SUCCESS] TTS enabled: {info.get('name')} ({info.get('type')})")
-                    if 'volume_percent' in info:
-                        self.logger.speech(f"  Volume: {info['volume_percent']}")
-                else:
-                    # TTS disabled
-                    self.logger.speech("[INFO] TTS disabled")
-                
-                # Update controls module
-                setattr(controls, var_name, new_value)
-                
-                # Notify tool manager
-                if hasattr(self.ai_core, 'tool_manager'):
-                    self.ai_core.tool_manager.handle_control_update(var_name, new_value)
-                
-                return
-            
-            # ====================================================================
-            # SPECIAL CASE 2: USE_CUSTOM_VOICE Toggle
-            # ====================================================================
-            if var_name == "USE_CUSTOM_VOICE":
-                if not getattr(controls, 'AVATAR_SPEECH', False):
-                    self.logger.warning("Enable AVATAR_SPEECH first")
-                    return
-                
-                if not self.tts_backend_switcher:
-                    self.logger.error("TTS backend switcher not initialized")
-                    self.logger.error("Recommendation: Restart application")
-                    return
-                
-                if not self.tts_backend_switcher.controls_module:
-                    self.logger.error("TTS backend switcher missing controls module")
-                    return
-                
-                # Get new value from toggle
-                new_value = self.ai_core.control_manager.toggle_feature(var_name)
+        """Toggle a control via AI Core's control manager"""
         
-                if new_value is None:
-                    self.logger.error("Failed to toggle USE_CUSTOM_VOICE")
-                    return
-                
-                # Update GUI controls BEFORE switching backend
+        # Get current value
+        current_value = getattr(controls, var_name, False)
+        new_value = not current_value
+        
+        # Check if this is an internal tool control
+        if self._is_internal_tool_control(var_name):
+            success = self._handle_internal_tool_toggle(var_name, new_value)
+            
+            if success:
+                # Update GUI
                 self.control_vars[var_name].set(new_value)
                 self.status_labels[var_name].config(
                     text="ON" if new_value else "OFF",
-                    foreground=DarkTheme.ACCENT_GREEN if new_value else DarkTheme.FG_MUTED,
+                    foreground=DarkTheme.ACCENT_GREEN if new_value else DarkTheme.FG_MUTED
                 )
                 
-                # Determine backend name
-                backend_name = "Custom Voice (XTTS)" if new_value else "System Voice (pyttsx3)"
-                
-                self.logger.speech(f"Switching to {backend_name}...")
-                
-                # Perform backend switch
-                success = self.tts_backend_switcher.switch_backend(new_value)
-                
-                if success:
-                    # Update controls module
-                    setattr(controls, var_name, new_value)
-                    
-                    # Log backend info
-                    if hasattr(self.ai_core, 'tts_tool') and self.ai_core.tts_tool:
-                        info = self.ai_core.tts_tool.get_voice_info()
-                        self.logger.speech(f"  Active backend: {info.get('name', 'Unknown')}")
-                        
-                        if 'volume_percent' in info:
-                            self.logger.speech(f"  Volume: {info['volume_percent']}")
-                        
-                        if hasattr(self, 'tts_status_label'):
-                            self.tts_status_label.config(
-                                text=f"Status: Ready ({info.get('type', 'Unknown')})",
-                                foreground=DarkTheme.ACCENT_GREEN
-                            )
-                else:
-                    # Backend switch failed - revert GUI
-                    self.control_vars[var_name].set(not new_value)
-                    self.status_labels[var_name].config(
-                        text="ON" if (not new_value) else "OFF",
-                        foreground=DarkTheme.ACCENT_GREEN if (not new_value) else DarkTheme.FG_MUTED,
-                    )
-                    
-                    self.logger.error(f"Failed to switch to {backend_name}")
-                    
-                    if hasattr(self, 'tts_status_label'):
-                        self.tts_status_label.config(
-                            text="Status: Switch Failed",
-                            foreground=DarkTheme.ACCENT_RED
-                        )
-                
-                # Notify tool manager
-                if hasattr(self.ai_core, 'tool_manager'):
-                    self.ai_core.tool_manager.handle_control_update(
-                        var_name, new_value if success else (not new_value)
-                    )
-                
-                return
-            
-            # ====================================================================
-            # REGULAR CONTROLS: Standard Toggle Logic
-            # ====================================================================
-            new_value = self.ai_core.control_manager.toggle_feature(var_name)
-            
-            if new_value is not None:
-                self.control_vars[var_name].set(new_value)
-                self.status_labels[var_name].config(
-                    text="ON" if new_value else "OFF",
-                    foreground=DarkTheme.ACCENT_GREEN if new_value else DarkTheme.FG_MUTED,
-                )
-
-                # Notify tool execution manager of control change
-                if hasattr(self.ai_core, 'tool_manager'):
-                    self.ai_core.tool_manager.handle_control_update(var_name, new_value)
-                    if new_value:
-                        self.logger.system(f"{var_name} enabled")
-                    else:
-                        self.logger.system(f"{var_name} disabled")
-
-                # Special logging for SLOW_MODE
-                if var_name == "SLOW_MODE":
-                    if new_value:
-                        delay = getattr(controls, 'DELAY_TIMER', 30)
-                        self.logger.system(f"Processing limited - {delay}s delay per cycle")
-                    else:
-                        self.logger.system("Processing speed normal - adaptive pacing")
+                # Update other tools in same category (mutual exclusivity)
+                self._update_tool_category_ui(var_name)
             else:
-                self.logger.error(f"Failed to toggle control: {var_name}")
+                # Revert GUI if toggle failed
+                self.control_vars[var_name].set(current_value)
+            
+            return
+        
+        # Regular control toggle
+        success = self.control_manager.update_control(var_name, new_value)
+        
+        if success:
+            # Update GUI
+            self.control_vars[var_name].set(new_value)
+            if var_name in self.status_labels:
+                self.status_labels[var_name].config(
+                    text="ON" if new_value else "OFF",
+                    foreground=DarkTheme.ACCENT_GREEN if new_value else DarkTheme.FG_MUTED
+                )
+            
+            # Handle special cases
+            if var_name == "ENABLE_CONTINUOUS_THINKING":
+                self._update_continuous_thinking_ui(new_value)
+    
+    def _is_internal_tool_control(self, var_name: str) -> bool:
+        """Check if control is for an internal tool"""
+        return var_name in self.internal_tool_metadata
+    
+    def _get_tool_service_type(self, var_name: str) -> Optional[str]:
+        """Get service type of internal tool"""
+        metadata = self.internal_tool_metadata.get(var_name)
+        return metadata['service_type'] if metadata else None
+    
+    def _handle_internal_tool_toggle(self, var_name: str, new_value: bool) -> bool:
+        """Handle internal tool toggle with mutual exclusivity"""
+        try:
+            # Use control manager which handles mutual exclusivity
+            success = self.control_manager.update_control(var_name, new_value)
+            
+            if success and new_value:
+                # Log success
+                metadata = self.internal_tool_metadata.get(var_name, {})
+                tool_name = metadata.get('tool_name', var_name)
+                service_type = metadata.get('service_type', 'unknown')
+                self.logger.success(f"[{service_type.upper()}] {tool_name} enabled")
+            
+            return success
+            
+        except Exception as e:
+            self.logger.error(f"Failed to toggle {var_name}: {e}")
+            return False
+    
+    def _update_tool_category_ui(self, toggled_var: str):
+        """Update UI for all tools in same category after toggle"""
+        service_type = self._get_tool_service_type(toggled_var)
+        if not service_type or service_type not in self.internal_tool_widgets:
+            return
+        
+        # Update all tools in this service type
+        for tool_var, (checkbox, status_label) in self.internal_tool_widgets[service_type].items():
+            current_value = getattr(controls, tool_var, False)
+            
+            # Update checkbox
+            if tool_var in self.control_vars:
+                self.control_vars[tool_var].set(current_value)
+            
+            # Update status label
+            status_label.config(
+                text="ON" if current_value else "OFF",
+                foreground=DarkTheme.ACCENT_GREEN if current_value else DarkTheme.FG_MUTED
+            )
+        
+        # Update category status label
+        self._update_category_status(service_type)
+    
+    def _update_category_status(self, service_type: str):
+        """Update the category status display"""
+        if service_type not in self.category_status_labels:
+            return
+        
+        status_label = self.category_status_labels[service_type]
+        
+        # Find active tool in this service type
+        active_tool = None
+        for tool_var, metadata in self.internal_tool_metadata.items():
+            if metadata['service_type'] == service_type:
+                if getattr(controls, tool_var, False):
+                    active_tool = metadata['tool_name']
+                    break
+        
+        if active_tool:
+            status_label.config(
+                text=f"[Active] {active_tool.upper()}",
+                foreground=DarkTheme.ACCENT_GREEN
+            )
+        else:
+            service_display = service_type.replace('_', ' ').title()
+            status_label.config(
+                text=f"No {service_display} active",
+                foreground=DarkTheme.FG_MUTED
+            )
+    
+    def _update_continuous_thinking_ui(self, enabled: bool):
+        """Update UI for continuous thinking toggle"""
+        if enabled:
+            self.logger.system("[Continuous Thinking] STARTED")
+        else:
+            self.logger.system("[Continuous Thinking] STOPPED")
 
-    def create_control_panel(self, parent_frame):
-        """Create comprehensive control panel with dynamic tools"""
-
-        container_frame = ttk.Frame(parent_frame)
-        container_frame.pack(fill=tk.BOTH, expand=True)
-
+    def create_control_panel(self, parent):
+        """Create the main control panel with scrolling"""
+        # Create canvas with scrollbar
         control_canvas = tk.Canvas(
-            container_frame, bg=DarkTheme.BG_DARK, highlightthickness=0
+            parent,
+            bg=DarkTheme.BG_DARKER,
+            highlightthickness=0
         )
         scrollbar = ttk.Scrollbar(
-            container_frame, orient="vertical", command=control_canvas.yview
+            parent,
+            orient="vertical",
+            command=control_canvas.yview
         )
-        scrollable_frame = ttk.Frame(control_canvas)
+        scrollable_frame = ttk.Frame(control_canvas, style="Dark.TFrame")
 
         scrollable_frame.bind(
             "<Configure>",
-            lambda e: control_canvas.configure(scrollregion=control_canvas.bbox("all")),
+            lambda e: control_canvas.configure(scrollregion=control_canvas.bbox("all"))
         )
 
-        canvas_window = control_canvas.create_window(
-            (0, 0), window=scrollable_frame, anchor="nw"
-        )
+        control_canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
         control_canvas.configure(yscrollcommand=scrollbar.set)
 
-        def configure_scroll_region(event):
-            control_canvas.configure(scrollregion=control_canvas.bbox("all"))
-            control_canvas.itemconfig(canvas_window, width=event.width)
+        control_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        control_canvas.bind("<Configure>", configure_scroll_region)
-
-        control_canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-
+        # Enable mousewheel scrolling
         def _on_mousewheel(event):
             control_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
@@ -309,19 +216,19 @@ class ControlPanelManager:
         control_canvas.bind("<Enter>", _bind_mousewheel)
         control_canvas.bind("<Leave>", _unbind_mousewheel)
 
-        # STATIC control groups (non-tool controls)
+        # STATIC control groups
         static_control_groups = {
             "AI Behavior": [
                 ("Continuous Thinking", "ENABLE_CONTINUOUS_THINKING",
-                "Enable continuous thought processing"),
+                 "Enable continuous thought processing"),
                 ("Auto Restart", "AUTO_RESTART",
-                "Automatically restart the agent after errors"),
+                 "Automatically restart the agent after errors"),
             ],
             "Rate Limiting": [
                 ("Limit Processing", "LIMIT_PROCESSING",
-                "Limit how fast the agent can think/process"),
+                 "Limit how fast the agent can think/process"),
                 ("Limit Speaking", "LIMIT_SPEAKING",
-                "Limit how often the agent can speak"),
+                 "Limit how often the agent can speak"),
             ],
             "Agent Memory": [
                 ("Base Memory", "USE_BASE_MEMORY", "Include base knowledge context"),
@@ -329,15 +236,11 @@ class ControlPanelManager:
                 ("Long Memory", "USE_LONG_MEMORY", "Include past day summaries"),
                 ("Save Memory", "SAVE_MEMORY", "Save conversations to memory system"),
             ],
-            "Output Actions": [
-                ("TTS Speech", "AVATAR_SPEECH", "Enable text-to-speech"),
-                ("Custom Voice", "USE_CUSTOM_VOICE", "Use voice cloning instead of system TTS")
-            ],
             "Filters": [
                 ("Content Filter", "ENABLE_CONTENT_FILTER",
-                "Filter profanity and controversial content"),
+                 "Filter profanity and controversial content"),
                 ("AI Filter", "USE_AI_CONTENT_FILTER",
-                "Use AI model for semantic filtering")
+                 "Use AI model for semantic filtering")
             ],
             "Debug & Logging": [
                 ("Log System", "LOG_SYSTEM_INFORMATION", "Log system messages"),
@@ -360,7 +263,10 @@ class ControlPanelManager:
             if group_name == "Rate Limiting":
                 self.create_timing_controls(scrollable_frame)
 
-        # Create dynamic tool sections
+        # Create internal tool sections (DYNAMIC DISCOVERY)
+        self.create_internal_tools_sections(scrollable_frame)
+
+        # Create dynamic tool sections (external tools)
         dynamic_tool_groups = self._get_dynamic_tool_groups()
         for category_name, tools_list in dynamic_tool_groups.items():
             self.create_dynamic_tool_group(scrollable_frame, category_name, tools_list)
@@ -372,45 +278,430 @@ class ControlPanelManager:
         global_frame.pack(fill=tk.X, padx=3, pady=1)
 
         button_frame = ttk.Frame(global_frame)
-        button_frame.pack(fill=tk.X, padx=3, pady=2)
+        button_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(
-            button_frame, text="Enable All", command=self.enable_all_controls, width=10
-        ).pack(side=tk.LEFT, padx=1)
-        ttk.Button(
-            button_frame, text="Disable All", command=self.disable_all_controls, width=10
-        ).pack(side=tk.LEFT, padx=1)
-        ttk.Button(
-            button_frame, text="Reset", command=self.reset_controls, width=10
-        ).pack(side=tk.LEFT, padx=1)
+        enable_all_btn = tk.Button(
+            button_frame,
+            text="Enable All",
+            command=self.enable_all_controls,
+            bg=DarkTheme.ACCENT_GREEN,
+            fg="white",
+            font=("Segoe UI", 9, "bold"),
+            relief=tk.FLAT,
+            cursor="hand2"
+        )
+        enable_all_btn.pack(side=tk.LEFT, padx=2)
 
-        # Add status sections
-        self.create_tts_status_section(scrollable_frame)
+        disable_all_btn = tk.Button(
+            button_frame,
+            text="Disable All",
+            command=self.disable_all_controls,
+            bg=DarkTheme.ACCENT_RED,
+            fg="white",
+            font=("Segoe UI", 9, "bold"),
+            relief=tk.FLAT,
+            cursor="hand2"
+        )
+        disable_all_btn.pack(side=tk.LEFT, padx=2)
+
+    def create_internal_tools_sections(self, parent):
+        """
+        Dynamically discover and create GUI sections for internal tools
+        Groups by service_type, handles mutual exclusivity
+        """
+        try:
+            # Get project root
+            project_root = Path(__file__).parent.parent.parent
+            internal_tools_dir = project_root / 'BASE' / 'tools' / 'internal'
+            
+            if not internal_tools_dir.exists():
+                self.logger.warning("[GUI] Internal tools directory not found")
+                return
+            
+            # Discover all internal tools
+            discovered_tools = self._discover_internal_tools(internal_tools_dir)
+            
+            if not discovered_tools:
+                return
+            
+            # Group by service_type
+            service_groups = {}
+            for tool_data in discovered_tools:
+                service_type = tool_data['service_type']
+                
+                if service_type not in service_groups:
+                    service_groups[service_type] = []
+                
+                service_groups[service_type].append(tool_data)
+            
+            # Create GUI section for each service type
+            for service_type, tools in sorted(service_groups.items()):
+                self._create_internal_service_group(parent, service_type, tools)
+        
+        except Exception as e:
+            self.logger.error(f"[GUI] Error creating internal tools sections: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _discover_internal_tools(self, tools_dir: Path) -> List[Dict]:
+        """
+        Discover all internal tools by scanning information.json files
+        
+        Returns:
+            List of tool metadata dicts
+        """
+        discovered = []
+        
+        for tool_dir in tools_dir.iterdir():
+            if not tool_dir.is_dir() or tool_dir.name.startswith('_'):
+                continue
+            
+            if tool_dir.name == 'shared':  # Skip shared utilities
+                continue
+            
+            info_file = tool_dir / 'information.json'
+            
+            if not info_file.exists():
+                continue
+            
+            try:
+                with open(info_file, 'r') as f:
+                    info = json.load(f)
+                
+                tool_name = info.get('tool_name')
+                control_var = info.get('control_variable_name')
+                service_type = info.get('service_type')
+                
+                if not tool_name or not control_var or not service_type:
+                    continue
+                
+                # Store metadata
+                tool_data = {
+                    'tool_name': tool_name,
+                    'control_var': control_var,
+                    'service_type': service_type,
+                    'description': info.get('tool_description', 'No description'),
+                    'display_name': tool_name.replace('_', ' ').title(),
+                    'priority': info.get('priority', 0),
+                    'features': info.get('features', {}),
+                    'requirements': info.get('requirements', {})
+                }
+                
+                discovered.append(tool_data)
+                
+                # Store in metadata lookup
+                self.internal_tool_metadata[control_var] = tool_data
+            
+            except Exception as e:
+                self.logger.warning(f"[GUI] Failed to load {tool_dir.name}/information.json: {e}")
+                continue
+        
+        return discovered
+    
+    def _create_internal_service_group(self, parent, service_type: str, tools: List[Dict]):
+        """
+        Create GUI section for a service type (e.g., TTS, voice_input)
+        Shows all tools in that category with mutual exclusivity
+        """
+        # Create friendly display name
+        service_display = service_type.replace('_', ' ').title()
+        
+        group_frame = ttk.LabelFrame(
+            parent,
+            text=f"Internal Tools: {service_display}",
+            style="Dark.TLabelframe"
+        )
+        group_frame.pack(fill=tk.X, padx=3, pady=1)
+        
+        # Category status header
+        status_frame = ttk.Frame(group_frame, style="Dark.TFrame")
+        status_frame.pack(fill=tk.X, padx=5, pady=(2, 0))
+        
+        tk.Label(
+            status_frame,
+            text=f"[Warning] Only ONE {service_display} tool can be active at a time",
+            font=("Segoe UI", 8, "italic"),
+            bg=DarkTheme.BG_DARK,
+            fg=DarkTheme.ACCENT_ORANGE
+        ).pack(side=tk.LEFT, padx=2)
+        
+        # Active tool indicator
+        status_label = tk.Label(
+            status_frame,
+            text="",
+            font=("Segoe UI", 8, "bold"),
+            bg=DarkTheme.BG_DARK,
+            fg=DarkTheme.FG_MUTED
+        )
+        status_label.pack(side=tk.LEFT, padx=10)
+        
+        self.category_status_labels[service_type] = status_label
+        
+        # Initialize widget tracking for this service type
+        if service_type not in self.internal_tool_widgets:
+            self.internal_tool_widgets[service_type] = {}
+        
+        # Sort tools by priority (higher first)
+        tools.sort(key=lambda x: x['priority'], reverse=True)
+        
+        # Create toggle for each tool
+        for tool_data in tools:
+            self._create_internal_tool_toggle(
+                parent=group_frame,
+                display_name=tool_data['display_name'],
+                var_name=tool_data['control_var'],
+                description=tool_data['description'],
+                service_type=service_type,
+                features=tool_data.get('features', {})
+            )
+        
+        # Update initial status
+        self._update_category_status(service_type)
+    
+    def _create_internal_tool_toggle(self, parent, display_name, var_name, description, 
+                                     service_type, features=None):
+        """Create a toggle for an internal tool with feature indicators"""
+        item_frame = ttk.Frame(parent, style="Dark.TFrame")
+        item_frame.pack(fill=tk.X, padx=5, pady=2)
+        
+        # Create boolean variable
+        var = tk.BooleanVar(value=getattr(controls, var_name, False))
+        self.control_vars[var_name] = var
+        
+        # Checkbox
+        check = tk.Checkbutton(
+            item_frame,
+            text=display_name,
+            variable=var,
+            command=lambda: self.toggle_control(var_name),
+            bg=DarkTheme.BG_DARK,
+            fg=DarkTheme.FG_PRIMARY,
+            selectcolor=DarkTheme.BG_DARKER,
+            activebackground=DarkTheme.BG_DARK,
+            activeforeground=DarkTheme.ACCENT_GREEN,
+            font=("Segoe UI", 9),
+            anchor="w",
+            width=20
+        )
+        check.pack(side=tk.LEFT, padx=2)
+        
+        # Status label
+        current_value = getattr(controls, var_name, False)
+        status = tk.Label(
+            item_frame,
+            text="ON" if current_value else "OFF",
+            font=("Segoe UI", 9, "bold"),
+            bg=DarkTheme.BG_DARK,
+            fg=DarkTheme.ACCENT_GREEN if current_value else DarkTheme.FG_MUTED,
+            width=4
+        )
+        status.pack(side=tk.LEFT, padx=5)
+        
+        self.status_labels[var_name] = status
+        
+        # Feature badges (optional)
+        if features:
+            badge_frame = tk.Frame(item_frame, bg=DarkTheme.BG_DARK)
+            badge_frame.pack(side=tk.LEFT, padx=5)
+            
+            # Show key features as small badges
+            if features.get('gpu_accelerated'):
+                self._create_badge(badge_frame, "GPU", DarkTheme.ACCENT_PURPLE)
+            if features.get('streaming'):
+                self._create_badge(badge_frame, "Stream", DarkTheme.ACCENT_BLUE)
+            if features.get('voice_hub'):
+                self._create_badge(badge_frame, "Hub", DarkTheme.ACCENT_GREEN)
+        
+        # Description label
+        desc = tk.Label(
+            item_frame,
+            text=description[:60] + "..." if len(description) > 60 else description,
+            font=("Segoe UI", 8),
+            bg=DarkTheme.BG_DARK,
+            fg=DarkTheme.FG_MUTED,
+            anchor="w"
+        )
+        desc.pack(side=tk.LEFT, padx=5)
+        
+        # Track widget for UI updates
+        self.internal_tool_widgets[service_type][var_name] = (check, status)
+    
+    def _create_badge(self, parent, text, color):
+        """Create a small feature badge"""
+        badge = tk.Label(
+            parent,
+            text=text,
+            font=("Segoe UI", 7, "bold"),
+            bg=color,
+            fg="white",
+            padx=3,
+            pady=1
+        )
+        badge.pack(side=tk.LEFT, padx=1)
+
+    def create_control_group(self, parent, group_name, controls_list):
+        """Create a control group section"""
+        group_frame = ttk.LabelFrame(
+            parent,
+            text=group_name,
+            style="Dark.TLabelframe"
+        )
+        group_frame.pack(fill=tk.X, padx=3, pady=1)
+
+        for display_name, var_name, description in controls_list:
+            item_frame = ttk.Frame(group_frame, style="Dark.TFrame")
+            item_frame.pack(fill=tk.X, padx=5, pady=2)
+
+            # Create boolean variable
+            var = tk.BooleanVar(value=getattr(controls, var_name, False))
+            self.control_vars[var_name] = var
+
+            # Checkbox
+            check = tk.Checkbutton(
+                item_frame,
+                text=display_name,
+                variable=var,
+                command=lambda v=var_name: self.toggle_control(v),
+                bg=DarkTheme.BG_DARK,
+                fg=DarkTheme.FG_PRIMARY,
+                selectcolor=DarkTheme.BG_DARKER,
+                activebackground=DarkTheme.BG_DARK,
+                activeforeground=DarkTheme.ACCENT_GREEN,
+                font=("Segoe UI", 9),
+                anchor="w",
+                width=20
+            )
+            check.pack(side=tk.LEFT, padx=2)
+
+            # Status label
+            current_value = getattr(controls, var_name, False)
+            status = tk.Label(
+                item_frame,
+                text="ON" if current_value else "OFF",
+                font=("Segoe UI", 9, "bold"),
+                bg=DarkTheme.BG_DARK,
+                fg=DarkTheme.ACCENT_GREEN if current_value else DarkTheme.FG_MUTED,
+                width=4
+            )
+            status.pack(side=tk.LEFT, padx=5)
+
+            self.status_labels[var_name] = status
+
+            # Description
+            desc = tk.Label(
+                item_frame,
+                text=description,
+                font=("Segoe UI", 8),
+                bg=DarkTheme.BG_DARK,
+                fg=DarkTheme.FG_MUTED,
+                anchor="w"
+            )
+            desc.pack(side=tk.LEFT, padx=5)
+
+    def create_timing_controls(self, parent):
+        """Create numeric input controls for timing"""
+        timing_frame = ttk.LabelFrame(
+            parent, text="Timing Settings", style="Dark.TLabelframe"
+        )
+        timing_frame.pack(fill=tk.X, padx=3, pady=1)
+
+        # Processing delay
+        proc_frame = ttk.Frame(timing_frame, style="Dark.TFrame")
+        proc_frame.pack(fill=tk.X, padx=5, pady=2)
+
+        tk.Label(
+            proc_frame,
+            text="Processing Delay (s):",
+            font=("Segoe UI", 9),
+            bg=DarkTheme.BG_DARK,
+            fg=DarkTheme.FG_PRIMARY,
+            width=20,
+            anchor="w"
+        ).pack(side=tk.LEFT, padx=2)
+
+        self.proc_delay_var = tk.StringVar(value=str(controls.PROCESSING_DELAY))
+        proc_entry = tk.Entry(
+            proc_frame,
+            textvariable=self.proc_delay_var,
+            width=10,
+            bg=DarkTheme.BG_DARKER,
+            fg=DarkTheme.FG_PRIMARY,
+            insertbackground=DarkTheme.ACCENT_GREEN,
+            font=("Segoe UI", 9)
+        )
+        proc_entry.pack(side=tk.LEFT, padx=5)
+
+        proc_apply = tk.Button(
+            proc_frame,
+            text="Apply",
+            command=lambda: self._apply_timing("PROCESSING_DELAY", self.proc_delay_var),
+            bg=DarkTheme.ACCENT_PURPLE,
+            fg="white",
+            font=("Segoe UI", 8),
+            relief=tk.FLAT,
+            cursor="hand2"
+        )
+        proc_apply.pack(side=tk.LEFT, padx=2)
+
+        # Speaking delay
+        speak_frame = ttk.Frame(timing_frame, style="Dark.TFrame")
+        speak_frame.pack(fill=tk.X, padx=5, pady=2)
+
+        tk.Label(
+            speak_frame,
+            text="Speaking Delay (s):",
+            font=("Segoe UI", 9),
+            bg=DarkTheme.BG_DARK,
+            fg=DarkTheme.FG_PRIMARY,
+            width=20,
+            anchor="w"
+        ).pack(side=tk.LEFT, padx=2)
+
+        self.speak_delay_var = tk.StringVar(value=str(controls.SPEAKING_DELAY))
+        speak_entry = tk.Entry(
+            speak_frame,
+            textvariable=self.speak_delay_var,
+            width=10,
+            bg=DarkTheme.BG_DARKER,
+            fg=DarkTheme.FG_PRIMARY,
+            insertbackground=DarkTheme.ACCENT_GREEN,
+            font=("Segoe UI", 9)
+        )
+        speak_entry.pack(side=tk.LEFT, padx=5)
+
+        speak_apply = tk.Button(
+            speak_frame,
+            text="Apply",
+            command=lambda: self._apply_timing("SPEAKING_DELAY", self.speak_delay_var),
+            bg=DarkTheme.ACCENT_PURPLE,
+            fg="white",
+            font=("Segoe UI", 8),
+            relief=tk.FLAT,
+            cursor="hand2"
+        )
+        speak_apply.pack(side=tk.LEFT, padx=2)
+
+    def _apply_timing(self, control_name, var):
+        """Apply timing control value"""
+        try:
+            value = float(var.get())
+            setattr(controls, control_name, value)
+            self.logger.system(f"[Controls] {control_name} = {value}")
+        except ValueError:
+            self.logger.error(f"[Controls] Invalid value for {control_name}")
 
     def _get_dynamic_tool_groups(self) -> Dict[str, List[Tuple]]:
         """
-        Get dynamically discovered tools grouped by category
-        REFACTORED: Works with new filesystem-based tool discovery
-        
-        Returns:
-            Dict mapping category names to list of tool info tuples
+        Discover external tools from tools/installed directory
+        Groups tools by category from metadata
         """
-        if not hasattr(self.ai_core, 'tool_manager'):
-            self.logger.warning("No tool execution manager - dynamic tools unavailable")
-            return {}
-        
-        tool_manager = self.ai_core.tool_manager
-        
         try:
-            # Get tools directory
             project_root = Path(__file__).parent.parent.parent
             tools_dir = project_root / 'BASE' / 'tools' / 'installed'
             
             if not tools_dir.exists():
-                self.logger.warning(f"Tools directory not found: {tools_dir}")
                 return {}
             
-            # Discover tools from filesystem
             discovered_tools = []
             
             for tool_dir in tools_dir.iterdir():
@@ -431,10 +722,9 @@ class ControlPanelManager:
                     if not tool_name or not control_var:
                         continue
                     
-                    # Extract metadata
                     metadata = info.get('metadata', {})
                     category = metadata.get('category', 'Other Tools')
-                    display_name = metadata.get('gui_label', 
+                    display_name = metadata.get('gui_label',
                                                tool_name.replace('_', ' ').title())
                     description = info.get('tool_description', 'No description')
                     
@@ -448,7 +738,6 @@ class ControlPanelManager:
                     })
                     
                 except Exception as e:
-                    self.logger.warning(f"Failed to load tool from {tool_dir.name}: {e}")
                     continue
             
             # Group by category
@@ -459,450 +748,91 @@ class ControlPanelManager:
                 if category not in categories:
                     categories[category] = []
                 
-                # Build tuple for GUI
                 categories[category].append((
-                    tool['display_name'],    # For checkbox label
-                    tool['control_var'],     # For control binding
-                    tool['description'],     # For tooltip
-                    tool['tool_name'],       # For identification
-                    tool['info']            # Full metadata
+                    tool['display_name'],
+                    tool['control_var'],
+                    tool['description'],
+                    tool['tool_name'],
+                    tool['info']
                 ))
-            
-            self.logger.system(
-                f"Loaded {len(discovered_tools)} dynamic tools in "
-                f"{len(categories)} categories"
-            )
             
             return categories
             
         except Exception as e:
-            self.logger.error(f"Failed to load dynamic tools: {e}")
-            import traceback
-            traceback.print_exc()
             return {}
 
     def create_dynamic_tool_group(self, parent, category_name: str, tools_list):
-        """
-        Create GUI section for dynamically discovered tools
-        
-        Args:
-            parent: Parent frame
-            category_name: Category display name
-            tools_list: List of (display_name, control_var, description, tool_name, info) tuples
-        """
+        """Create GUI section for dynamically discovered external tools"""
         group_frame = ttk.LabelFrame(
-            parent, 
-            text=f"{category_name}", 
+            parent,
+            text=f"{category_name}",
             style="Dark.TLabelframe"
         )
         group_frame.pack(fill=tk.X, padx=3, pady=1)
         
-        # Add info label for dynamic tools
-        info_label = tk.Label(
-            group_frame,
-            text="🔌 Modular tools - auto-discovered from filesystem",
-            font=("Segoe UI", 8, "italic"),
-            foreground=DarkTheme.ACCENT_PURPLE,
-            background=DarkTheme.BG_DARKER,
+        for display_name, control_var, description, tool_name, info in tools_list:
+            self._create_tool_toggle(group_frame, display_name, control_var, description)
+    
+    def _create_tool_toggle(self, parent, display_name, var_name, description):
+        """Create a toggle for an external tool"""
+        item_frame = ttk.Frame(parent, style="Dark.TFrame")
+        item_frame.pack(fill=tk.X, padx=5, pady=2)
+        
+        var = tk.BooleanVar(value=getattr(controls, var_name, False))
+        self.control_vars[var_name] = var
+        
+        check = tk.Checkbutton(
+            item_frame,
+            text=display_name,
+            variable=var,
+            command=lambda: self.toggle_control(var_name),
+            bg=DarkTheme.BG_DARK,
+            fg=DarkTheme.FG_PRIMARY,
+            selectcolor=DarkTheme.BG_DARKER,
+            activebackground=DarkTheme.BG_DARK,
+            activeforeground=DarkTheme.ACCENT_GREEN,
+            font=("Segoe UI", 9),
+            anchor="w",
+            width=20
         )
-        info_label.pack(fill=tk.X, padx=3, pady=2)
-        
-        for tool_data in tools_list:
-            display_name, var_name, description, tool_name, tool_info = tool_data
-            self._create_dynamic_tool_control(
-                group_frame, 
-                display_name, 
-                var_name, 
-                description,
-                tool_name
-            )
-
-    def _create_dynamic_tool_control(
-        self, 
-        parent, 
-        display_name: str, 
-        var_name: str, 
-        description: str,
-        tool_name: str
-    ):
-        """
-        Create individual control for a dynamic tool
-        
-        Args:
-            parent: Parent frame
-            display_name: Human-readable name
-            var_name: Control variable name
-            description: Tool description
-            tool_name: Tool identifier name
-        """
-        control_frame = ttk.Frame(parent)
-        control_frame.pack(fill=tk.X, padx=2, pady=0)
-        
-        # Get current value - create if doesn't exist
-        if not hasattr(controls, var_name):
-            setattr(controls, var_name, False)
-            self.logger.system(f"Created missing control variable: {var_name}")
+        check.pack(side=tk.LEFT, padx=2)
         
         current_value = getattr(controls, var_name, False)
-        bool_var = tk.BooleanVar(value=current_value)
-        self.control_vars[var_name] = bool_var
-        
-        # Create checkbox
-        checkbox = ttk.Checkbutton(
-            control_frame,
-            text=display_name,
-            variable=bool_var,
-            command=lambda vn=var_name: self.toggle_control(vn),
-        )
-        checkbox.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        
-        # Create status label
-        status_color = (
-            DarkTheme.ACCENT_GREEN if current_value 
-            else DarkTheme.FG_MUTED
-        )
-        status_label = tk.Label(
-            control_frame,
+        status = tk.Label(
+            item_frame,
             text="ON" if current_value else "OFF",
-            font=("Segoe UI", 8, "bold"),
-            foreground=status_color,
-            background=DarkTheme.BG_DARKER,
-            width=4,
-        )
-        status_label.pack(side=tk.RIGHT, padx=1)
-        self.status_labels[var_name] = status_label
-        
-        # Add tooltip
-        if description:
-            full_description = f"{description}\n\n[Modular Tool: {tool_name}]"
-            self.create_tooltip(checkbox, full_description)
-
-    def create_control_group(self, parent, group_name, controls_list):
-        """Create a standard control group"""
-        group_frame = ttk.LabelFrame(parent, text=group_name, style="Dark.TLabelframe")
-        group_frame.pack(fill=tk.X, padx=3, pady=1)
-        
-        # Define logging controls (stored in Config, not controls module)
-        logging_controls = {
-            'LOG_TOOL_EXECUTION', 'LOG_PROMPT_CONSTRUCTION',
-            'LOG_RESPONSE_PROCESSING', 'LOG_SYSTEM_INFORMATION', 'SHOW_CHAT'
-        }
-
-        for display_name, var_name, description in controls_list:
-            control_frame = ttk.Frame(group_frame)
-            control_frame.pack(fill=tk.X, padx=2, pady=0)
-            
-            # Read current value from appropriate source
-            if var_name in logging_controls:
-                # Logging controls: read from Config
-                current_value = getattr(self.ai_core.config, var_name, False)
-            else:
-                # Other controls: read from controls module
-                current_value = getattr(controls, var_name, False)
-            
-            bool_var = tk.BooleanVar(value=current_value)
-            self.control_vars[var_name] = bool_var
-
-            checkbox = ttk.Checkbutton(
-                control_frame,
-                text=display_name,
-                variable=bool_var,
-                command=lambda vn=var_name: self.toggle_control(vn),
-            )
-            checkbox.pack(side=tk.LEFT, fill=tk.X, expand=True)
-
-            status_color = (
-                DarkTheme.ACCENT_GREEN if current_value else DarkTheme.FG_MUTED
-            )
-            status_label = tk.Label(
-                control_frame,
-                text="ON" if current_value else "OFF",
-                font=("Segoe UI", 8, "bold"),
-                foreground=status_color,
-                background=DarkTheme.BG_DARKER,
-                width=4,
-            )
-            status_label.pack(side=tk.RIGHT, padx=1)
-            self.status_labels[var_name] = status_label
-
-            if description:
-                self.create_tooltip(checkbox, description)
-    
-    def create_timing_controls(self, parent):
-        """Create numeric spinbox controls for timing parameters"""
-        timing_frame = ttk.LabelFrame(
-            parent,
-            text="Timing Controls",
-            style="Dark.TLabelframe"
-        )
-        timing_frame.pack(fill=tk.X, padx=3, pady=1)
-        
-        # Processing delay control
-        proc_frame = tk.Frame(timing_frame, bg=DarkTheme.BG_DARKER)
-        proc_frame.pack(fill=tk.X, padx=5, pady=3)
-        
-        proc_label = tk.Label(
-            proc_frame,
-            text="Processing Delay (s):",
-            font=("Segoe UI", 9),
-            bg=DarkTheme.BG_DARKER,
-            fg=DarkTheme.FG_PRIMARY,
-            width=20,
-            anchor=tk.W
-        )
-        proc_label.pack(side=tk.LEFT)
-        
-        self.proc_delay_var = tk.IntVar(value=getattr(controls, 'PROCESSING_DELAY', 30))
-        proc_spinbox = tk.Spinbox(
-            proc_frame,
-            from_=5,
-            to=300,
-            textvariable=self.proc_delay_var,
-            command=lambda: self.update_delay_timer('PROCESSING_DELAY', self.proc_delay_var.get()),
-            font=("Segoe UI", 9),
+            font=("Segoe UI", 9, "bold"),
             bg=DarkTheme.BG_DARK,
-            fg=DarkTheme.FG_PRIMARY,
-            buttonbackground=DarkTheme.BUTTON_BG,
-            width=8
+            fg=DarkTheme.ACCENT_GREEN if current_value else DarkTheme.FG_MUTED,
+            width=4
         )
-        proc_spinbox.pack(side=tk.LEFT, padx=5)
+        status.pack(side=tk.LEFT, padx=5)
         
-        proc_desc = tk.Label(
-            proc_frame,
-            text="(Cycle delay)",
-            font=("Segoe UI", 8, "italic"),
-            bg=DarkTheme.BG_DARKER,
-            fg=DarkTheme.FG_MUTED
-        )
-        proc_desc.pack(side=tk.LEFT, padx=5)
+        self.status_labels[var_name] = status
         
-        # Speaking delay control
-        speak_frame = tk.Frame(timing_frame, bg=DarkTheme.BG_DARKER)
-        speak_frame.pack(fill=tk.X, padx=5, pady=3)
-        
-        speak_label = tk.Label(
-            speak_frame,
-            text="Speaking Delay (s):",
-            font=("Segoe UI", 9),
-            bg=DarkTheme.BG_DARKER,
-            fg=DarkTheme.FG_PRIMARY,
-            width=20,
-            anchor=tk.W
-        )
-        speak_label.pack(side=tk.LEFT)
-        
-        self.speak_delay_var = tk.IntVar(value=getattr(controls, 'SPEAKING_DELAY', 60))
-        speak_spinbox = tk.Spinbox(
-            speak_frame,
-            from_=10,
-            to=600,
-            textvariable=self.speak_delay_var,
-            command=lambda: self.update_delay_timer('SPEAKING_DELAY', self.speak_delay_var.get()),
-            font=("Segoe UI", 9),
-            bg=DarkTheme.BG_DARK,
-            fg=DarkTheme.FG_PRIMARY,
-            buttonbackground=DarkTheme.BUTTON_BG,
-            width=8
-        )
-        speak_spinbox.pack(side=tk.LEFT, padx=5)
-        
-        speak_desc = tk.Label(
-            speak_frame,
-            text="(Response delay)",
-            font=("Segoe UI", 8, "italic"),
-            bg=DarkTheme.BG_DARKER,
-            fg=DarkTheme.FG_MUTED
-        )
-        speak_desc.pack(side=tk.LEFT, padx=5)
-
-    def update_delay_timer(self, var_name, value):
-        """Update delay timer control variable"""
-        try:
-            value = int(value)
-            
-            # Update controls module
-            setattr(controls, var_name, value)
-            
-            # Update cognitive loop if running
-            if var_name == 'SPEAKING_DELAY':
-                if hasattr(self.ai_core, 'processing_delegator'):
-                    thought_proc = self.ai_core.processing_delegator.thought_processor
-                    if thought_proc.cognitive_loop:
-                        thought_proc.cognitive_loop.min_response_interval = value
-                        self.logger.system(
-                            f"[Timing] Speaking delay updated to {value}s"
-                        )
-            elif var_name == 'PROCESSING_DELAY':
-                self.logger.system(
-                    f"[Timing] Processing delay updated to {value}s"
-                )
-            
-        except ValueError:
-            self.logger.error(f"Invalid value for {var_name}")
-
-    def create_tts_status_section(self, parent):
-        """Create TTS tool status section"""
-        tts_frame = ttk.LabelFrame(
-            parent, text="TTS System", style="Dark.TLabelframe"
-        )
-        tts_frame.pack(fill=tk.X, padx=3, pady=1)
-
-        tts_controls = ttk.Frame(tts_frame)
-        tts_controls.pack(fill=tk.X, padx=3, pady=2)
-
-        self.tts_status_label = tk.Label(
-            tts_controls,
-            text="Status: Checking...",
+        desc = tk.Label(
+            item_frame,
+            text=description,
             font=("Segoe UI", 8),
-            foreground=DarkTheme.FG_MUTED,
-            background=DarkTheme.BG_DARK,
+            bg=DarkTheme.BG_DARK,
+            fg=DarkTheme.FG_MUTED,
+            anchor="w"
         )
-        self.tts_status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
-
-        ttk.Button(
-            tts_controls,
-            text="Test",
-            command=self.test_tts,
-            width=10,
-        ).pack(side=tk.RIGHT, padx=1)
-        
-        ttk.Button(
-            tts_controls,
-            text="Refresh",
-            command=self.check_tts_status,
-            width=10,
-        ).pack(side=tk.RIGHT, padx=1)
-
-        self.check_tts_status()
-
-    def create_tooltip(self, widget, text):
-        """Create a tooltip for a widget"""
-
-        def show_tooltip(event):
-            tooltip = tk.Toplevel()
-            tooltip.wm_overrideredirect(True)
-            tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root+10}")
-            tooltip.configure(bg=DarkTheme.BG_DARK)
-
-            label = tk.Label(
-                tooltip,
-                text=text,
-                background=DarkTheme.BG_DARK,
-                foreground=DarkTheme.FG_PRIMARY,
-                font=("Segoe UI", 9),
-                wraplength=300,
-                padx=8,
-                pady=4,
-            )
-            label.pack()
-
-            widget.tooltip = tooltip
-
-        def hide_tooltip(event):
-            if hasattr(widget, "tooltip"):
-                widget.tooltip.destroy()
-                del widget.tooltip
-
-        widget.bind("<Enter>", show_tooltip)
-        widget.bind("<Leave>", hide_tooltip)
-
-    def update_control_display(self):
-        """Update all control displays"""
-        for var_name, bool_var in self.control_vars.items():
-            current_value = getattr(controls, var_name, False)
-            bool_var.set(current_value)
-            if var_name in self.status_labels:
-                self.status_labels[var_name].config(
-                    text="ON" if current_value else "OFF",
-                    foreground=(
-                        DarkTheme.ACCENT_GREEN if current_value else DarkTheme.FG_MUTED
-                    ),
-                )
+        desc.pack(side=tk.LEFT, padx=5)
 
     def enable_all_controls(self):
         """Enable all controls"""
-        for var_name in self.control_vars:
-            self.ai_core.control_manager.set_feature(var_name, True)
-        self.update_control_display()
-        self.logger.system("All controls enabled")
+        for var_name, var in self.control_vars.items():
+            if not var.get():
+                self.toggle_control(var_name)
 
     def disable_all_controls(self):
         """Disable all controls"""
-        for var_name in self.control_vars:
-            self.ai_core.control_manager.set_feature(var_name, False)
-        self.update_control_display()
-        self.logger.system("All controls disabled")
+        for var_name, var in self.control_vars.items():
+            if var.get():
+                self.toggle_control(var_name)
 
     def reset_controls(self):
-        """Reset controls to defaults"""
-        self.ai_core.control_manager.reset_to_defaults()
-        self.update_control_display()
-        self.logger.system("Controls reset to defaults")
-
-    def check_tts_status(self):
-        """Check TTS tool status (TTS is still in internal/passive system)"""
-        try:
-            if not hasattr(self.ai_core, 'tts_tool') or not self.ai_core.tts_tool:
-                self.tts_status_label.config(
-                    text="Status: Not Configured",
-                    foreground=DarkTheme.FG_MUTED
-                )
-                return
-            
-            available = self.ai_core.tts_tool.is_available()
-            
-            if available:
-                info = self.ai_core.tts_tool.get_voice_info()
-                voice_type = info.get('type', 'Unknown')
-                voice_name = info.get('name', 'Unknown')
-                
-                status_text = f"Status: Ready ({voice_type})"
-                status_color = DarkTheme.ACCENT_GREEN
-                self.logger.system(f"[TTS] {status_text} - {voice_name}")
-            else:
-                status_text = "Status: Not Available"
-                status_color = DarkTheme.ACCENT_RED
-            
-            self.tts_status_label.config(
-                text=status_text,
-                foreground=status_color
-            )
-            
-        except Exception as e:
-            self.tts_status_label.config(
-                text=f"Status: Error - {str(e)}",
-                foreground=DarkTheme.ACCENT_RED
-            )
-            self.logger.error(f"Error checking TTS status: {e}")
-    
-    def test_tts(self):
-        """Test TTS with sample phrase"""
-        try:
-            if not hasattr(self.ai_core, 'tts_tool') or not self.ai_core.tts_tool:
-                self.logger.warning("TTS tool not configured")
-                return
-            
-            if not self.ai_core.tts_tool.is_available():
-                self.logger.warning("TTS tool not available")
-                return
-            
-            self.logger.system("Testing TTS...")
-            
-            test_phrase = "Hello! This is a TTS system test."
-            
-            import threading
-            
-            def speak_test():
-                result = self.ai_core.tts_tool.speak(test_phrase, stream=False)
-                if "completed" in result.lower():
-                    self.logger.system("TTS test successful")
-                else:
-                    self.logger.warning(f"TTS test result: {result}")
-            
-            thread = threading.Thread(target=speak_test, daemon=True)
-            thread.start()
-            
-        except Exception as e:
-            self.logger.error(f"Error testing TTS: {e}")
-            import traceback
-            traceback.print_exc()
+        """Reset all controls to defaults"""
+        self.logger.system("Resetting all controls to defaults...")
+        # Implementation depends on how defaults are stored

@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import bot info
-from personality.bot_info import agentname, username, responsemodel, visionmodel, embedmodel, toolmodel, thoughtmodel, actionmodel
+# from personality.bot_info import agentname, username, responsemodel, visionmodel, embedmodel, toolmodel, thoughtmodel, actionmodel
 
 def load_config():
     """Load configuration from JSON file"""
