@@ -314,7 +314,7 @@ class Config:
         
         # Store metadata in registry
         self._tool_registry[tool_name] = {
-            'control_variable': control_var,
+            'control_variable_name': control_var,
             'default_value': default_value,
             'display_name': tool_info.get('metadata', {}).get(
                 'display_name', 
@@ -352,7 +352,7 @@ class Config:
         
         # Store metadata in registry
         self._tool_registry[tool_name] = {
-            'control_variable': control_var,
+            'control_variable_name': control_var,
             'default_value': default_value,
             'display_name': tool_info.metadata.get(
                 'display_name', 
@@ -381,7 +381,7 @@ class Config:
             controls_module: The personality.controls module
         """
         for tool_name, tool_meta in self._tool_registry.items():
-            control_var = tool_meta['control_variable']
+            control_var = tool_meta['control_variable_name']
             default_value = tool_meta['default_value']
             
             # Only sync if variable exists (should always exist after _discover_and_register_tools)

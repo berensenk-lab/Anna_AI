@@ -81,22 +81,9 @@ class ToolLifecycleManager:
     # ========================================================================
     # TOOL DISCOVERY (OPTIMIZED: Minimal Loading)
     # ========================================================================
-    
+
     def discover_tools(self) -> Dict[str, Dict]:
-        """
-        Discover all BaseTool architecture tools
-        
-        OPTIMIZATION: Only loads MINIMAL metadata during discovery
-        Full metadata is loaded lazily when needed via get_tool_metadata()
-        
-        Minimal metadata includes:
-        - tool_name (required for identification)
-        - control_variable (required for mapping)
-        - description (truncated to 100 chars)
-        - file paths (for lazy loading)
-        
-        This makes startup 50-200ms faster for systems with many tools
-        """
+        """Discover all BaseTool architecture tools"""
         tools_dir = self.project_root / 'BASE' / 'tools' / 'installed'
         
         if not tools_dir.exists():
@@ -135,7 +122,7 @@ class ToolLifecycleManager:
                     continue
                 
                 tool_name = info.get('tool_name')
-                control_var = info.get('control_variable_name')
+                control_var = info.get('control_variable_name')  # ← Correct key from JSON
                 
                 if not tool_name or not control_var:
                     if self.logger:
@@ -149,9 +136,10 @@ class ToolLifecycleManager:
                 if len(description) > 100:
                     description = description[:97] + "..."
                 
+                # CRITICAL FIX: Store with CORRECT key name
                 discovered[tool_name] = {
                     'tool_name': tool_name,
-                    'control_variable': control_var,
+                    'control_variable_name': control_var,  # ← Use correct key!
                     'description': description,
                     'timeout': info.get('timeout_seconds', 30),
                     'cooldown': info.get('cooldown_seconds', 0),
@@ -182,9 +170,13 @@ class ToolLifecycleManager:
         
         if self.logger:
             self.logger.system(
-                f"[Tool Discovery] Complete: {len(discovered)} tool(s) found "
-                f"(minimal metadata loaded)"
+                f"[Tool Discovery] Complete: {len(discovered)} tool(s) found"
             )
+            # DIAGNOSTIC: Show what was discovered
+            for tool_name, meta in discovered.items():
+                self.logger.system(
+                    f"  - {tool_name}: {meta.get('control_variable_name', 'NO CONTROL VAR')}"
+                )
         
         return discovered
     
@@ -264,7 +256,7 @@ class ToolLifecycleManager:
                 result[tool_name] = {
                     'tool_name': metadata.get('tool_name'),
                     'tool_description': metadata.get('description'),
-                    'control_variable_name': metadata.get('control_variable'),
+                    'control_variable_name': metadata.get('control_variable_name'),
                     'timeout_seconds': metadata.get('timeout'),
                     'cooldown_seconds': metadata.get('cooldown')
                 }

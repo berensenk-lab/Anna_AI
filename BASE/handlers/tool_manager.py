@@ -63,20 +63,14 @@ class ToolManager:
             self.logger.system(
                 f"[Tool Manager] Initialized with {discovered_count} tools discovered"
             )
-    
+
     def _build_control_mapping(self, discovered_tools: Dict[str, Dict]):
-        """
-        Build mapping from control variables to tool names
-        
-        CRITICAL: This solves the USE_WIKI_SEARCH -> wiki_search mapping issue
-        
-        Args:
-            discovered_tools: Dict from tool discovery (tool_name -> metadata)
-        """
+        """Build mapping from control variables to tool names"""
         self._control_to_tool_map.clear()
         
         for tool_name, metadata in discovered_tools.items():
-            control_var = metadata.get('control_variable')
+            # CRITICAL FIX: Try both key names (for backward compatibility)
+            control_var = metadata.get('control_variable_name') or metadata.get('control_variable_name')
             
             if control_var:
                 self._control_to_tool_map[control_var] = tool_name
@@ -85,12 +79,24 @@ class ToolManager:
                     self.logger.system(
                         f"[Tool Manager] Mapped control: {control_var} → {tool_name}"
                     )
+            else:
+                if self.logger:
+                    self.logger.warning(
+                        f"[Tool Manager] No control variable for {tool_name}\n"
+                        f"  Metadata keys: {list(metadata.keys())}"
+                    )
         
         if self.logger and self._control_to_tool_map:
-            self.logger.system(
-                f"[Tool Manager] Built control mapping for {len(self._control_to_tool_map)} tools"
+            self.logger.success(
+                f"[Tool Manager] Built control mapping for {len(self._control_to_tool_map)} tools:\n"
+                f"  {dict(list(self._control_to_tool_map.items())[:5])}"  # Show first 5
             )
-    
+        elif self.logger:
+            self.logger.error(
+                "[Tool Manager] CRITICAL: Control mapping is EMPTY!\n"
+                f"  Discovered tools: {list(discovered_tools.keys())}"
+            )
+            
     def _resolve_tool_name(self, control_or_tool_name: str) -> Optional[str]:
         """
         Resolve a control variable or tool name to the actual tool name
@@ -113,6 +119,66 @@ class ToolManager:
         
         return None
     
+    async def start_enabled_tools(self):
+        """
+        Start all tools that have their control variables set to True
+        
+        Call this after initialization to auto-start enabled tools.
+        Should be called from CoreInitializer after setting event_loop.
+        
+        Returns:
+            Number of tools started
+        """
+        if not self._event_loop:
+            if self.logger:
+                self.logger.warning(
+                    "[Tool Manager] Cannot start tools - event loop not set"
+                )
+            return 0
+        
+        if self.logger:
+            self.logger.system(
+                "[Tool Manager] Checking control variables to start enabled tools..."
+            )
+        
+        started_count = 0
+        
+        # Check each discovered tool
+        for tool_name, metadata in self._tool_metadata.items():
+            control_var = metadata.get('control_variable_name')
+            
+            if not control_var:
+                continue
+            
+            # Check if control variable is True
+            control_value = getattr(self.controls, control_var, False)
+            
+            if control_value:
+                # Tool should be enabled - start it
+                if self.logger:
+                    self.logger.system(
+                        f"[Tool Manager] Starting {tool_name} ({control_var}=True)"
+                    )
+                
+                # Use handle_control_update to properly start the tool
+                self.handle_control_update(control_var, True)
+                started_count += 1
+                
+                # Give each tool a moment to start
+                await asyncio.sleep(0.1)
+        
+        if self.logger:
+            if started_count > 0:
+                self.logger.success(
+                    f"[Tool Manager] Started {started_count} tool(s) from control variables"
+                )
+            else:
+                self.logger.system(
+                    "[Tool Manager] No tools enabled in control variables"
+                )
+        
+        return started_count
+
     # ========================================================================
     # SETUP AND CONFIGURATION
     # ========================================================================

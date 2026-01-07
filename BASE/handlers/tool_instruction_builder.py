@@ -26,37 +26,66 @@ class ToolInstructionBuilder:
     # MINIMAL TOOL LIST (for cognitive modes)
     # ========================================================================
     
+# BASE/handlers/tool_instruction_builder.py (UPDATE existing method)
+
     def build_tool_list_section(self) -> str:
-        """
-        Build minimal tool list for cognitive modes
-        
-        Shows only: tool name + 1-line description + format hint
-        Cognitive modes output: {"tool": "sound"}
-        """
+        """Build minimal tool list for cognitive modes"""
         enabled_tools = self.tool_manager.get_enabled_tool_names()
         
         if not enabled_tools:
+            if self.logger:
+                self.logger.warning("[Tool Builder] No enabled tools")
             return ""
+        
+        if self.logger:
+            self.logger.system(
+                f"[Tool Builder] Building list for {len(enabled_tools)} enabled tool(s): "
+                f"{', '.join(enabled_tools)}"
+            )
         
         lines = ["\n## AVAILABLE TOOLS"]
         lines.append("You can use these tools by including them in <actions> tags:")
+        lines.append("")
         
-        # Get all metadata
         all_metadata = self.tool_manager.get_all_tool_metadata()
         
+        found_count = 0
         for tool_name in sorted(enabled_tools):
             metadata = all_metadata.get(tool_name)
             if not metadata:
+                if self.logger:
+                    self.logger.warning(
+                        f"[Tool Builder] No metadata for enabled tool: {tool_name}"
+                    )
                 continue
             
-            # Get description
-            description = metadata.get('tool_description', 'No description available')
+            description = metadata.get('tool_description', 'No description')
             lines.append(f"**{tool_name}** - {description}")
-            
-            # Format hint (base tool only)
             lines.append(f"  Format: {{\"tool\": \"{tool_name}\"}}")
+            lines.append("")
+            found_count += 1
         
-        return "\n".join(lines)
+        if found_count == 0:
+            if self.logger:
+                self.logger.error(
+                    "[Tool Builder] CRITICAL: Enabled tools found but NO metadata retrieved!"
+                )
+                self.logger.error(
+                    f"[Tool Builder] Enabled: {enabled_tools}"
+                )
+                self.logger.error(
+                    f"[Tool Builder] Metadata keys: {list(all_metadata.keys())}"
+                )
+            return ""
+        
+        result = "\n".join(lines)
+        
+        if self.logger:
+            self.logger.success(
+                f"[Tool Builder] Built tool list with {found_count}/{len(enabled_tools)} tool(s)"
+            )
+        
+        return result
     
     # ========================================================================
     # DETAILED TOOL INSTRUCTIONS (for action mode ONLY)

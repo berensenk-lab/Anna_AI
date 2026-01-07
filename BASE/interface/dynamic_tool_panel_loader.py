@@ -90,7 +90,7 @@ class DynamicToolPanelLoader:
                 'tool_name': tool_name,
                 'display_name': display_name,  # Guaranteed non-None
                 'category': metadata.get('category', 'Other Tools'),
-                'control_variable': metadata.get('control_variable'),
+                'control_variable_name': metadata.get('control_variable_name'),
                 'has_component': has_component,
                 'component_path': component_file if has_component else None,
                 'description': metadata.get('description', 'No description'),
@@ -149,7 +149,7 @@ class DynamicToolPanelLoader:
                 'tool_name': data.get('tool_name'),
                 'display_name': display_name,  # Never None
                 'category': metadata.get('category', 'Other Tools'),
-                'control_variable': data.get('control_variable_name'),
+                'control_variable_name': data.get('control_variable_name'),
                 'description': data.get('tool_description', ''),
                 'icon': metadata.get('gui_icon', '🔧')
             }

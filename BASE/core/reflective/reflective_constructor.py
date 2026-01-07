@@ -35,7 +35,7 @@ class ReflectiveConstructor:
         self.logger = logger
         self.parts = ReflectivePromptParts()
         self.personality = PersonalityPromptParts()
-    
+
     def build_reflective_prompt(
         self,
         thought_chain: List[str],
@@ -44,7 +44,6 @@ class ReflectiveConstructor:
         is_startup: bool = False
     ) -> str:
         """Build complete reflective thinking prompt"""
-        # Detect startup based on thought count
         thought_count = len(thought_chain)
         is_actually_startup = is_startup or thought_count < self.STARTUP_THOUGHT_THRESHOLD
         
@@ -56,15 +55,12 @@ class ReflectiveConstructor:
         
         sections = []
         
-        # 1. Personality injection
         sections.append(self.personality.get_unified_personality())
         
-        # 1.5. Current context (if available)
         current_ctx = self.personality.format_current_context()
         if current_ctx:
             sections.append(current_ctx)
         
-        # 2. Thought examples (personality-matched BEHAVIORS)
         if self.memory_search:
             examples = self._get_thought_examples(
                 thought_chain=thought_chain,
@@ -75,26 +71,34 @@ class ReflectiveConstructor:
             if examples:
                 sections.append(examples)
         
-        # 3. Recent thoughts (if any)
         if thought_chain:
             sections.append(self._format_thought_chain(thought_chain))
         
-        # 4. Mode instructions
         if is_actually_startup:
             sections.append(self.parts.get_startup_instructions())
         else:
             sections.append(self.parts.get_mode_instructions())
         
-        # 5. Tool list (minimal overview only)
+        # CRITICAL FIX: Actually build and inject tool list
         if self.tool_manager:
             tool_list = self._build_minimal_tool_list()
             if tool_list:
                 sections.append(tool_list)
+                if self.logger:
+                    enabled = self.tool_manager.get_enabled_tool_names()
+                    self.logger.system(
+                        f"[Reflective Constructor] Injected {len(enabled)} tool(s): "
+                        f"{', '.join(enabled)}"
+                    )
+            else:
+                if self.logger:
+                    self.logger.warning("[Reflective Constructor] No tools enabled")
+        else:
+            if self.logger:
+                self.logger.error("[Reflective Constructor] No tool_manager - tools unavailable!")
 
-        # 6. Urgency instructions
         sections.append(self.parts.get_urgency_instructions())
         
-        # 7. Memory context (ACTUAL MEMORIES to reflect on - not for startup)
         if not is_actually_startup and self.memory_search:
             memory_context = self._get_memory_context(
                 thought_chain=thought_chain,
@@ -104,19 +108,14 @@ class ReflectiveConstructor:
             if memory_context:
                 sections.append(f"\n## RELEVANT MEMORIES\n{memory_context}")
         
-        # 8. Context (startup or standard)
         if is_actually_startup:
             sections.append(self._build_startup_context())
         else:
             sections.append(self._build_standard_context(ongoing_context, query))
 
-        # 9. Spoken Response Decision
         sections.append(self.parts.get_spoken_response_rules())
-        
-        # 10. Output format
         sections.append(self.parts.get_output_format())
         
-        # 11. Important reminders (if available) - ALWAYS LAST
         reminders = self.personality.format_important_reminders()
         if reminders:
             sections.append(reminders)
@@ -125,9 +124,30 @@ class ReflectiveConstructor:
         
         if self.logger:
             mode = "Startup" if is_actually_startup else "Standard"
-            self.logger.reflective(f"{mode}]\n{prompt}")
+            self.logger.reflective(f"[{mode}]\n{prompt}")
         
         return prompt
+
+    def _build_minimal_tool_list(self) -> str:
+        """Build minimal tool list with enhanced logging"""
+        from BASE.handlers.tool_instruction_builder import ToolInstructionBuilder
+        
+        builder = ToolInstructionBuilder(
+            tool_manager=self.tool_manager,
+            logger=self.logger
+        )
+        
+        tool_section = builder.build_tool_list_section()
+        
+        if self.logger and tool_section:
+            enabled = self.tool_manager.get_enabled_tool_names()
+            self.logger.system(
+                f"[Reflective Constructor] Built tool list: {len(enabled)} tool(s)"
+            )
+        elif self.logger:
+            self.logger.warning("[Reflective Constructor] Tool list builder returned empty")
+        
+        return tool_section
     
     def _format_thought_chain(self, thoughts: List[str]) -> str:
         """Format thoughts for context"""
@@ -321,17 +341,6 @@ class ReflectiveConstructor:
             )
         
         return result
-    
-    def _build_minimal_tool_list(self) -> str:
-        """Build minimal tool list (names + 1-line descriptions only)"""
-        from BASE.handlers.tool_instruction_builder import ToolInstructionBuilder
-        
-        builder = ToolInstructionBuilder(
-            tool_manager=self.tool_manager,
-            logger=self.logger
-        )
-        
-        return builder.build_tool_list_section()
     
     def _build_startup_context(self) -> str:
         """Build startup context from various sources"""

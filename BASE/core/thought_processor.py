@@ -943,3 +943,34 @@ class ThoughtProcessor:
             'pending_actions': pending_count,
             'prompt_system': 'modular_simplified_trigger'
         }
+    
+    def verify_tool_injection(self):
+        """Diagnostic method to verify tool manager is properly injected"""
+        if not self.tool_manager:
+            self.logger.error("[Verification] No tool_manager in ThoughtProcessor!")
+            return False
+        
+        enabled = self.tool_manager.get_enabled_tool_names()
+        self.logger.system(f"[Verification] ThoughtProcessor has tool_manager")
+        self.logger.system(f"[Verification] Enabled tools: {enabled}")
+        
+        # Check each constructor
+        constructors = [
+            ('reactive', self.reactive_constructor),
+            ('reflective', self.reflective_constructor),
+            ('proactive', self.proactive_constructor),
+            ('action', self.action_constructor)
+        ]
+        
+        all_ok = True
+        for name, constructor in constructors:
+            if not hasattr(constructor, 'tool_manager'):
+                self.logger.error(f"[Verification] {name} constructor missing tool_manager!")
+                all_ok = False
+            elif constructor.tool_manager is None:
+                self.logger.error(f"[Verification] {name} constructor has None tool_manager!")
+                all_ok = False
+            else:
+                self.logger.success(f"[Verification] {name} constructor has tool_manager")
+        
+        return all_ok

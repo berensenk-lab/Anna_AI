@@ -104,12 +104,26 @@ class CoreInitializer:
                 logger=self.logger
             )
             
-            # CRITICAL FIX: Set event loop and thought buffer BEFORE starting tools
+            # CRITICAL FIX: Set event loop BEFORE starting tools
             if self.main_loop:
                 self.tool_manager.set_event_loop(self.main_loop)
                 self.logger.system("[Init] Event loop set for tool manager")
             
-            # Get enabled tools
+            if self.main_loop:
+                future = asyncio.run_coroutine_threadsafe(
+                    self.tool_manager.start_enabled_tools(),
+                    self.main_loop
+                )
+                # Wait for tools to start (30 second timeout)
+                try:
+                    started_count = future.result(timeout=30.0)
+                    self.logger.system(
+                        f"[Init] Auto-started {started_count} tool(s) from control variables"
+                    )
+                except Exception as e:
+                    self.logger.error(f"[Init] Error auto-starting tools: {e}")
+            
+            # Get enabled tools count
             enabled_tools = self.tool_manager.get_enabled_tool_names()
             self.logger.system(
                 f"Tool system initialized: {len(enabled_tools)} tools enabled"
@@ -279,6 +293,17 @@ class CoreInitializer:
                 self.logger.system(
                     f"[Init] Starting {len(enabled_tools)} enabled tool(s)..."
                 )
+
+            # NEW: Verify injection worked
+            if hasattr(self.processing_delegator.thought_processor, 'verify_tool_injection'):
+                if self.processing_delegator.thought_processor.verify_tool_injection():
+                    self.logger.success(
+                        "[Init] Tool injection verification PASSED"
+                    )
+                else:
+                    self.logger.error(
+                        "[Init] Tool injection verification FAILED"
+                    )
             
         except Exception as e:
             self.logger.error(f"Tool manager injection failed: {e}")

@@ -93,7 +93,7 @@ class ControlManager:
             all_metadata = tool_manager.get_all_tool_metadata()
             
             for tool_name, metadata in all_metadata.items():
-                control_var = metadata.get('control_variable')
+                control_var = metadata.get('control_variable_name')
                 
                 if control_var:
                     self._tool_control_vars.add(control_var)
@@ -344,70 +344,70 @@ class ControlManager:
     # MAIN UPDATE METHOD
     # ========================================================================
     
-    def update_control(self, feature_name: str, new_value: bool) -> bool:
+    def update_control(self, control_variable_name: str, new_value: bool) -> bool:
         """
         Update a control variable and handle side effects
         
         Args:
-            feature_name: Name of control variable
+            control_variable_name: Name of control variable
             new_value: New boolean value
             
         Returns:
             True if update succeeded
         """
-        if not hasattr(self.controls_module, feature_name):
-            self.logger.error(f"[Control] Unknown feature: {feature_name}")
+        if not hasattr(self.controls_module, control_variable_name):
+            self.logger.error(f"[Control] Unknown feature: {control_variable_name}")
             return False
         
-        old_value = getattr(self.controls_module, feature_name)
+        old_value = getattr(self.controls_module, control_variable_name)
         
         # Special handling for specific controls
-        if feature_name == 'ENABLE_CONTINUOUS_THINKING':
+        if control_variable_name == 'ENABLE_CONTINUOUS_THINKING':
             success = self.handle_continuous_thinking_toggle(new_value)
             if success:
-                setattr(self.controls_module, feature_name, new_value)
+                setattr(self.controls_module, control_variable_name, new_value)
             return success
         
         # Handle internal tool controls
-        elif self._is_internal_tool_control(feature_name):
-            return self.handle_internal_tool_toggle(feature_name, new_value)
+        elif self._is_internal_tool_control(control_variable_name):
+            return self.handle_internal_tool_toggle(control_variable_name, new_value)
         
         # Logging controls (sync BOTH config and controls)
-        elif feature_name in ['LOG_TOOL_EXECUTION', 'LOG_PROMPT_CONSTRUCTION', 
+        elif control_variable_name in ['LOG_TOOL_EXECUTION', 'LOG_PROMPT_CONSTRUCTION', 
                             'LOG_RESPONSE_PROCESSING', 'LOG_SYSTEM_INFORMATION', 'SHOW_CHAT',
                             'LOG_REACTIVE_PROMPT', 'LOG_REFLECTIVE_PROMPT', 'LOG_PROACTIVE_PROMPT',
                             'LOG_RESPONSIVE_PROMPT', 'LOG_ACTION_PROMPT', 'LOG_CODING_EXECUTION',
                             'LOG_DISCORD_EXECUTION', 'LOG_MINECRAFT_EXECUTION']:
             # Update controls module
-            setattr(self.controls_module, feature_name, new_value)
+            setattr(self.controls_module, control_variable_name, new_value)
             
             # Update config (for logger to see)
             if self.config:
-                setattr(self.config, feature_name, new_value)
-                self.logger.system(f"[Control] {feature_name} = {new_value}")
+                setattr(self.config, control_variable_name, new_value)
+                self.logger.system(f"[Control] {control_variable_name} = {new_value}")
                 return True
             else:
-                self.logger.warning(f"[Control] No config - cannot update {feature_name}")
+                self.logger.warning(f"[Control] No config - cannot update {control_variable_name}")
                 return False
         
         # Regular control update
-        setattr(self.controls_module, feature_name, new_value)
-        self.logger.system(f"[Control] {feature_name}: {old_value} → {new_value}")
+        setattr(self.controls_module, control_variable_name, new_value)
+        self.logger.system(f"[Control] {control_variable_name}: {old_value} → {new_value}")
         
         # Notify tool manager if this is a tool control
-        if self._is_tool_control(feature_name):
+        if self._is_tool_control(control_variable_name):
             self.logger.system(
-                f"[Control] {feature_name} is a tool control - notifying tool manager"
+                f"[Control] {control_variable_name} is a tool control - notifying tool manager"
             )
             
             if self._tool_manager_ref:
                 try:
-                    self._tool_manager_ref.handle_control_update(feature_name, new_value)
+                    self._tool_manager_ref.handle_control_update(control_variable_name, new_value)
                 except Exception as e:
                     self.logger.warning(f"Tool manager notification failed: {e}")
             else:
                 self.logger.warning(
-                    f"[Control] Tool manager not available for {feature_name}"
+                    f"[Control] Tool manager not available for {control_variable_name}"
                 )
         else:
             self.logger.system(
