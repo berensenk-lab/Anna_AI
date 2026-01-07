@@ -5,6 +5,7 @@ OpenCV Vision Tool - High-Performance Continuous Monitoring
 Uses MSS + OpenCV for fast, non-blocking screen capture
 Integrates with thought buffer via context_loop
 Optimized for VTuber real-time awareness
+UPDATED: Supports customizable analysis prompts via GUI
 """
 import asyncio
 import base64
@@ -37,6 +38,7 @@ class OpenCVVisionTool(BaseTool):
     - Configurable FPS (5-30+)
     - Change detection triggers
     - Continuous thought buffer injection
+    - Customizable analysis prompts (GUI support)
     """
     
     @property
@@ -45,7 +47,6 @@ class OpenCVVisionTool(BaseTool):
     
     async def initialize(self) -> bool:
         """Initialize OpenCV vision system"""
-        # Configuration
         self.vision_model = getattr(self._config, 'vision_model', 'llava:latest')
         self.ollama_endpoint = getattr(self._config, 'ollama_endpoint', 'http://localhost:11434')
         self.target_fps = getattr(self._config, 'opencv_vision_fps', 10)
@@ -54,41 +55,49 @@ class OpenCVVisionTool(BaseTool):
         self.analysis_interval = getattr(self._config, 'opencv_vision_interval', 5.0)
         self.change_threshold = getattr(self._config, 'opencv_vision_change_threshold', 50000)
         
-        # Check availability
+        self.analysis_prompt = (
+            "You are monitoring a screen for an AI agent. "
+            "Provide a detailed description of what's currently visible on the screen. "
+            "This is captured from the user's desktop, and may be a screenshot of an image, "
+            "a game, an application, text, or other media. "
+            "If characters, text, objects, or other noteworthy items appear, describe them. "
+            "Describe any observed interactions between the objects in the image. "
+            "If any UI elements are present, provide details about them. "
+            "If uncertainty about a detail exists, omit that detail. "
+            "Describe only what is visible and do not invent details. "
+            "The description should include an overall impression as well as specific details. "
+            "Keep the description under 1000 characters. Respond with only the description "
+            "of what is visible on the screen."
+        )
+        
         if not OPENCV_AVAILABLE:
             if self._logger:
                 self._logger.warning(
                     "[OpenCV Vision] Libraries not available - "
                     "install with: pip install mss opencv-python numpy"
                 )
-            return True  # Graceful degradation
+            return True
         
-        # Capture state
-        self.monitor_index = 1  # Store index instead of monitor dict
-        self.monitor_info = None  # Store for status reporting
+        self.monitor_index = 1
+        self.monitor_info = None
         self.capture_thread = None
         self.capture_running = False
         
-        # Frame buffer
         self.frame_buffer = Queue(maxsize=5)
         self.latest_frame = None
         self.frame_lock = Lock()
         
-        # Performance tracking
         self.capture_count = 0
         self.last_capture_time = 0
         self.fps_counter = deque(maxlen=30)
         
-        # Analysis tracking
         self.last_analysis_time = 0
         self.last_frame_for_change = None
         
-        # Detect monitors (but don't keep MSS instance)
         try:
             with mss.mss() as sct:
                 monitors = sct.monitors
                 
-                # Use primary monitor (index 1, 0 is all monitors)
                 if len(monitors) > 1:
                     self.monitor_info = monitors[1]
                 else:
@@ -108,11 +117,10 @@ class OpenCVVisionTool(BaseTool):
         except Exception as e:
             if self._logger:
                 self._logger.error(f"[OpenCV Vision] Initialization error: {e}")
-            return True  # Still return True for graceful degradation
+            return True
     
     async def cleanup(self):
         """Cleanup vision resources"""
-        # Stop capture thread
         if self.capture_running:
             self.capture_running = False
             if self.capture_thread:
@@ -146,10 +154,6 @@ class OpenCVVisionTool(BaseTool):
             }
         }
     
-    # ========================================================================
-    # CONTEXT LOOP (Continuous Monitoring)
-    # ========================================================================
-    
     def has_context_loop(self) -> bool:
         """Enable continuous monitoring via context loop"""
         return True
@@ -169,7 +173,6 @@ class OpenCVVisionTool(BaseTool):
                 self._logger.warning("[OpenCV Vision] Not available, context loop exiting")
             return
         
-        # Start capture thread
         self._start_capture_thread()
         
         if self._logger:
@@ -182,15 +185,12 @@ class OpenCVVisionTool(BaseTool):
             while self._running:
                 current_time = time.time()
                 
-                # Check if time for analysis
                 time_since_analysis = current_time - self.last_analysis_time
                 
                 if time_since_analysis >= self.analysis_interval:
-                    # Get latest frame
                     frame = self._get_latest_frame()
                     
                     if frame is not None:
-                        # Check for significant changes (optional optimization)
                         should_analyze = True
                         
                         if self.last_frame_for_change is not None:
@@ -199,21 +199,13 @@ class OpenCVVisionTool(BaseTool):
                                 self.last_frame_for_change
                             )
                             
-                            # Only analyze if significant change
                             if change_amount < self.change_threshold:
                                 should_analyze = False
-                                # if self._logger:
-                                #     self._logger.system(
-                                #         f"[OpenCV Vision] Skipping analysis - "
-                                #         f"change amount {change_amount:.0f} < threshold"
-                                #     )
                         
                         if should_analyze:
-                            # Analyze frame with vision model
                             analysis = await self._analyze_frame_with_vision(frame)
                             
                             if analysis:
-                                # Inject into thought buffer with HIGH priority
                                 thought_buffer.add_processed_thought(
                                     content=analysis,
                                     source='vision_result',
@@ -229,7 +221,6 @@ class OpenCVVisionTool(BaseTool):
                         
                         self.last_analysis_time = current_time
                 
-                # Sleep briefly
                 await asyncio.sleep(0.5)
         
         except asyncio.CancelledError:
@@ -241,14 +232,9 @@ class OpenCVVisionTool(BaseTool):
             import traceback
             traceback.print_exc()
         finally:
-            # Stop capture thread
             self.capture_running = False
             if self.capture_thread:
                 self.capture_thread.join(timeout=2.0)
-    
-    # ========================================================================
-    # THREADED SCREEN CAPTURE
-    # ========================================================================
     
     def _start_capture_thread(self):
         """Start background capture thread"""
@@ -261,9 +247,7 @@ class OpenCVVisionTool(BaseTool):
     
     def _capture_loop(self):
         """Main capture loop (runs in separate thread)"""
-        # Create MSS instance in this thread (thread-safe)
         with mss.mss() as sct:
-            # Get monitor info
             monitors = sct.monitors
             if len(monitors) <= self.monitor_index:
                 if self._logger:
@@ -279,43 +263,35 @@ class OpenCVVisionTool(BaseTool):
             while self.capture_running:
                 loop_start = time.perf_counter()
                 
-                # Throttle to target FPS
                 elapsed = loop_start - last_capture
                 if elapsed < frame_delay:
                     time.sleep(frame_delay - elapsed)
                     continue
                 
                 try:
-                    # Capture screen with MSS (fast!)
                     screenshot = sct.grab(monitor)
                     
-                    # Convert to numpy array (BGR for OpenCV)
                     frame = np.array(screenshot)
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
                     
-                    # Resize for performance
                     frame = cv2.resize(
                         frame, 
                         (self.capture_width, self.capture_height),
                         interpolation=cv2.INTER_AREA
                     )
                     
-                    # Update latest frame (thread-safe)
                     with self.frame_lock:
                         self.latest_frame = frame.copy()
                     
-                    # Add to buffer (non-blocking)
                     try:
                         self.frame_buffer.put_nowait(frame)
                     except Full:
-                        # Buffer full, remove oldest
                         try:
                             self.frame_buffer.get_nowait()
                             self.frame_buffer.put_nowait(frame)
                         except:
                             pass
                     
-                    # Track stats
                     self.capture_count += 1
                     self.last_capture_time = time.time()
                     self.fps_counter.append(time.perf_counter())
@@ -350,18 +326,13 @@ class OpenCVVisionTool(BaseTool):
         except:
             return 0.0
     
-    # ========================================================================
-    # VISION ANALYSIS
-    # ========================================================================
-    
     async def _analyze_frame_with_vision(self, frame: np.ndarray) -> Optional[str]:
         """
-        Analyze frame using vision model
+        Analyze frame using vision model with CUSTOMIZABLE PROMPT
         
         Returns concise description for thought buffer
         """
         try:
-            # Convert to base64 JPEG
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             pil_image = Image.fromarray(frame_rgb)
             
@@ -369,20 +340,11 @@ class OpenCVVisionTool(BaseTool):
             pil_image.save(buffer, format="JPEG", quality=85, optimize=True)
             base64_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
             
-            # Prepare prompt for continuous monitoring
-            prompt = (
-                "You are monitoring a screen for an AI agent. "
-                "Provide a description of what's currently visible on the screen. "
-                "Focus on: active application, main content, any user interactions, "
-                "and significant changes. Be concise." \
-                "Keep the summary under 1000 characters."
-            )
+            prompt = self.analysis_prompt
             
-            # Add current context if available
             if hasattr(self._config, 'current_context') and self._config.current_context:
                 prompt += f"\n\nCURRENT CONTEXT: {self._config.current_context}"
             
-            # Call Ollama (non-blocking)
             import requests
             
             response = await asyncio.get_event_loop().run_in_executor(
@@ -404,12 +366,11 @@ class OpenCVVisionTool(BaseTool):
                 analysis = result.get('response', '').strip()
                 
                 if analysis:
-                    # Format for thought buffer
-                    formatted = f"SCREEN VISION: {analysis}"
+                    formatted = f"SCREEN VISION: {analysis[:1000]}"
                     
                     if self._logger:
                         self._logger.success(
-                            f"[Vision] Analysis: {analysis}..."
+                            f"[Vision] Analysis: {analysis}"
                         )
                     
                     return formatted
@@ -425,10 +386,6 @@ class OpenCVVisionTool(BaseTool):
             if self._logger:
                 self._logger.error(f"[OpenCV Vision] Analysis error: {e}")
             return None
-    
-    # ========================================================================
-    # COMMAND EXECUTION
-    # ========================================================================
     
     async def execute(self, command: str, args: List[Any]) -> Dict[str, Any]:
         """

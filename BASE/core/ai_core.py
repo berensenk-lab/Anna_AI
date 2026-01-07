@@ -358,7 +358,7 @@ class AICore:
     
     def shutdown(self):
         """Gracefully shutdown all systems"""
-        self.logger.system("🛑 Starting IMMEDIATE shutdown...")
+        self.logger.system("Starting IMMEDIATE shutdown...")
         self.shutdown_flag.set()
         self.speech_stop_flag.set()
         
@@ -366,7 +366,7 @@ class AICore:
         if hasattr(self, 'core_hot_reload') and self.core_hot_reload:
             try:
                 self.core_hot_reload.stop_watching()
-                self.logger.system("🛑 Stopped core hot-reload manager")
+                self.logger.system("Stopped core hot-reload manager")
             except Exception as e:
                 self.logger.warning(f"Error stopping core hot-reload: {e}")
         
@@ -385,7 +385,7 @@ class AICore:
                         )
                         time.sleep(0.5)
             
-            self.logger.system("🛑 Stopped cognitive loop")
+            self.logger.system("Stopped cognitive loop")
         except Exception as e:
             self.logger.warning(f"Error stopping cognitive loop: {e}")
         
@@ -423,7 +423,7 @@ class AICore:
         # Stop event loop
         self._stop_event_loop()
         
-        self.logger.system("🛑 Shutdown complete")
+        self.logger.system("Shutdown complete")
     
     # ========================================================================
     # MAIN API - USER INTERACTION

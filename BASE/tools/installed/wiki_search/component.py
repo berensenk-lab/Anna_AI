@@ -104,7 +104,7 @@ class WikiSearchComponent:
         # Search button
         self.search_button = ttk.Button(
             search_frame,
-            text="🔍 Search",
+            text="Search",
             command=self._perform_search,
             width=12
         )
@@ -113,7 +113,7 @@ class WikiSearchComponent:
         # Clear button
         self.clear_button = ttk.Button(
             search_frame,
-            text="🗑️ Clear",
+            text="Clear",
             command=self._clear_results,
             width=10
         )
@@ -161,7 +161,7 @@ class WikiSearchComponent:
         # Status label
         self.status_label = tk.Label(
             status_frame,
-            text="🟢 Ready - Wikipedia is always available",
+            text="Ready - Wikipedia is always available",
             font=("Segoe UI", 9),
             foreground=DarkTheme.ACCENT_GREEN,
             background=DarkTheme.BG_DARKER,
@@ -172,7 +172,7 @@ class WikiSearchComponent:
         # Info button
         info_button = tk.Label(
             status_frame,
-            text="ℹ️",
+            text="",
             font=("Segoe UI", 10),
             foreground=DarkTheme.ACCENT_PURPLE,
             background=DarkTheme.BG_DARKER,
@@ -283,7 +283,7 @@ class WikiSearchComponent:
         
         # Update status
         self.status_label.config(
-            text="🔄 Searching Wikipedia...",
+            text="Searching Wikipedia...",
             foreground=DarkTheme.ACCENT_BLUE
         )
         self.search_button.config(state=tk.DISABLED)
@@ -333,9 +333,9 @@ class WikiSearchComponent:
             
             # Update status with position info
             if self.search_count > 1:
-                status_text = f"✅ Found {chunks} chunk(s) - Search #{self.search_count} (different section)"
+                status_text = f"Found {chunks} chunk(s) - Search #{self.search_count} (different section)"
             else:
-                status_text = f"✅ Found {chunks} chunk(s) from '{article}'"
+                status_text = f"Found {chunks} chunk(s) from '{article}'"
             
             self.status_label.config(
                 text=status_text,
@@ -432,7 +432,7 @@ class WikiSearchComponent:
         
         if not self.wiki_tool:
             self.status_label.config(
-                text="⚫ Tool Not Available",
+                text="Tool Not Enabled",
                 foreground=DarkTheme.FG_MUTED
             )
             self.search_button.config(state=tk.DISABLED)
@@ -440,7 +440,7 @@ class WikiSearchComponent:
         
         # Wikipedia is always available (no API key needed)
         self.status_label.config(
-            text="🟢 Ready - Wikipedia is always available",
+            text="Ready - Wikipedia is always available",
             foreground=DarkTheme.ACCENT_GREEN
         )
         self.search_button.config(state=tk.NORMAL)
@@ -461,7 +461,7 @@ class WikiSearchComponent:
     def _show_error(self, message: str):
         """Show error message"""
         self.status_label.config(
-            text=f"❌ {message}",
+            text=f"{message}",
             foreground=DarkTheme.ACCENT_RED
         )
         self.search_button.config(state=tk.NORMAL)

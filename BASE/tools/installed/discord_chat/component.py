@@ -244,7 +244,7 @@ class DiscordChatComponent:
         
         ttk.Button(
             button_frame,
-            text="🔄 Reload",
+            text="Reload",
             command=self._reload_settings,
             width=15
         ).pack(side=tk.LEFT, padx=2)
@@ -295,7 +295,7 @@ class DiscordChatComponent:
         
         ttk.Button(
             control_frame,
-            text="🔄 Refresh Status",
+            text="Refresh Status",
             command=self._refresh_status,
             width=15
         ).pack(side=tk.LEFT, padx=2)
@@ -420,7 +420,7 @@ class DiscordChatComponent:
             with open(config_path, 'w') as f:
                 f.write(content)
             
-            self.logger.discord("✅ Settings saved to config.py")
+            self.logger.discord("Settings saved to config.py")
             messagebox.showinfo("Success", "Settings saved! Restart the bot for changes to take effect.")
             
         except Exception as e:
@@ -449,7 +449,7 @@ class DiscordChatComponent:
             self.respond_mentions_var.set(getattr(config, 'DISCORD_RESPOND_TO_MENTIONS', True))
             self.respond_replies_var.set(getattr(config, 'DISCORD_RESPOND_TO_REPLIES', True))
             
-            self.logger.discord("🔄 Settings reloaded from config.py")
+            self.logger.discord("Settings reloaded from config.py")
             
         except Exception as e:
             self.logger.error(f"Failed to reload settings: {e}")
@@ -473,7 +473,7 @@ class DiscordChatComponent:
                 
                 @client.event
                 async def on_ready():
-                    self.logger.discord(f"✅ Connected as {client.user}")
+                    self.logger.discord(f"Connected as {client.user}")
                     self.logger.discord(f"Bot ID: {client.user.id}")
                     await client.close()
                 
@@ -486,7 +486,7 @@ class DiscordChatComponent:
             messagebox.showinfo("Success", "Connection test successful!")
             
         except discord.LoginFailure:
-            self.logger.error("❌ Invalid token")
+            self.logger.error("Invalid token")
             messagebox.showerror("Error", "Invalid bot token")
         except Exception as e:
             self.logger.error(f"Connection test failed: {e}")
@@ -507,7 +507,7 @@ class DiscordChatComponent:
                 result = await self.discord_tool.execute('start', [])
                 if result.get('success'):
                     self._update_status_connected()
-                    self.logger.discord("✅ Discord bot started")
+                    self.logger.discord("Discord bot started")
                 else:
                     error = result.get('content', 'Unknown error')
                     messagebox.showerror("Error", f"Failed to start: {error}")
@@ -554,9 +554,9 @@ class DiscordChatComponent:
         self._update_stats()
     
     def _update_status_not_available(self):
-        """Update UI for tool not available"""
+        """Update UI for tool not enabled"""
         self.status_label.config(
-            text="⚫ Tool Not Available",
+            text="Tool Not Enabled",
             foreground=DarkTheme.FG_MUTED
         )
         self.start_button.config(state=tk.DISABLED)
@@ -565,7 +565,7 @@ class DiscordChatComponent:
     def _update_status_connected(self):
         """Update UI for connected state"""
         self.status_label.config(
-            text="🟢 Bot Online",
+            text="Bot Online",
             foreground=DarkTheme.ACCENT_GREEN
         )
         self.start_button.config(state=tk.DISABLED)

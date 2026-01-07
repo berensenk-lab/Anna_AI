@@ -32,7 +32,7 @@ class SessionFilesPanel:
     """Manages session file upload and display"""
 
     __slots__ = ('parent', 'ai_core', 'logger', 'file_items', 'canvas', 'scrollbar',
-                 'scrollable_frame', 'canvas_window')
+                'scrollable_frame', 'canvas_window')
 
     def __init__(self, parent, ai_core, logger):
         self.parent = parent
@@ -57,8 +57,8 @@ class SessionFilesPanel:
         
         info_label = tk.Label(
             info_frame,
-            text="ℹ️ Upload code or documentation files for AI to reference during this session only.\n"
-                 "Files are NOT saved to persistent memory and will be cleared when you close the app.",
+            text="Upload code or documentation files for AI to reference during this session only.\n"
+                "Files are NOT saved to persistent memory and will be cleared when you close the app.",
             font=("Segoe UI", 9),
             foreground=DarkTheme.FG_SECONDARY,
             background=DarkTheme.BG_DARKER,
@@ -80,14 +80,14 @@ class SessionFilesPanel:
         
         ttk.Button(
             button_frame,
-            text="🗑️ Clear All",
+            text="Clear All",
             command=self.clear_all_files,
             width=15
         ).pack(side=tk.LEFT, padx=2)
         
         ttk.Button(
             button_frame,
-            text="🔄 Refresh",
+            text="Refresh",
             command=self.refresh_file_list,
             width=15
         ).pack(side=tk.LEFT, padx=2)
@@ -103,31 +103,51 @@ class SessionFilesPanel:
             highlightthickness=0,
             height=400
         )
-        scrollbar = ttk.Scrollbar(
+        self.scrollbar = ttk.Scrollbar(
             list_frame,
             orient="vertical",
             command=self.canvas.yview
         )
         self.scrollable_frame = ttk.Frame(self.canvas)
         
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-        )
-        
         self.canvas_window = self.canvas.create_window(
             (0, 0),
             window=self.scrollable_frame,
             anchor="nw"
         )
-        self.canvas.configure(yscrollcommand=scrollbar.set)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
         
-        # Bind mousewheel
+        def update_scroll_region(event=None):
+            self.canvas.update_idletasks()
+            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+            
+            bbox = self.canvas.bbox("all")
+            canvas_height = self.canvas.winfo_height()
+            
+            if bbox and bbox[3] > canvas_height:
+                self.scrollbar.pack(side="right", fill="y")
+            else:
+                self.scrollbar.pack_forget()
+        
+        def configure_canvas_width(event):
+            self.canvas.itemconfig(self.canvas_window, width=event.width)
+            update_scroll_region()
+        
+        self.scrollable_frame.bind("<Configure>", update_scroll_region)
+        self.canvas.bind("<Configure>", configure_canvas_width)
+        
+        # Bind mousewheel - only scroll if content overflows
         def _on_mousewheel(event):
-            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            bbox = self.canvas.bbox("all")
+            canvas_height = self.canvas.winfo_height()
+            if bbox and bbox[3] > canvas_height:
+                self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
         
         def _bind_mousewheel(event):
-            self.canvas.bind_all("<MouseWheel>", _on_mousewheel)
+            bbox = self.canvas.bbox("all")
+            canvas_height = self.canvas.winfo_height()
+            if bbox and bbox[3] > canvas_height:
+                self.canvas.bind_all("<MouseWheel>", _on_mousewheel)
         
         def _unbind_mousewheel(event):
             self.canvas.unbind_all("<MouseWheel>")
@@ -135,15 +155,7 @@ class SessionFilesPanel:
         self.canvas.bind("<Enter>", _bind_mousewheel)
         self.canvas.bind("<Leave>", _unbind_mousewheel)
         
-        # Configure canvas width
-        def configure_scroll_region(event):
-            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-            self.canvas.itemconfig(self.canvas_window, width=event.width)
-        
-        self.canvas.bind("<Configure>", configure_scroll_region)
-        
         self.canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
         
         # Initial load
         self.refresh_file_list()

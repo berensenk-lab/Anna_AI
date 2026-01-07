@@ -100,7 +100,7 @@ class DuckDuckGoSearchComponent:
         # Search button
         self.search_button = ttk.Button(
             search_frame,
-            text="🔍 Search",
+            text="Search",
             command=self._perform_search,
             width=12
         )
@@ -109,7 +109,7 @@ class DuckDuckGoSearchComponent:
         # Reset button (for pagination)
         self.reset_button = ttk.Button(
             search_frame,
-            text="🔄 Reset",
+            text="Reset",
             command=self._reset_pagination,
             width=10
         )
@@ -118,7 +118,7 @@ class DuckDuckGoSearchComponent:
         # Clear button
         self.clear_button = ttk.Button(
             search_frame,
-            text="🗑️ Clear",
+            text="Clear",
             command=self._clear_results,
             width=10
         )
@@ -132,7 +132,7 @@ class DuckDuckGoSearchComponent:
         # Status label
         self.status_label = tk.Label(
             status_frame,
-            text="⚫ Checking availability...",
+            text="Checking availability...",
             font=("Segoe UI", 9),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -143,7 +143,7 @@ class DuckDuckGoSearchComponent:
         # Info button
         info_button = tk.Label(
             status_frame,
-            text="ℹ️",
+            text="",
             font=("Segoe UI", 10),
             foreground=DarkTheme.ACCENT_PURPLE,
             background=DarkTheme.BG_DARKER,
@@ -270,7 +270,7 @@ class DuckDuckGoSearchComponent:
         # Update status
         search_num = self.search_count[query]
         self.status_label.config(
-            text=f"🔄 Searching (page {search_num})...",
+            text=f"Searching (page {search_num})...",
             foreground=DarkTheme.ACCENT_BLUE
         )
         self.search_button.config(state=tk.DISABLED)
@@ -330,7 +330,7 @@ class DuckDuckGoSearchComponent:
                     def update_ui():
                         self.pagination_label.config(text="")
                         self.status_label.config(
-                            text=f"✅ Pagination reset for '{query}'",
+                            text=f"Pagination reset for '{query}'",
                             foreground=DarkTheme.ACCENT_GREEN
                         )
                         self.logger.tool(f"[DuckDuckGo] Pagination reset: {query}")
@@ -364,7 +364,7 @@ class DuckDuckGoSearchComponent:
             
             # Update status
             self.status_label.config(
-                text=f"✅ Found {result_count} result(s) from different sources",
+                text=f"Found {result_count} result(s) from different sources",
                 foreground=DarkTheme.ACCENT_GREEN
             )
             
@@ -466,7 +466,7 @@ class DuckDuckGoSearchComponent:
         
         if not self.ddg_tool:
             self.status_label.config(
-                text="⚫ Tool Not Available",
+                text="Tool Not Enabled",
                 foreground=DarkTheme.FG_MUTED
             )
             self.search_button.config(state=tk.DISABLED)
@@ -475,7 +475,7 @@ class DuckDuckGoSearchComponent:
         
         if self.ddg_tool.is_available():
             self.status_label.config(
-                text="🟢 Ready - Privacy-focused search (no tracking)",
+                text="Ready - Privacy-focused search (no tracking)",
                 foreground=DarkTheme.ACCENT_GREEN
             )
             self.search_button.config(state=tk.NORMAL)
@@ -504,7 +504,7 @@ class DuckDuckGoSearchComponent:
     def _show_error(self, message: str):
         """Show error message"""
         self.status_label.config(
-            text=f"❌ {message}",
+            text=f"{message}",
             foreground=DarkTheme.ACCENT_RED
         )
         self.search_button.config(state=tk.NORMAL)

@@ -55,7 +55,7 @@ class WebFetchComponent:
         # Main panel frame
         self.panel_frame = ttk.LabelFrame(
             parent_frame,
-            text="🌐 Web Fetch",
+            text="Web Fetch",
             style="Dark.TLabelframe"
         )
         self.panel_frame.pack(fill=tk.BOTH, expand=True, pady=(5, 0))
@@ -104,7 +104,7 @@ class WebFetchComponent:
         # Fetch button
         self.fetch_button = ttk.Button(
             url_frame,
-            text="🔍 Fetch",
+            text="Fetch",
             command=self._perform_fetch,
             width=12
         )
@@ -113,7 +113,7 @@ class WebFetchComponent:
         # Clear button
         self.clear_button = ttk.Button(
             url_frame,
-            text="🗑️ Clear",
+            text="Clear",
             command=self._clear_results,
             width=10
         )
@@ -146,7 +146,7 @@ class WebFetchComponent:
         # Domains button
         self.domains_button = ttk.Button(
             options_frame,
-            text="📋 Approved Domains",
+            text="Approved Domains",
             command=self._show_domains,
             width=18
         )
@@ -155,7 +155,7 @@ class WebFetchComponent:
         # Info label
         info_label = tk.Label(
             options_frame,
-            text="ℹ️ Only approved domains can be fetched",
+            text="Only approved domains can be fetched",
             font=("Segoe UI", 8, "italic"),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER
@@ -170,7 +170,7 @@ class WebFetchComponent:
         # Status label
         self.status_label = tk.Label(
             status_frame,
-            text="🟢 Ready - Web fetch available",
+            text="Ready - Web fetch available",
             font=("Segoe UI", 9),
             foreground=DarkTheme.ACCENT_GREEN,
             background=DarkTheme.BG_DARKER,
@@ -181,7 +181,7 @@ class WebFetchComponent:
         # Info button
         info_button = tk.Label(
             status_frame,
-            text="ℹ️",
+            text="",
             font=("Segoe UI", 10),
             foreground=DarkTheme.ACCENT_PURPLE,
             background=DarkTheme.BG_DARKER,
@@ -291,7 +291,7 @@ class WebFetchComponent:
         
         # Update status
         self.status_label.config(
-            text=f"🔄 Fetching {url}...",
+            text=f"Fetching {url}...",
             foreground=DarkTheme.ACCENT_BLUE
         )
         self.fetch_button.config(state=tk.DISABLED)
@@ -336,7 +336,7 @@ class WebFetchComponent:
             size = metadata.get('size', 0)
             domain = metadata.get('domain', 'unknown')
             
-            status_text = f"✅ Retrieved {size:,} chars from {domain}"
+            status_text = f"Retrieved {size:,} chars from {domain}"
             
             self.status_label.config(
                 text=status_text,
@@ -399,7 +399,7 @@ class WebFetchComponent:
         
         # Update status
         self.status_label.config(
-            text="📋 Retrieving approved domains...",
+            text="Retrieving approved domains...",
             foreground=DarkTheme.ACCENT_BLUE
         )
         
@@ -434,7 +434,7 @@ class WebFetchComponent:
             # Update status
             domain_count = metadata.get('domain_count', 0)
             self.status_label.config(
-                text=f"📋 {domain_count} approved domains listed",
+                text=f"{domain_count} approved domains listed",
                 foreground=DarkTheme.ACCENT_GREEN
             )
             
@@ -462,7 +462,7 @@ class WebFetchComponent:
         
         if not self.web_fetch_tool:
             self.status_label.config(
-                text="⚫ Tool Not Available",
+                text="Tool Not Enabled",
                 foreground=DarkTheme.FG_MUTED
             )
             self.fetch_button.config(state=tk.DISABLED)
@@ -471,7 +471,7 @@ class WebFetchComponent:
         
         # Web fetch is always available (no API key needed)
         self.status_label.config(
-            text="🟢 Ready - Web fetch available",
+            text="Ready - Web fetch available",
             foreground=DarkTheme.ACCENT_GREEN
         )
         self.fetch_button.config(state=tk.NORMAL)
@@ -493,7 +493,7 @@ class WebFetchComponent:
     def _show_error(self, message: str):
         """Show error message"""
         self.status_label.config(
-            text=f"❌ {message}",
+            text=f"{message}",
             foreground=DarkTheme.ACCENT_RED
         )
         self.fetch_button.config(state=tk.NORMAL)

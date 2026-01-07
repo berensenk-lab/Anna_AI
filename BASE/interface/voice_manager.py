@@ -339,7 +339,7 @@ class VoiceManager:
             return
         
         if not self.voice_tool.is_available():
-            self.logger.error("[Voice] Voice input tool not available")
+            self.logger.error("[Voice] Voice input tool not enabled")
             self._update_voice_status("Error: Tool unavailable", "error")
             return
         

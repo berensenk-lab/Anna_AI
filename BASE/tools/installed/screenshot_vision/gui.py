@@ -62,7 +62,7 @@ class VisionGUI:
         tk.Label(hdr, text="Vision Tool", font=("Segoe UI", 16, "bold"),
                 bg=self.bg, fg=self.fg).pack(side=tk.LEFT)
         
-        self.status_lbl = tk.Label(hdr, text="⚫ Initializing", font=("Segoe UI", 10),
+        self.status_lbl = tk.Label(hdr, text="Initializing", font=("Segoe UI", 10),
                                    bg=self.bg, fg="#888")
         self.status_lbl.pack(side=tk.RIGHT)
         
@@ -89,7 +89,7 @@ class VisionGUI:
         self.screenshot_btn = self._create_btn(btn_frm, "📸 Screenshot", self._screenshot)
         self.screenshot_btn.pack(side=tk.LEFT, padx=(0, 5))
         
-        self.analyze_btn = self._create_btn(btn_frm, "🔍 Analyze", self._analyze)
+        self.analyze_btn = self._create_btn(btn_frm, "Analyze", self._analyze)
         self.analyze_btn.pack(side=tk.LEFT)
         
         self.clear_btn = self._create_btn(btn_frm, "🗑 Clear", self._clear, bg="#555")
@@ -153,11 +153,11 @@ class VisionGUI:
         """Update status display"""
         if success and status.get('available'):
             monitors = status.get('monitors', 0)
-            self.status_lbl.config(text=f"🟢 Ready ({monitors} monitor{'s' if monitors != 1 else ''})",
+            self.status_lbl.config(text=f"Ready ({monitors} monitor{'s' if monitors != 1 else ''})",
                                   fg=self.success)
         else:
             self.status_lbl.config(text="🔴 Not Available", fg=self.error)
-            self._log("Vision tool not available. Install: pip install pyautogui screeninfo pillow\n", "error")
+            self._log("Vision tool not enabled. Install: pip install pyautogui screeninfo pillow\n", "error")
     
     def _screenshot(self):
         """Execute screenshot command"""

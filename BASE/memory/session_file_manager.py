@@ -447,7 +447,7 @@ class SessionFileManager:
         if file_id in self.session_files:
             filename = self.session_files[file_id]['filename']
             del self.session_files[file_id]
-            self.logger.system(f"🗑️ Removed session file: {filename}")
+            self.logger.system(f"Removed session file: {filename}")
             return True
         return False
     
@@ -456,7 +456,7 @@ class SessionFileManager:
         count = len(self.session_files)
         self.session_files.clear()
         if count > 0:
-            self.logger.system(f"🗑️ Cleared {count} session file(s)")
+            self.logger.system(f"Cleared {count} session file(s)")
     
     def _generate_file_id(self, filepath: str) -> str:
         """Generate unique file ID from filepath"""

@@ -35,7 +35,7 @@ class InfoView:
         # Add refresh button
         refresh_button = ttk.Button(
             header_frame,
-            text="🔄 Refresh",
+            text="Refresh",
             command=self.refresh_readme,
             width=12
         )
@@ -232,7 +232,7 @@ class InfoView:
     
     def show_error(self, message):
         """Display error message in the text widget"""
-        self.readme_text.insert(tk.END, "❌ ERROR\n\n", 'h2')
+        self.readme_text.insert(tk.END, "ERROR\n\n", 'h2')
         self.readme_text.insert(tk.END, message)
     
     def refresh_readme(self):

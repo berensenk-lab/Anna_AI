@@ -87,7 +87,7 @@ class ToolsView:
         
         refresh_button = ttk.Button(
             header_frame,
-            text="[Refresh] Refresh",
+            text="Refresh",
             command=self._refresh_panels,
             width=12
         )
@@ -198,24 +198,47 @@ class ToolsView:
         scrollbar = ttk.Scrollbar(tool_container, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
         
-        scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-        
         canvas_window = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
         
-        def configure_scroll_region(event):
+        def update_scroll_region(event=None):
+            canvas.update_idletasks()
             canvas.configure(scrollregion=canvas.bbox("all"))
-            canvas.itemconfig(canvas_window, width=event.width)
+            
+            bbox = canvas.bbox("all")
+            canvas_height = canvas.winfo_height()
+            
+            if bbox and bbox[3] > canvas_height:
+                scrollbar.pack(side="right", fill="y")
+            else:
+                scrollbar.pack_forget()
         
-        canvas.bind("<Configure>", configure_scroll_region)
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        def configure_canvas_width(event):
+            canvas.itemconfig(canvas_window, width=event.width)
+            update_scroll_region()
+        
+        scrollable_frame.bind("<Configure>", update_scroll_region)
+        canvas.bind("<Configure>", configure_canvas_width)
         
         def _on_mousewheel(event):
-            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            bbox = canvas.bbox("all")
+            canvas_height = canvas.winfo_height()
+            if bbox and bbox[3] > canvas_height:
+                canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
         
-        canvas.bind("<Enter>", lambda e: canvas.bind_all("<MouseWheel>", _on_mousewheel))
-        canvas.bind("<Leave>", lambda e: canvas.unbind_all("<MouseWheel>"))
+        def _bind_mousewheel(event):
+            bbox = canvas.bbox("all")
+            canvas_height = canvas.winfo_height()
+            if bbox and bbox[3] > canvas_height:
+                canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        
+        def _unbind_mousewheel(event):
+            canvas.unbind_all("<MouseWheel>")
+        
+        canvas.bind("<Enter>", _bind_mousewheel)
+        canvas.bind("<Leave>", _unbind_mousewheel)
+        
+        canvas.pack(side="left", fill="both", expand=True)
         
         self._load_tool_component(scrollable_frame, panel_info)
         

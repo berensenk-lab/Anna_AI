@@ -419,7 +419,7 @@ class HotReloadManager:
         
         # Default style
         default_style = {
-            'text': '🔄 Reload',
+            'text': 'Reload',
             'width': 10,
         }
         
@@ -438,10 +438,10 @@ class HotReloadManager:
             # Update button state
             if success:
                 reload_btn.config(state='normal', text='✓ Reloaded')
-                parent.after(2000, lambda: reload_btn.config(text='🔄 Reload'))
+                parent.after(2000, lambda: reload_btn.config(text='Reload'))
             else:
                 reload_btn.config(state='normal', text='✗ Failed')
-                parent.after(2000, lambda: reload_btn.config(text='🔄 Reload'))
+                parent.after(2000, lambda: reload_btn.config(text='Reload'))
         
         reload_btn = ttk.Button(
             parent,
