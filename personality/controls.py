@@ -28,12 +28,12 @@ KILL_COMMAND = "shut down sleep now"
 
 # Continuous autonomous thinking system
 # Handles reactive (responding to events) and proactive (self-initiated) thinking
-ENABLE_CONTINUOUS_THINKING = False  # Master toggle for autonomous cognitive loop
+ENABLE_CONTINUOUS_THINKING = False
 
 # Thinking pace configuration
-MIN_PROACTIVE_INTERVAL = 5.0   # Minimum seconds between self-initiated thoughts
-MAX_PROACTIVE_INTERVAL = 15.0  # Force a thought after this much silence
-MAX_CONSECUTIVE_PROACTIVE = 200 # Max autonomous thoughts before needing external input
+MIN_PROACTIVE_INTERVAL = 5.0
+MAX_PROACTIVE_INTERVAL = 15.0
+MAX_CONSECUTIVE_PROACTIVE = 200
 
 # Chat engagement (respond to unaddressed chat messages)
 CHAT_ENGAGEMENT = False
@@ -48,24 +48,24 @@ AUTO_RESTART = False
 # ========================================================================
 
 # Processing rate limiting (how fast agent can think)
-LIMIT_PROCESSING = False  # Enable processing rate limiting
-PROCESSING_DELAY = 10     # Seconds between processing cycles when enabled
+LIMIT_PROCESSING = False
+PROCESSING_DELAY = 10
 
 # Speaking rate limiting (how often agent can speak)
-LIMIT_SPEAKING = False     # Enable speaking rate limiting
-SPEAKING_DELAY = 30       # Minimum seconds between spoken responses when enabled
+LIMIT_SPEAKING = False
+SPEAKING_DELAY = 30
 
 # ========================================================================
 # AUTO-RESPONSE (GUI/CLI)
 # ========================================================================
 
 # Automatic responses when no user input detected
-AUTO_RESPOND = False              # Enable automatic responses
-AUTO_RESPOND_INTERVAL = 60        # Time interval (seconds) to trigger auto-response
+AUTO_RESPOND = False
+AUTO_RESPOND_INTERVAL = 60
 
 # Auto-prompts (background checks)
-AUTO_PROMPT = False               # Enable periodic background checks
-AUTO_PROMPT_INTERVAL = 300        # Auto-prompt interval in seconds
+AUTO_PROMPT = False
+AUTO_PROMPT_INTERVAL = 300
 
 # ========================================================================
 # STREAMING
@@ -80,16 +80,16 @@ STREAM_RESPONSES = False
 # ========================================================================
 
 # Memory context layers
-USE_BASE_MEMORY = True         # BASE memory (document embeddings)
-USE_LONG_MEMORY = True         # Long-term memory (embedded conversation summaries)
-USE_SHORT_MEMORY = True        # Short-term memory (today's conversation entries)
+USE_BASE_MEMORY = True
+USE_LONG_MEMORY = True
+USE_SHORT_MEMORY = True
 
 # Memory management
-SAVE_MEMORY = True             # Save conversations to memory system
+SAVE_MEMORY = True
 USE_MEMORY = True              # Enable memory system
-MEMORY_LENGTH = 25             # Number of recent interactions to keep
-MAX_LONG_TERM_MEMORIES = 1     # Max long-term memory results per query
-MAX_BASE_MEMORIES = 1          # Max base memory results per query
+MEMORY_LENGTH = 25
+MAX_LONG_TERM_MEMORIES = 1
+MAX_BASE_MEMORIES = 1
 
 # ========================================================================
 # TOOL CONTROLS - DYNAMICALLY CREATED
@@ -164,14 +164,14 @@ AVATAR_SPEECH = True
 # ========================================================================
 
 # OpenCV Vision Configuration
-USE_OPENCV_VISION = False  # Set to True to enable
+USE_OPENCV_VISION = False
 
 # Performance tuning
-opencv_vision_fps = 15              # Capture frame rate (1-60)
-opencv_vision_interval = 5.0        # Analysis interval in seconds
-opencv_vision_width = 1024          # Capture width (smaller = faster)
-opencv_vision_height = 768          # Capture height
-opencv_vision_change_threshold = 50000  # Change detection sensitivity
+opencv_vision_fps = 15
+opencv_vision_interval = 5.0
+opencv_vision_width = 1024
+opencv_vision_height = 768
+opencv_vision_change_threshold = 50000
 
 # ========================================================================
 # MULTI-AGENT SYSTEMS
@@ -219,20 +219,20 @@ USE_THOUGHT_BUFFER = True
 # ========================================================================
 
 # Tool and execution logging
-LOG_TOOL_EXECUTION = True      # Log tool usage details and returns
-LOG_PROMPT_CONSTRUCTION = False  # Log complete constructed prompts
+LOG_TOOL_EXECUTION = True
+LOG_PROMPT_CONSTRUCTION = False
 
 # Prompt type logging
-LOG_REACTIVE_PROMPT = True     # Log reactive (event-driven) prompts
-LOG_REFLECTIVE_PROMPT = True   # Log reflective (analysis) prompts
-LOG_PROACTIVE_PROMPT = True    # Log proactive (self-initiated) prompts
-LOG_RESPONSIVE_PROMPT = True   # Log responsive (reply) prompts
-LOG_ACTION_PROMPT = True       # Log action execution prompts
+LOG_REACTIVE_PROMPT = True
+LOG_REFLECTIVE_PROMPT = True
+LOG_PROACTIVE_PROMPT = True
+LOG_RESPONSIVE_PROMPT = True
+LOG_ACTION_PROMPT = True
 
 # Response and system logging
-LOG_RESPONSE_PROCESSING = True  # Log complete agent responses
-LOG_SYSTEM_INFORMATION = True   # Log system information
-SHOW_CHAT = False               # Print live chat messages to output
+LOG_RESPONSE_PROCESSING = True
+LOG_SYSTEM_INFORMATION = True
+SHOW_CHAT = False
 
 # Specialized logging
 LOG_CODING_EXECUTION = False    # Log coding tool operations
@@ -244,8 +244,8 @@ LOG_MINECRAFT_EXECUTION = False # Log Minecraft operations
 # ========================================================================
 
 # LLM settings
-MAX_TOKENS = 2000      # Maximum tokens for LLM responses
-TEMPERATURE = 0.7      # Temperature for LLM sampling (0.0-2.0)
+MAX_TOKENS = 2000
+TEMPERATURE = 0.7
 
 # Legacy compatibility
 SLOW_MODE = False      # Deprecated: Use LIMIT_PROCESSING instead

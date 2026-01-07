@@ -22,14 +22,14 @@ game_username = "Player"
 
 # PRIMARY MODELS (Fast - 2-6s each)
 # Used for most cognitive operations
-thoughtmodel = "gemma3:12b-it-q4_K_M"    # Cognitive processing
-responsemodel = "gemma3:12b-it-q4_K_M"   # Response generation
-toolmodel = "gemma3:12b-it-q4_K_M"       # Tool selection and use
-actionmodel = "gemma3:12b-it-q4_K_M"     # Action execution
+thoughtmodel = "gemma3:12b-it-q4_K_M"
+responsemodel = "gemma3:12b-it-q4_K_M"
+toolmodel = "gemma3:12b-it-q4_K_M"
+actionmodel = "gemma3:12b-it-q4_K_M"
 
 # SPECIALIZED MODELS
-visionmodel = "gemma3:12b-it-q4_K_M"     # Image analysis
-embedmodel = "nomic-embed-text:latest"   # Semantic embeddings
+visionmodel = "gemma3:12b-it-q4_K_M"
+embedmodel = "nomic-embed-text:latest"
 
 # ALTERNATIVE MODELS (for experimentation)
 # qwen3-vl:8b-instruct-q4_K_M

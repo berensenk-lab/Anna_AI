@@ -63,6 +63,9 @@ logs/
 
 # Memory files
 .pkl
+personality/memory/long_memory.json
+personality/memory/medium_memory.json
+personality/memory/short_memory.json
 
 # NODE MODULES
 node_modules/
@@ -71,5 +74,15 @@ node_modules/
 test.html
 output.md
 
-# ignore tools updated in other repos
-installed/
+# embeddings
+*_embeddings.json
+personality/memory/voice_embeddings_cache.pkl
+
+# staged for removal
+X_*
+
+# game guides and embeds
+personality/base_memory/base_files/mecha_break.md
+personality/base_memory/game_guides/mecha_break.md
+personality/base_memory/game_guides/minecraft_guide.md
+

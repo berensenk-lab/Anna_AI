@@ -1,6 +1,5 @@
 {
   "_comment_architecture": "Configuration file for Anna AI Agent - Dynamic tool system",
-  
   "ollama": {
     "_comment": "Ollama LLM API configuration",
     "endpoint": "http://localhost:11434",
@@ -17,27 +16,20 @@
     "timeout": 600,
     "seed": null
   },
-  
   "models": {
-    "_comment": "Ollama model assignments",
+    "_comment": "Model assignments - should match bot_info.py",
     "thought_model": "gemma3:12b-it-q4_K_M",
     "response_model": "gemma3:12b-it-q4_K_M",
     "vision_model": "gemma3:12b-it-q4_K_M",
     "embed_model": "nomic-embed-text",
     "tool_model": "gemma3:12b-it-q4_K_M"
   },
-  
-  "agent": {
-    "_comment": "Agent identity and controls",
+  "bot": {
+    "_comment": "Bot identity - should match bot_info.py",
     "name": "Anna",
+    "username": "Master",
     "max_context_entries": 25,
-    "recent_convo_limit": 25,
-    "max_character_limit": 1000
-  },
-  "user":{
-    "_comment": "User information for the system",
-    "name": "Sir",
-    "username": "Player"
+    "recent_convo_limit": 25
   },
   "memory": {
     "_comment": "Memory system configuration",
@@ -55,9 +47,6 @@
     "log_system_information": true,
     "show_chat": true
   },
-  "vb_cable":{
-    "cable_name": 
-  },
   "warudo": {
     "_comment": "Warudo VTuber integration - external tool",
     "websocket_url": "ws://127.0.0.1:19190",
@@ -65,7 +54,6 @@
     "auto_connect": true,
     "connection_timeout": 2.0
   },
-  
   "chat_engagement": {
     "_comment": "Autonomous chat engagement system",
     "enabled": false,
@@ -74,7 +62,6 @@
     "max_unengaged_messages": 5,
     "engagement_cooldown": 60
   },
-  
   "youtube": {
     "_comment": "YouTube live chat integration - external tool",
     "_note": "Control via USE_YOUTUBE in controls.py (dynamically created)",
@@ -83,7 +70,6 @@
     "auto_start": false,
     "max_messages": 10
   },
-  
   "twitch": {
     "_comment": "Twitch chat integration - external tool",
     "_note": "Control via USE_TWITCH in controls.py (dynamically created)",
@@ -94,7 +80,6 @@
     "oauth_token": "",
     "nickname": ""
   },
-  
   "discord": {
     "_comment": "Discord bot integration - external tool",
     "_note": "Control via USE_DISCORD in controls.py (dynamically created)",
@@ -114,7 +99,6 @@
     "split_long_messages": true,
     "command_cooldown": 3
   },
-  
   "features": {
     "_comment": "Feature toggles - some controlled via dynamic tool system",
     "_note_tts": "TTS selection via USE_GPT_SOVITS, USE_XTTS, USE_PYTTSX3 (dynamic)",
@@ -126,7 +110,6 @@
     "use_sound_effects": true,
     "sound_effects_directory": "./BASE/tools/installed/sound_effects/effects"
   },
-  
   "hot_reload": {
     "_comment": "Hot reload system for development",
     "enabled": true,
@@ -137,7 +120,6 @@
       "BASE/core/"
     ]
   },
-  
   "_architecture_notes": {
     "dynamic_tools": "Tool controls (USE_*) created from information.json files",
     "internal_tools": "BASE/tools/internal/ - TTS, voice input (mutual exclusivity)",

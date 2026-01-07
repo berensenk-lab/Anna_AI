@@ -252,6 +252,7 @@ class ControlPanelManager:
                 ("Log Responses", "LOG_RESPONSE_PROCESSING", "Log response generation"),
                 ("Log Tools", "LOG_TOOL_EXECUTION", "Log tool executions"),
                 ("Log Live Chat", "SHOW_CHAT", "Print live chat messages"),
+                ("Log Prompt Construction", "LOG_PROMPT_CONSTRUCTION", "Log prompt building details"),
             ],
         }
 
@@ -459,7 +460,7 @@ class ControlPanelManager:
         self._update_category_status(service_type)
     
     def _create_internal_tool_toggle(self, parent, display_name, var_name, description, 
-                                     service_type, features=None):
+                                    service_type, features=None):
         """Create a toggle for an internal tool with feature indicators"""
         item_frame = ttk.Frame(parent, style="Dark.TFrame")
         item_frame.pack(fill=tk.X, padx=5, pady=2)
@@ -484,6 +485,9 @@ class ControlPanelManager:
             width=20
         )
         check.pack(side=tk.LEFT, padx=2)
+        
+        # Add tooltip to checkbox
+        self._add_tooltip(check, description)
         
         # Status label
         current_value = getattr(controls, var_name, False)
@@ -511,17 +515,6 @@ class ControlPanelManager:
                 self._create_badge(badge_frame, "Stream", DarkTheme.ACCENT_BLUE)
             if features.get('voice_hub'):
                 self._create_badge(badge_frame, "Hub", DarkTheme.ACCENT_GREEN)
-        
-        # Description label
-        desc = tk.Label(
-            item_frame,
-            text=description[:60] + "..." if len(description) > 60 else description,
-            font=("Segoe UI", 8),
-            bg=DarkTheme.BG_DARK,
-            fg=DarkTheme.FG_MUTED,
-            anchor="w"
-        )
-        desc.pack(side=tk.LEFT, padx=5)
         
         # Track widget for UI updates
         self.internal_tool_widgets[service_type][var_name] = (check, status)
@@ -572,6 +565,9 @@ class ControlPanelManager:
                 width=20
             )
             check.pack(side=tk.LEFT, padx=2)
+            
+            # Add tooltip to checkbox
+            self._add_tooltip(check, description)
 
             # Status label
             current_value = getattr(controls, var_name, False)
@@ -587,16 +583,33 @@ class ControlPanelManager:
 
             self.status_labels[var_name] = status
 
-            # Description
-            desc = tk.Label(
-                item_frame,
-                text=description,
+    def _add_tooltip(self, widget, text):
+        """Add tooltip to widget that appears on hover"""
+        def on_enter(e):
+            tooltip = tk.Toplevel()
+            tooltip.wm_overrideredirect(True)
+            tooltip.wm_geometry(f"+{e.x_root+10}+{e.y_root+10}")
+            label = tk.Label(
+                tooltip,
+                text=text,
+                bg=DarkTheme.BG_LIGHTER,
+                fg=DarkTheme.FG_PRIMARY,
+                relief=tk.SOLID,
+                borderwidth=1,
                 font=("Segoe UI", 8),
-                bg=DarkTheme.BG_DARK,
-                fg=DarkTheme.FG_MUTED,
-                anchor="w"
+                padx=5,
+                pady=3,
+                wraplength=300
             )
-            desc.pack(side=tk.LEFT, padx=5)
+            label.pack()
+            widget.tooltip = tooltip
+        
+        def on_leave(e):
+            if hasattr(widget, 'tooltip'):
+                widget.tooltip.destroy()
+        
+        widget.bind('<Enter>', on_enter)
+        widget.bind('<Leave>', on_leave)
 
     def create_timing_controls(self, parent):
         """Create numeric input controls for timing"""
@@ -609,7 +622,7 @@ class ControlPanelManager:
         proc_frame = ttk.Frame(timing_frame, style="Dark.TFrame")
         proc_frame.pack(fill=tk.X, padx=5, pady=2)
 
-        tk.Label(
+        proc_label = tk.Label(
             proc_frame,
             text="Processing Delay (s):",
             font=("Segoe UI", 9),
@@ -617,7 +630,11 @@ class ControlPanelManager:
             fg=DarkTheme.FG_PRIMARY,
             width=20,
             anchor="w"
-        ).pack(side=tk.LEFT, padx=2)
+        )
+        proc_label.pack(side=tk.LEFT, padx=2)
+        
+        # Add tooltip to label
+        self._add_tooltip(proc_label, "Seconds between processing cycles when rate limiting is enabled")
 
         self.proc_delay_var = tk.StringVar(value=str(controls.PROCESSING_DELAY))
         proc_entry = tk.Entry(
@@ -647,7 +664,7 @@ class ControlPanelManager:
         speak_frame = ttk.Frame(timing_frame, style="Dark.TFrame")
         speak_frame.pack(fill=tk.X, padx=5, pady=2)
 
-        tk.Label(
+        speak_label = tk.Label(
             speak_frame,
             text="Speaking Delay (s):",
             font=("Segoe UI", 9),
@@ -655,7 +672,11 @@ class ControlPanelManager:
             fg=DarkTheme.FG_PRIMARY,
             width=20,
             anchor="w"
-        ).pack(side=tk.LEFT, padx=2)
+        )
+        speak_label.pack(side=tk.LEFT, padx=2)
+        
+        # Add tooltip to label
+        self._add_tooltip(speak_label, "Minimum seconds between spoken responses when rate limiting is enabled")
 
         self.speak_delay_var = tk.StringVar(value=str(controls.SPEAKING_DELAY))
         speak_entry = tk.Entry(
@@ -797,6 +818,9 @@ class ControlPanelManager:
         )
         check.pack(side=tk.LEFT, padx=2)
         
+        # Add tooltip to checkbox
+        self._add_tooltip(check, description)
+        
         current_value = getattr(controls, var_name, False)
         status = tk.Label(
             item_frame,
@@ -809,16 +833,6 @@ class ControlPanelManager:
         status.pack(side=tk.LEFT, padx=5)
         
         self.status_labels[var_name] = status
-        
-        desc = tk.Label(
-            item_frame,
-            text=description,
-            font=("Segoe UI", 8),
-            bg=DarkTheme.BG_DARK,
-            fg=DarkTheme.FG_MUTED,
-            anchor="w"
-        )
-        desc.pack(side=tk.LEFT, padx=5)
 
     def enable_all_controls(self):
         """Enable all controls"""

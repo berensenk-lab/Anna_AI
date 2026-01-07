@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import bot info
-# from personality.bot_info import agentname, username, responsemodel, visionmodel, embedmodel, toolmodel, thoughtmodel, actionmodel
+from personality.bot_info import agentname, username, responsemodel, visionmodel, embedmodel, toolmodel, thoughtmodel, actionmodel
 
 def load_config():
     """Load configuration from JSON file"""
@@ -434,10 +434,19 @@ class Config:
         Args:
             controls_module: The live personality.controls module
         """
-        # Most values should be read directly from controls_module
-        # This method exists for any config-specific sync needs
-        # (controls are the runtime authority, config is just defaults)
-        pass
+        # Sync logging controls FROM controls TO config
+        logging_controls = [
+            'LOG_TOOL_EXECUTION', 'LOG_PROMPT_CONSTRUCTION',
+            'LOG_RESPONSE_PROCESSING', 'LOG_SYSTEM_INFORMATION', 'SHOW_CHAT',
+            'LOG_REACTIVE_PROMPT', 'LOG_REFLECTIVE_PROMPT', 'LOG_PROACTIVE_PROMPT',
+            'LOG_RESPONSIVE_PROMPT', 'LOG_ACTION_PROMPT', 'LOG_CODING_EXECUTION',
+            'LOG_DISCORD_EXECUTION', 'LOG_MINECRAFT_EXECUTION'
+        ]
+        
+        for control_name in logging_controls:
+            if hasattr(controls_module, control_name):
+                control_value = getattr(controls_module, control_name)
+                setattr(self, control_name, control_value)
     
     def get_active_tools(self, controls_module) -> dict:
         """

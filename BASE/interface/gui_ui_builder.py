@@ -27,7 +27,7 @@ class UIBuilder:
 
     def __init__(self, parent):
         self.parent = parent
-        self.parent.root.geometry("770x870")
+        self.parent.root.geometry("1000x870")
         self.theme_manager = ThemeManager(self.parent)
         self.controls_view = ControlsView(self.parent)
         self.chat_view_instance = ChatView(self.parent)

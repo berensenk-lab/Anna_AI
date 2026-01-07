@@ -372,9 +372,16 @@ class ControlManager:
         elif self._is_internal_tool_control(feature_name):
             return self.handle_internal_tool_toggle(feature_name, new_value)
         
-        # Logging controls (go to config)
+        # Logging controls (sync BOTH config and controls)
         elif feature_name in ['LOG_TOOL_EXECUTION', 'LOG_PROMPT_CONSTRUCTION', 
-                               'LOG_RESPONSE_PROCESSING', 'LOG_SYSTEM_INFORMATION', 'SHOW_CHAT']:
+                            'LOG_RESPONSE_PROCESSING', 'LOG_SYSTEM_INFORMATION', 'SHOW_CHAT',
+                            'LOG_REACTIVE_PROMPT', 'LOG_REFLECTIVE_PROMPT', 'LOG_PROACTIVE_PROMPT',
+                            'LOG_RESPONSIVE_PROMPT', 'LOG_ACTION_PROMPT', 'LOG_CODING_EXECUTION',
+                            'LOG_DISCORD_EXECUTION', 'LOG_MINECRAFT_EXECUTION']:
+            # Update controls module
+            setattr(self.controls_module, feature_name, new_value)
+            
+            # Update config (for logger to see)
             if self.config:
                 setattr(self.config, feature_name, new_value)
                 self.logger.system(f"[Control] {feature_name} = {new_value}")

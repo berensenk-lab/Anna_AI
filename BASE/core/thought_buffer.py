@@ -11,6 +11,8 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from personality.bot_info import agentname, username
+
 
 # ============================================================================
 # STRING INTERNING OPTIMIZATION
@@ -174,7 +176,7 @@ class ThoughtBuffer:
     """
     
     __slots__ = (
-        '_config','_agentname','_username','_raw_events', '_thoughts', 'max_thoughts',
+        '_raw_events', '_thoughts', 'max_thoughts',
         'last_response_time', 'last_thought_generation', 
         'current_goal', 'goal_set_time', 'goal_progress_thoughts', 
         'goals_achieved', 'has_urgent_reminders', 'urgent_reminder_count',
@@ -186,23 +188,11 @@ class ThoughtBuffer:
         'chat_engagement', 'response_trigger'
     )
     
-    def __init__(self, max_thoughts=25, config=None):
+    def __init__(self, max_thoughts=25):
         self._raw_events: Deque[RawDataEvent] = deque(maxlen=50)
         self._thoughts: Deque[ProcessedThought] = deque(maxlen=max_thoughts)
         
         self.max_thoughts = max_thoughts
-        
-        # Store config reference and cache names
-        self._config = config
-        if config:
-            self._agentname = config.agentname
-            self._username = config.username
-        else:
-            # Fallback to config.json if no config passed
-            from BASE.core.config import Config
-            cfg = Config()
-            self._agentname = cfg.agentname
-            self._username = cfg.username
         
         self.last_response_time = 0.0
         self.last_thought_generation = 0.0
