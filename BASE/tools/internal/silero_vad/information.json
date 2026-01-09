@@ -1,0 +1,37 @@
+{
+  "tool_name": "silero_vad",
+  "tool_description": "Real-time voice activity detection using Silero VAD with GPU acceleration",
+  "category": "internal",
+  "service_type": "voice_input",
+  "control_variable_name": "USE_SILERO_VAD",
+  "control_logic": "enabled_when_true",
+  "version": "1.0.0",
+  "priority": 12,
+  "requirements": {
+    "gpu_recommended": true,
+    "min_vram_gb": 1,
+    "cuda_required": false,
+    "python_packages": [
+      "torch",
+      "torchaudio",
+      "sounddevice",
+      "numpy"
+    ]
+  },
+  "features": {
+    "real_time": true,
+    "voice_hub": true,
+    "vad_filter": true,
+    "multi_language": true,
+    "low_latency": true,
+    "gpu_accelerated": true
+  },
+  "configuration": {
+    "sample_rate": 16000,
+    "chunk_duration_ms": 500,
+    "vad_threshold": 0.5,
+    "min_speech_duration_ms": 250,
+    "min_silence_duration_ms": 500,
+    "speech_pad_ms": 200
+  }
+}
