@@ -52,7 +52,7 @@ class BingSearchComponent:
         # Main panel frame
         self.panel_frame = ttk.LabelFrame(
             parent_frame,
-            text="Bing Web Search",
+            text="🔍 Bing Web Search",
             style="Dark.TLabelframe"
         )
         self.panel_frame.pack(fill=tk.BOTH, expand=True, pady=(5, 0))
@@ -98,7 +98,7 @@ class BingSearchComponent:
         # Search button
         self.search_button = ttk.Button(
             search_frame,
-            text="Search",
+            text="🔍 Search",
             command=self._perform_search,
             width=12
         )
@@ -107,7 +107,7 @@ class BingSearchComponent:
         # Clear button
         self.clear_button = ttk.Button(
             search_frame,
-            text="Clear",
+            text="🗑️ Clear",
             command=self._clear_results,
             width=10
         )
@@ -121,7 +121,7 @@ class BingSearchComponent:
         # Status label
         self.status_label = tk.Label(
             status_frame,
-            text="Checking availability...",
+            text="⚫ Checking availability...",
             font=("Segoe UI", 9),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -132,7 +132,7 @@ class BingSearchComponent:
         # Info button
         info_button = tk.Label(
             status_frame,
-            text="",
+            text="ℹ️",
             font=("Segoe UI", 10),
             foreground=DarkTheme.ACCENT_PURPLE,
             background=DarkTheme.BG_DARKER,
@@ -231,7 +231,7 @@ class BingSearchComponent:
         
         # Update status
         self.status_label.config(
-            text="Searching...",
+            text="🔄 Searching...",
             foreground=DarkTheme.ACCENT_BLUE
         )
         self.search_button.config(state=tk.DISABLED)
@@ -273,7 +273,7 @@ class BingSearchComponent:
             
             # Update status
             self.status_label.config(
-                text=f"Found {result_count} result(s)",
+                text=f"✅ Found {result_count} result(s)",
                 foreground=DarkTheme.ACCENT_GREEN
             )
             
@@ -350,7 +350,7 @@ class BingSearchComponent:
         
         if not self.bing_tool:
             self.status_label.config(
-                text="Tool Not Enabled",
+                text="⚫ Tool Not Available",
                 foreground=DarkTheme.FG_MUTED
             )
             self.search_button.config(state=tk.DISABLED)
@@ -358,7 +358,7 @@ class BingSearchComponent:
         
         if self.bing_tool.is_available():
             self.status_label.config(
-                text="Ready - Enter query and press Search",
+                text="🟢 Ready - Enter query and press Search",
                 foreground=DarkTheme.ACCENT_GREEN
             )
             self.search_button.config(state=tk.NORMAL)
@@ -385,7 +385,7 @@ class BingSearchComponent:
     def _show_error(self, message: str):
         """Show error message"""
         self.status_label.config(
-            text=f"{message}",
+            text=f"❌ {message}",
             foreground=DarkTheme.ACCENT_RED
         )
         self.search_button.config(state=tk.NORMAL)

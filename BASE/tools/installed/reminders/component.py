@@ -58,7 +58,7 @@ class RemindersComponent:
         
         self.status_label = tk.Label(
             status_frame,
-            text="Loading...",
+            text="⚫ Loading...",
             font=("Segoe UI", 9),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -194,7 +194,7 @@ class RemindersComponent:
         self.reminders_tool = self._get_reminders_tool()
         
         if not self.reminders_tool:
-            self._show_error("Reminders tool not enabled")
+            self._show_error("Reminders tool not available")
             return
         
         # Execute create command
@@ -394,7 +394,7 @@ class RemindersComponent:
         self.reminders_tool = self._get_reminders_tool()
         
         if not self.reminders_tool:
-            messagebox.showerror("Error", "Reminders tool not enabled")
+            messagebox.showerror("Error", "Reminders tool not available")
             return
         
         # Confirm deletion
@@ -446,12 +446,12 @@ class RemindersComponent:
                 )
             elif total_count > 0:
                 self.status_label.config(
-                    text=f"{total_count} active reminder(s)",
+                    text=f"🟢 {total_count} active reminder(s)",
                     foreground=DarkTheme.ACCENT_GREEN
                 )
             else:
                 self.status_label.config(
-                    text="Ready - No active reminders",
+                    text="🟢 Ready - No active reminders",
                     foreground=DarkTheme.ACCENT_GREEN
                 )
         
@@ -462,7 +462,7 @@ class RemindersComponent:
     def _update_status_unavailable(self):
         """Update UI for unavailable state"""
         self.status_label.config(
-            text="Tool Not Enabled",
+            text="⚫ Tool Not Available",
             foreground=DarkTheme.FG_MUTED
         )
     
@@ -490,7 +490,7 @@ class RemindersComponent:
     def _show_error(self, message: str):
         """Show error message"""
         self.status_label.config(
-            text=f"{message}",
+            text=f"❌ {message}",
             foreground=DarkTheme.ACCENT_RED
         )
         self.logger.error(f"[Reminders] {message}")

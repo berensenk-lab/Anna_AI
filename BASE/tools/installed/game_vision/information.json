@@ -42,7 +42,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Vision",
+    "category": "Computer Vision",
     "display_name": "Game Vision",
     "version": "1.0.0",
     "requires_api": false,

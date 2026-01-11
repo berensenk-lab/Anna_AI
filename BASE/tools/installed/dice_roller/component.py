@@ -85,7 +85,7 @@ class DiceRollerComponent:
         # Tool status
         self.status_label = tk.Label(
             status_frame,
-            text="Not Active",
+            text="⚫ Not Active",
             font=("Segoe UI", 9, "bold"),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -288,14 +288,14 @@ class DiceRollerComponent:
         
         ttk.Button(
             btn_frame,
-            text="Clear History",
+            text="🗑️ Clear History",
             command=self._clear_history,
             width=12
         ).pack(side=tk.LEFT, padx=2)
         
         ttk.Button(
             btn_frame,
-            text="Refresh",
+            text="🔄 Refresh",
             command=self._refresh_status,
             width=12
         ).pack(side=tk.LEFT, padx=2)
@@ -605,14 +605,14 @@ class DiceRollerComponent:
     def _update_status_inactive(self):
         """Update UI for inactive state"""
         self.status_label.config(
-            text="Not Active",
+            text="⚫ Not Active",
             foreground=DarkTheme.FG_MUTED
         )
     
     def _update_status_active(self):
         """Update UI for active state"""
         self.status_label.config(
-            text="Active",
+            text="🟢 Active",
             foreground=DarkTheme.ACCENT_GREEN
         )
     

@@ -67,7 +67,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Coding",
+    "category": "Development",
     "display_name": "VS Code Integration",
     "gui_label": "VS Code",
     "gui_icon": "",

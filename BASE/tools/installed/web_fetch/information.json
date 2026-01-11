@@ -49,8 +49,8 @@
   "retry_on_failure": true,
   "max_retries": 2,
   "metadata": {
-    "category": "Search",
-    "display_name": "Web Search",
+    "category": "Information Retrieval",
+    "display_name": "Web Fetch",
     "gui_label": "Web Fetch",
     "gui_icon": "",
     "version": "1.0.0",

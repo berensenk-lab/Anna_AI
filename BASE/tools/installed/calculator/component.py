@@ -341,7 +341,7 @@ class CalculatorComponent:
         self.calculator_tool = self._get_calculator_tool()
         
         if not self.calculator_tool:
-            self._show_error("Calculator tool not enabled")
+            self._show_error("Calculator tool not available")
             return
         
         # Parse input based on mode

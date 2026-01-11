@@ -110,7 +110,7 @@ class WarudoComponent:
         # Info label
         info_label = tk.Label(
             config_frame,
-            text="",
+            text="ℹ️",
             font=("Segoe UI", 10),
             foreground=DarkTheme.ACCENT_PURPLE,
             background=DarkTheme.BG_DARKER,
@@ -179,7 +179,7 @@ class WarudoComponent:
         
         self.status_label = tk.Label(
             status_label_frame,
-            text="Not Connected",
+            text="⚫ Not Connected",
             font=("Segoe UI", 9),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -412,9 +412,9 @@ class WarudoComponent:
             self._update_status_disconnected()
     
     def _update_status_not_available(self):
-        """Update UI for tool not enabled"""
+        """Update UI for tool not available"""
         self.status_label.config(
-            text="Tool Not Enabled",
+            text="⚫ Tool Not Available",
             foreground=DarkTheme.FG_MUTED
         )
         self.connect_button.config(state=tk.DISABLED)
@@ -423,7 +423,7 @@ class WarudoComponent:
     def _update_status_connected(self):
         """Update UI for connected state"""
         self.status_label.config(
-            text="Connected",
+            text="🟢 Connected",
             foreground=DarkTheme.ACCENT_GREEN
         )
         self.connect_button.config(state=tk.DISABLED)
@@ -432,7 +432,7 @@ class WarudoComponent:
     def _update_status_disconnected(self):
         """Update UI for disconnected state"""
         self.status_label.config(
-            text="Not Connected",
+            text="⚫ Not Connected",
             foreground=DarkTheme.FG_MUTED
         )
         self.connect_button.config(state=tk.NORMAL)
@@ -461,7 +461,7 @@ class WarudoComponent:
     def _show_error(self, message: str):
         """Show error message"""
         self.status_label.config(
-            text=f"{message}",
+            text=f"❌ {message}",
             foreground=DarkTheme.ACCENT_RED
         )
         self.logger.error(f"[Warudo] {message}")

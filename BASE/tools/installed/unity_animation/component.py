@@ -88,7 +88,7 @@ class UnityAnimationComponent:
         
         self.status_label = tk.Label(
             status_left,
-            text="Not Connected",
+            text="⚫ Not Connected",
             font=("Segoe UI", 9, "bold"),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -113,7 +113,7 @@ class UnityAnimationComponent:
         
         refresh_btn = ttk.Button(
             status_right,
-            text="Refresh",
+            text="🔄 Refresh",
             command=self._refresh_status,
             width=12
         )
@@ -369,7 +369,7 @@ class UnityAnimationComponent:
         """Create activity log section"""
         log_frame = ttk.LabelFrame(
             self.panel_frame,
-            text="Activity Log",
+            text="📋 Activity Log",
             style="Dark.TLabelframe"
         )
         log_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
@@ -431,7 +431,7 @@ class UnityAnimationComponent:
         self.unity_tool = self._get_unity_tool()
         
         if not self.unity_tool:
-            self._add_log("Unity tool not enabled", 'error')
+            self._add_log("Unity tool not available", 'error')
             return
         
         if not self.unity_tool.is_available():
@@ -528,7 +528,7 @@ class UnityAnimationComponent:
         self.connected = True
         
         self.status_label.config(
-            text="Connected",
+            text="🟢 Connected",
             foreground=DarkTheme.ACCENT_GREEN
         )
         
@@ -545,7 +545,7 @@ class UnityAnimationComponent:
         self.connected = False
         
         self.status_label.config(
-            text="Not Connected",
+            text="⚫ Not Connected",
             foreground=DarkTheme.FG_MUTED
         )
         

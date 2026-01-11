@@ -106,7 +106,7 @@ class GameGuideComponent:
         # Search button
         self.search_button = ttk.Button(
             search_frame,
-            text="Search",
+            text="🔍 Search",
             command=self._perform_search,
             width=12
         )
@@ -115,7 +115,7 @@ class GameGuideComponent:
         # List games button
         self.list_games_button = ttk.Button(
             search_frame,
-            text="List Games",
+            text="📋 List Games",
             command=self._list_games,
             width=12
         )
@@ -124,7 +124,7 @@ class GameGuideComponent:
         # Clear button
         self.clear_button = ttk.Button(
             search_frame,
-            text="Clear",
+            text="🗑️ Clear",
             command=self._clear_results,
             width=10
         )
@@ -171,7 +171,7 @@ class GameGuideComponent:
         # Status label
         self.status_label = tk.Label(
             status_frame,
-            text="Initializing...",
+            text="⚫ Initializing...",
             font=("Segoe UI", 9),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -193,7 +193,7 @@ class GameGuideComponent:
         # Info button
         info_button = tk.Label(
             status_frame,
-            text="",
+            text="ℹ️",
             font=("Segoe UI", 10),
             foreground=DarkTheme.ACCENT_PURPLE,
             background=DarkTheme.BG_DARKER,
@@ -308,7 +308,7 @@ class GameGuideComponent:
             search_desc += f" in {game_filter}"
         
         self.status_label.config(
-            text=f"Searching {search_desc}...",
+            text=f"🔄 Searching {search_desc}...",
             foreground=DarkTheme.ACCENT_BLUE
         )
         
@@ -316,7 +316,7 @@ class GameGuideComponent:
         self.guide_tool = self._get_guide_tool()
         
         if not self.guide_tool or not self.guide_tool.is_available():
-            self._show_error("Game guide tool not enabled")
+            self._show_error("Game guide tool not available")
             self.search_button.config(state=tk.NORMAL)
             self.list_games_button.config(state=tk.NORMAL)
             return
@@ -362,9 +362,9 @@ class GameGuideComponent:
             game_filter = metadata.get('game_filter') or metadata.get('game')
             
             if game_filter:
-                status_text = f"Found {results_count} result(s) in {game_filter}"
+                status_text = f"✅ Found {results_count} result(s) in {game_filter}"
             else:
-                status_text = f"Found {results_count} result(s)"
+                status_text = f"✅ Found {results_count} result(s)"
             
             self.status_label.config(
                 text=status_text,
@@ -385,7 +385,7 @@ class GameGuideComponent:
         self.list_games_button.config(state=tk.DISABLED)
         
         self.status_label.config(
-            text="Loading game list...",
+            text="🔄 Loading game list...",
             foreground=DarkTheme.ACCENT_BLUE
         )
         
@@ -393,7 +393,7 @@ class GameGuideComponent:
         self.guide_tool = self._get_guide_tool()
         
         if not self.guide_tool or not self.guide_tool.is_available():
-            self._show_error("Game guide tool not enabled")
+            self._show_error("Game guide tool not available")
             self.search_button.config(state=tk.NORMAL)
             self.list_games_button.config(state=tk.NORMAL)
             return
@@ -444,7 +444,7 @@ class GameGuideComponent:
             
             # Update status
             game_count = metadata.get('total_games', len(games))
-            status_text = f"Found {game_count} game guide(s)"
+            status_text = f"✅ Found {game_count} game guide(s)"
             
             self.status_label.config(
                 text=status_text,
@@ -556,7 +556,7 @@ class GameGuideComponent:
         
         if not self.guide_tool or not self.guide_tool.is_available():
             self.status_label.config(
-                text="Tool Not Enabled - Add game guides and embed them",
+                text="⚫ Tool Not Available - Add game guides and embed them",
                 foreground=DarkTheme.FG_MUTED
             )
             self.search_button.config(state=tk.DISABLED)
@@ -571,7 +571,7 @@ class GameGuideComponent:
                 chunk_count = len(self.guide_tool.game_guides)
                 
                 self.status_label.config(
-                    text="Ready - Game guides loaded (returns 5 results per search)",
+                    text="🟢 Ready - Game guides loaded (returns 5 results per search)",
                     foreground=DarkTheme.ACCENT_GREEN
                 )
                 
@@ -625,7 +625,7 @@ class GameGuideComponent:
     def _show_error(self, message: str):
         """Show error message"""
         self.status_label.config(
-            text=f"{message}",
+            text=f"❌ {message}",
             foreground=DarkTheme.ACCENT_RED
         )
         self.search_button.config(state=tk.NORMAL)

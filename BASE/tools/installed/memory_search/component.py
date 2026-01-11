@@ -106,7 +106,7 @@ class MemorySearchComponent:
         # Search button
         self.search_button = ttk.Button(
             search_frame,
-            text="Search",
+            text="🔍 Search",
             command=self._perform_search,
             width=12
         )
@@ -115,7 +115,7 @@ class MemorySearchComponent:
         # Clear button (yesterday button removed)
         self.clear_button = ttk.Button(
             search_frame,
-            text="Clear",
+            text="🗑️ Clear",
             command=self._clear_results,
             width=10
         )
@@ -178,7 +178,7 @@ class MemorySearchComponent:
         # Status label
         self.status_label = tk.Label(
             status_frame,
-            text="Initializing...",
+            text="⚫ Initializing...",
             font=("Segoe UI", 9),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -200,7 +200,7 @@ class MemorySearchComponent:
         # Info button
         info_button = tk.Label(
             status_frame,
-            text="",
+            text="ℹ️",
             font=("Segoe UI", 10),
             foreground=DarkTheme.ACCENT_PURPLE,
             background=DarkTheme.BG_DARKER,
@@ -306,7 +306,7 @@ class MemorySearchComponent:
             search_desc += f" (date: {date_filter})"
         
         self.status_label.config(
-            text=f"Searching {search_desc}...",
+            text=f"🔄 Searching {search_desc}...",
             foreground=DarkTheme.ACCENT_BLUE
         )
         
@@ -314,7 +314,7 @@ class MemorySearchComponent:
         self.memory_tool = self._get_memory_tool()
         
         if not self.memory_tool or not self.memory_tool.is_available():
-            self._show_error("Memory search tool not enabled")
+            self._show_error("Memory search tool not available")
             self.search_button.config(state=tk.NORMAL)
             return
         
@@ -371,11 +371,11 @@ class MemorySearchComponent:
             date_filter = metadata.get('date_filter')
             
             if 'tiers_searched' in metadata:
-                status_text = f"Found results in {metadata['tiers_searched']} tier(s)"
+                status_text = f"✅ Found results in {metadata['tiers_searched']} tier(s)"
             elif 'results' in metadata:
-                status_text = f"Found {metadata['results']} result(s) in {tier} memory"
+                status_text = f"✅ Found {metadata['results']} result(s) in {tier} memory"
             else:
-                status_text = f"Retrieved {tier} memory"
+                status_text = f"✅ Retrieved {tier} memory"
             
             if date_filter:
                 status_text += f" (date: {date_filter})"
@@ -481,7 +481,7 @@ class MemorySearchComponent:
         
         if not self.memory_tool or not self.memory_tool.is_available():
             self.status_label.config(
-                text="Tool Not Enabled",
+                text="⚫ Tool Not Available",
                 foreground=DarkTheme.FG_MUTED
             )
             self.search_button.config(state=tk.DISABLED)
@@ -499,7 +499,7 @@ class MemorySearchComponent:
                 )
                 
                 self.status_label.config(
-                    text="Ready - Memory system online (returns 5 results per search)",
+                    text="🟢 Ready - Memory system online (returns 5 results per search)",
                     foreground=DarkTheme.ACCENT_GREEN
                 )
                 
@@ -539,7 +539,7 @@ class MemorySearchComponent:
     def _show_error(self, message: str):
         """Show error message"""
         self.status_label.config(
-            text=f"{message}",
+            text=f"❌ {message}",
             foreground=DarkTheme.ACCENT_RED
         )
         self.search_button.config(state=tk.NORMAL)
