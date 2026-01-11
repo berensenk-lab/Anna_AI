@@ -2,7 +2,7 @@
   "tool_name": "unity",
   "control_variable_name": "USE_UNITY_ANIMATION",
   "control_variable_value": false,
-  "tool_description": "Control Unity VRM character animations and emotions via WebSocket",
+  "tool_description": "Control Unity VRM character with procedural gestures and emotions via WebSocket",
   "priority": "LOW",
   "available_commands": [
     {
@@ -12,37 +12,107 @@
       "format": "{\"tool\": \"unity.emotion\", \"args\": [\"happy\", 0.8]}"
     },
     {
-      "command": "animation",
-      "args": ["animation_name: str", "intensity: Optional[float]"],
-      "description": "Play character animation",
-      "format": "{\"tool\": \"unity.animation\", \"args\": [\"wave\", 0.7]}"
+      "command": "gesture",
+      "args": ["gesture_name: str", "target: Optional[str]"],
+      "description": "Execute procedural gesture animation",
+      "format": "{\"tool\": \"unity.gesture\", \"args\": [\"wave\"]}"
     }
   ],
-    "tool_usage_examples": [
-    "{\"tool\": \"unity.animation\", \"args\": [\"wave\"]}",
-    "{\"tool\": \"unity.animation\", \"args\": [\"scare\"]}",
-    "{\"tool\": \"unity.animation\", \"args\": [\"swing\"]}",
+  "available_gestures": [
+    {
+      "name": "wave",
+      "description": "Wave at someone - raises right arm and waves hand",
+      "requires_target": false,
+      "example": "{\"tool\": \"unity.gesture\", \"args\": [\"wave\"]}"
+    },
+    {
+      "name": "point",
+      "description": "Point at a specific object or direction",
+      "requires_target": false,
+      "target_optional": true,
+      "example": "{\"tool\": \"unity.gesture\", \"args\": [\"point\", \"Cube\"]}"
+    },
+    {
+      "name": "reach",
+      "description": "Reach toward an object to interact with it",
+      "requires_target": false,
+      "target_optional": true,
+      "example": "{\"tool\": \"unity.gesture\", \"args\": [\"reach\", \"Ball\"]}"
+    },
+    {
+      "name": "nod",
+      "description": "Nod head in agreement or acknowledgment",
+      "requires_target": false,
+      "example": "{\"tool\": \"unity.gesture\", \"args\": [\"nod\"]}"
+    },
+    {
+      "name": "shake_head",
+      "description": "Shake head to indicate no or disagreement",
+      "requires_target": false,
+      "example": "{\"tool\": \"unity.gesture\", \"args\": [\"shake_head\"]}"
+    },
+    {
+      "name": "bow",
+      "description": "Bow forward politely",
+      "requires_target": false,
+      "example": "{\"tool\": \"unity.gesture\", \"args\": [\"bow\"]}"
+    },
+    {
+      "name": "shrug",
+      "description": "Shrug shoulders to indicate uncertainty or indifference",
+      "requires_target": false,
+      "example": "{\"tool\": \"unity.gesture\", \"args\": [\"shrug\"]}"
+    },
+    {
+      "name": "think",
+      "description": "Thinking pose - hand near chin, head tilted",
+      "requires_target": false,
+      "example": "{\"tool\": \"unity.gesture\", \"args\": [\"think\"]}"
+    }
+  ],
+  "available_emotions": [
+    "happy",
+    "angry",
+    "sad",
+    "surprised",
+    "relaxed",
+    "neutral"
+  ],
+  "tool_usage_examples": [
+    "{\"tool\": \"unity.gesture\", \"args\": [\"wave\"]}",
+    "{\"tool\": \"unity.gesture\", \"args\": [\"nod\"]}",
+    "{\"tool\": \"unity.gesture\", \"args\": [\"point\", \"Cube\"]}",
+    "{\"tool\": \"unity.gesture\", \"args\": [\"reach\", \"Door\"]}",
+    "{\"tool\": \"unity.gesture\", \"args\": [\"bow\"]}",
+    "{\"tool\": \"unity.gesture\", \"args\": [\"shrug\"]}",
+    "{\"tool\": \"unity.gesture\", \"args\": [\"shake_head\"]}",
+    "{\"tool\": \"unity.gesture\", \"args\": [\"think\"]}",
     "{\"tool\": \"unity.emotion\", \"args\": [\"happy\"]}",
-    "{\"tool\": \"unity.emotion\", \"args\": [\"angry\"]}"
+    "{\"tool\": \"unity.emotion\", \"args\": [\"surprised\", 0.8]}"
   ],
   "tool_usage_guidance": [
-    "Use emotions to express feelings.",
-    "Available emotions: happy, angry, sad, surprised, relaxed",
-    "Use animations for actions.",
-    "Available animations: nod, laugh, shrug, upset, wave, cat, confused, shy, swing, stretch, yay, taunt, bow, scare, refuse, snap",
-    "Emotions and animations execute with 10 second cooldown",
-    "Use emotions and animations frequently.",
-    "Use emotions and animations that match the current tone and situation.",
-    "Intensity ranges from 0.0 (subtle) to 1.0 (full)"
+    "Use emotions to express feelings during conversation",
+    "Available emotions: happy, angry, sad, surprised, relaxed, neutral",
+    "Use gestures for physical actions and non-verbal communication",
+    "Gestures are procedural and goal-oriented - they adapt to the scene",
+    "Some gestures accept optional target parameters (object names in scene)",
+    "Examples: point at 'Cube', reach for 'Door', look at 'Camera'",
+    "Gestures execute with cooldown - wait for completion before next gesture",
+    "Combine gestures with emotions for richer expression",
+    "Use think gesture when contemplating or processing information",
+    "Use nod/shake_head for quick acknowledgment responses",
+    "Wave gesture is good for greetings and farewells"
   ],
   "proactive_triggers": [
     "When expressing emotions in conversation",
     "When greeting or acknowledging user",
-    "When celebrating achievements",
-    "When showing confusion or thinking",
-    "When appropriate to physical context"
+    "When user asks about physical objects in scene",
+    "When indicating agreement (nod) or disagreement (shake_head)",
+    "When showing uncertainty (shrug) or contemplation (think)",
+    "When appropriate to gesture toward something specific",
+    "During explanations that benefit from physical demonstration"
   ],
-  "cooldown_seconds": 10,
+  "cooldown_seconds": 5,
   "timeout_seconds": 5,
   "retry_on_failure": false,
   "max_retries": 0,
@@ -51,9 +121,9 @@
     "display_name": "Unity VRM Animation",
     "gui_label": "Unity",
     "gui_icon": "",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "requires_api": false,
     "dependencies": ["websockets"],
-    "notes": "Requires Unity with VRMAgentWebSocket component. Refactored to modern architecture."
+    "notes": "Procedural gesture system with goal-oriented animations. Works with any humanoid VRM model. Gestures can target scene objects by name."
   }
 }
