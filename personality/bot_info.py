@@ -11,7 +11,7 @@ Bot Identity and Model Configuration
 agentname = "Anna"
 
 # User's name (how bot refers to the user)
-username = "Sir"
+username = "Almoo"
 
 # User's in-game username (for game-specific interactions)
 game_username = "Player"
