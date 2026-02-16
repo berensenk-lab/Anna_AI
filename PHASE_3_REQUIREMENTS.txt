@@ -1,0 +1,24 @@
+# Phase 3 Database & Enterprise Features Requirements
+# Add these to your main requirements.txt
+
+# Phase 3: Database & ORM
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+alembic==1.12.1
+
+# Phase 3: Message Queue & Workers
+redis==5.0.1
+rq==1.14.1
+rq-scheduler==0.13.1
+
+# Phase 3: Monitoring & Metrics
+prometheus-client==0.19.0
+
+# Phase 3: Security & Auth
+pyjwt==2.8.1
+python-jose==3.3.0
+cryptography==41.0.7
+
+# Optional: Advanced Features
+# sqlalchemy-utils==0.41.1  # UUID, password hashing helpers
+# greenlet==3.0.1  # For async database support

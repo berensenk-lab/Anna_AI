@@ -1,0 +1,164 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anna-ai"
+version = "1.0.0"
+description = "Anna AI - Agentic AI System with Continuous Cognitive Architecture"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "KryptykBioz", email = "contact@kryptykbioz.com"},
+]
+keywords = [
+    "ai",
+    "agent",
+    "llm",
+    "agentic",
+    "cognitive",
+    "memory",
+    "vtuber",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "numpy==1.26.4",
+    "pillow==10.4.0",
+    "sounddevice==0.5.2",
+    "soundfile==0.13.1",
+    "pyttsx3==2.99",
+    "faster-whisper==1.2.1",
+    "vosk==0.3.45",
+    "TTS==0.22.0",
+    "discord.py==2.6.4",
+    "requests==2.32.5",
+    "beautifulsoup4==4.14.2",
+    "websockets==15.0.1",
+    "pygame==2.6.1",
+    "PyAutoGUI==0.9.54",
+    "screeninfo==0.8.1",
+    "colorama==0.4.6",
+    "python-dotenv==1.1.1",
+    "watchdog==6.0.0",
+    "transformers==4.38.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.4.3",
+    "pytest-cov==4.1.0",
+    "pytest-asyncio==0.21.1",
+    "black==23.12.0",
+    "flake8==6.1.0",
+    "mypy==1.7.1",
+    "isort==5.13.2",
+    "pre-commit==3.5.0",
+]
+
+gpu = [
+    "torch==2.10.0",
+    "torchaudio==2.10.0",
+    "torchvision==0.15.0",
+    "ctranslate2>=3.0.0",
+]
+
+docker = [
+    "flask==3.0.0",
+    "gunicorn==21.2.0",
+]
+
+phase3 = [
+    "sqlalchemy==2.0.23",
+    "psycopg2-binary==2.9.9",
+    "alembic==1.12.1",
+    "redis==5.0.1",
+    "rq==1.14.1",
+    "rq-scheduler==0.13.1",
+    "prometheus-client==0.19.0",
+    "pyjwt==2.8.1",
+    "python-jose==3.3.0",
+    "cryptography==41.0.7",
+]
+
+[project.urls]
+Homepage = "https://github.com/KryptykBioz/Anna_AI"
+Repository = "https://github.com/KryptykBioz/Anna_AI.git"
+Documentation = "https://github.com/KryptykBioz/Anna_AI#readme"
+Issues = "https://github.com/KryptykBioz/Anna_AI/issues"
+
+[project.scripts]
+anna-ai = "main:main"
+
+[tool.setuptools]
+packages = ["BASE", "personality"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | venv
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_glob = ["*/migrations/*"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+follow_imports = "normal"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --cov=BASE --cov-report=html --cov-report=term-missing"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["BASE"]
+omit = ["*/tests/*", "*/venv/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]

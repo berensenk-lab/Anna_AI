@@ -82,8 +82,10 @@ Conversation from {previous_date} ({len(entries_from_date)} messages):
 
 Summary of {previous_date}:"""
 
-    
-    summary = _call_llm(memory_manager.ollama_endpoint, prompt)
+    # Read model from config so it stays in sync with the rest of the system
+    model = memory_manager.config.thought_model
+
+    summary = _call_llm(memory_manager.ollama_endpoint, prompt, model)
     
     if summary:
         # CRITICAL: Store the summary with the conversation date (previous_date)
@@ -95,16 +97,16 @@ Summary of {previous_date}:"""
     print(f"[Summarizer] Failed to generate summary for {previous_date}")
     return False
 
-def _call_llm(endpoint: str, prompt: str) -> Optional[str]:
+def _call_llm(endpoint: str, prompt: str, model: str) -> Optional[str]:
     """Call Ollama to generate summary"""
     try:
         r = requests.post(f"{endpoint}/api/generate",
                          json={
-                             "model": "llama3.2:latest",
+                             "model": model,
                              "prompt": prompt,
                              "stream": False,
                              "temperature": 0.3,
-                             "max_tokens": 500
+                             "num_predict": 500
                          },
                          timeout=120)
         r.raise_for_status()

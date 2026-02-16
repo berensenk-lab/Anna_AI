@@ -66,7 +66,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Memory",
+    "category": "Memory & Recall",
     "display_name": "Memory Search",
     "gui_label": "Memory",
     "gui_icon": "",

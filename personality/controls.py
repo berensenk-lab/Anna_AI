@@ -30,9 +30,39 @@ KILL_COMMAND = "shut down sleep now"
 # Handles reactive (responding to events) and proactive (self-initiated) thinking
 ENABLE_CONTINUOUS_THINKING = False
 
+# ========================================================================
+# TOOL CONTROLS
+# ========================================================================
+
+USE_SOUND_EFFECTS = True
+USE_WEB_FETCH = True
+USE_CALCULATOR = True
+USE_DUCKDUCKGO_SEARCH = True
+USE_BING_SEARCH = True
+USE_WIKI_SEARCH = True
+USE_DISCORD = True
+USE_TWITCH = True
+USE_YOUTUBE = True
+USE_REMINDERS = True
+USE_CALENDAR = True
+USE_MEMORY_SEARCH = True
+USE_DICE_ROLLER = True
+USE_GAME_GUIDE = True
+USE_SCREENSHOT_VISION = True
+USE_OPENCV_VISION = False
+USE_GROUP_CHAT = False
+USE_MINECRAFT = False
+USE_MINECRAFT_SPECTATOR = False
+USE_LEAGUE_OF_LEGENDS = False
+USE_GAME_VISION = False
+USE_CODING = False
+USE_MCP_BRIDGE = False
+USE_UNITY_ANIMATION = False
+
+
 # Thinking pace configuration
-MIN_PROACTIVE_INTERVAL = 5.0
-MAX_PROACTIVE_INTERVAL = 15.0
+MIN_PROACTIVE_INTERVAL = 2.0
+MAX_PROACTIVE_INTERVAL = 5.0
 MAX_CONSECUTIVE_PROACTIVE = 200
 
 # Chat engagement (respond to unaddressed chat messages)
@@ -48,8 +78,8 @@ AUTO_RESTART = False
 # ========================================================================
 
 # Processing rate limiting (how fast agent can think)
-LIMIT_PROCESSING = False
-PROCESSING_DELAY = 10
+LIMIT_PROCESSING = True
+PROCESSING_DELAY = 2
 
 # Speaking rate limiting (how often agent can speak)
 LIMIT_SPEAKING = False
@@ -131,8 +161,8 @@ MAX_BASE_MEMORIES = 1
 # ========================================================================
 
 # Intelligent tool selection and verification
-INTELLIGENT_TOOL_SELECTION = False
-USE_AI_TOOL_VERIFICATION = False
+INTELLIGENT_TOOL_SELECTION = True
+USE_AI_TOOL_VERIFICATION = True
 TOOL_SELECTION_THRESHOLD = 0.3
 
 # ========================================================================

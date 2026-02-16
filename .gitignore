@@ -86,3 +86,47 @@ personality/base_memory/base_files/mecha_break.md
 personality/base_memory/game_guides/mecha_break.md
 personality/base_memory/game_guides/minecraft_guide.md
 
+# Testing and Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Development
+.tox/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Docker
+.dockerignore
+
+# Build and packaging
+*.whl
+*.tar.gz
+.eggs/
+*.egg
+*.egg-info/
+dist/
+build/
+
+# IDE and Editors
+*.sublime-workspace
+*.sublime-project
+.project
+.pydevproject
+.settings/
+*.launch
+.classpath
+.c9/
+*.stackdump
+
+# Pre-commit hooks
+.pre-commit-config.yaml
+
+# Performance profiling
+*.prof
+*.lprof

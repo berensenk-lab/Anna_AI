@@ -39,7 +39,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Game",
+    "category": "Game Integration",
     "display_name": "League of Legends",
     "gui_label": "League of Legends",
     "gui_icon": "",

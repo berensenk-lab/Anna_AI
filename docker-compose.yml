@@ -1,0 +1,105 @@
+# Anna AI Docker Compose
+#
+# Basic:     docker compose up -d
+# Phase 3:   docker compose --profile phase3 up -d
+#            (adds PostgreSQL + Redis for database and message queue)
+#
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: anna-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=5m
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - anna-network
+    restart: unless-stopped
+
+  anna-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: anna-ai
+    ports:
+      - "5000:5000"  # API server (if enabled)
+    volumes:
+      - ./personality:/app/personality
+      - ./models:/app/models
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    environment:
+      - OLLAMA_ENDPOINT=http://ollama:11434
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+      # Phase 3: Database and message queue (used when services are available)
+      - DATABASE_URL=postgresql://anna:password@postgres:5432/anna_ai
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - anna-network
+    restart: unless-stopped
+    # Uncomment to run CLI instead of GUI:
+    # command: ["python", "main.py", "--no-gui"]
+
+  # Phase 3: PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: anna-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=anna
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=anna_ai
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U anna -d anna_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - anna-network
+    restart: unless-stopped
+    profiles:
+      - phase3
+
+  # Redis for message queue and caching (Phase 3)
+  redis:
+    image: redis:7-alpine
+    container_name: anna-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - anna-network
+    restart: unless-stopped
+    profiles:
+      - phase3
+
+volumes:
+  ollama_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  anna-network:
+    driver: bridge

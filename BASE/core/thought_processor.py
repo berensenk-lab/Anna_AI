@@ -615,8 +615,13 @@ class ThoughtProcessor:
             if not in_xml_block and line and not line.startswith('<') and not line.startswith('```'):
                 thoughts.append(line)
         
+        # Support both XML format <speak>YES</speak> and plain text SPEAK: YES
         speak_match = re.search(r'<speak>\s*(YES|NO)\s*</speak>', response, re.IGNORECASE)
-        should_speak = speak_match.group(1).upper() == 'YES' if speak_match else False
+        if speak_match:
+            should_speak = speak_match.group(1).upper() == 'YES'
+        else:
+            plain_match = re.search(r'SPEAK:\s*(YES|NO)', response, re.IGNORECASE)
+            should_speak = plain_match.group(1).upper() == 'YES' if plain_match else False
         
         actions = []
         actions_match = re.search(r'<actions>(.*?)</actions>', response, re.DOTALL)

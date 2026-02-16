@@ -177,7 +177,7 @@ class SoundsComponent:
         
         self.status_label = tk.Label(
             status_frame,
-            text="Tool not enabled",
+            text="⚫ Tool not enabled",
             font=("Segoe UI", 9),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -257,7 +257,7 @@ class SoundsComponent:
     def _play_sound(self, sound_name: str):
         """Play a sound effect"""
         if not self.sounds_tool:
-            self._show_error("Sound tool not enabled")
+            self._show_error("Sound tool not available")
             return
         
         # Get current volume
@@ -350,14 +350,14 @@ class SoundsComponent:
     def _update_status_available(self, sound_count: int):
         """Update UI for available state"""
         self.status_label.config(
-            text=f"Ready - {sound_count} sound(s) available",
+            text=f"🟢 Ready - {sound_count} sound(s) available",
             foreground=DarkTheme.ACCENT_GREEN
         )
     
     def _update_status_unavailable(self, reason: str):
         """Update UI for unavailable state"""
         self.status_label.config(
-            text=f"Not Available: {reason}",
+            text=f"⚫ Not Available: {reason}",
             foreground=DarkTheme.FG_MUTED
         )
     
@@ -384,7 +384,7 @@ class SoundsComponent:
     def _show_error(self, message: str):
         """Show error message"""
         self.status_label.config(
-            text=f"{message}",
+            text=f"❌ {message}",
             foreground=DarkTheme.ACCENT_RED
         )
         # Only log errors that happen after initialization

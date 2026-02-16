@@ -71,7 +71,7 @@ class LeagueOfLegendsComponent:
         # Connection status
         self.status_label = tk.Label(
             status_frame,
-            text="Checking connection...",
+            text="⚫ Checking connection...",
             font=("Segoe UI", 9),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -112,7 +112,7 @@ class LeagueOfLegendsComponent:
         
         self.threat_indicator = tk.Label(
             threat_frame,
-            text="Unknown",
+            text="⚫ Unknown",
             font=("Segoe UI", 9, "bold"),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -280,14 +280,14 @@ class LeagueOfLegendsComponent:
         self._last_game_data = game_data
     
     def _update_status_no_tool(self):
-        """Update UI when tool not enabled"""
+        """Update UI when tool not available"""
         self.status_label.config(
-            text="Tool Not Enabled",
+            text="⚫ Tool Not Available",
             foreground=DarkTheme.FG_MUTED
         )
         self.game_time_label.config(text="--:--")
         self.threat_indicator.config(
-            text="Unknown",
+            text="⚫ Unknown",
             foreground=DarkTheme.FG_MUTED
         )
         self.champion_label.config(text="Tool not initialized")
@@ -302,7 +302,7 @@ class LeagueOfLegendsComponent:
         )
         self.game_time_label.config(text="--:--")
         self.threat_indicator.config(
-            text="No Data",
+            text="⚫ No Data",
             foreground=DarkTheme.FG_MUTED
         )
         self.champion_label.config(text="No active match detected")
@@ -317,7 +317,7 @@ class LeagueOfLegendsComponent:
         )
         self.game_time_label.config(text="--:--")
         self.threat_indicator.config(
-            text="Standby",
+            text="⚫ Standby",
             foreground=DarkTheme.FG_MUTED
         )
         self.champion_label.config(text="Waiting for match to start...")
@@ -327,7 +327,7 @@ class LeagueOfLegendsComponent:
     def _update_status_connected(self):
         """Update UI when connected and in match"""
         self.status_label.config(
-            text="Live Match - Monitoring Active",
+            text="🟢 Live Match - Monitoring Active",
             foreground=DarkTheme.ACCENT_GREEN
         )
     
@@ -352,7 +352,7 @@ class LeagueOfLegendsComponent:
             indicator = "🟡 ELEVATED"
             color = DarkTheme.ACCENT_ORANGE if hasattr(DarkTheme, 'ACCENT_ORANGE') else DarkTheme.FG_SECONDARY
         else:
-            indicator = "Normal"
+            indicator = "🟢 Normal"
             color = DarkTheme.ACCENT_GREEN
         
         self.threat_indicator.config(

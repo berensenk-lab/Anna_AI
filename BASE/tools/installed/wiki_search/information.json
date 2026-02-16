@@ -38,7 +38,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Search",
+    "category": "Information Retrieval",
     "display_name": "Wikipedia Search",
     "gui_label": "Wikipedia",
     "gui_icon": "",

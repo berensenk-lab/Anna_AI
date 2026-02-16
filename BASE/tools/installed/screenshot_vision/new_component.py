@@ -106,7 +106,7 @@ class GameVisionComponent:
         
         self.status_label = tk.Label(
             status_row1,
-            text="Not Available",
+            text="⚫ Not Available",
             font=("Segoe UI", 9),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -338,7 +338,7 @@ class GameVisionComponent:
         
         self.set_window_button = ttk.Button(
             button_row,
-            text="Set Window",
+            text="✅ Set Window",
             command=self._set_selected_window,
             width=18
         )
@@ -496,7 +496,7 @@ class GameVisionComponent:
         
         # Update status labels
         self.status_label.config(
-            text="Active",
+            text="🟢 Active",
             foreground=DarkTheme.ACCENT_GREEN
         )
         
@@ -569,9 +569,9 @@ class GameVisionComponent:
         self.reset_monitor_button.config(state=tk.NORMAL)
     
     def _update_status_not_available(self):
-        """Update UI for tool not enabled"""
+        """Update UI for tool not available"""
         self.status_label.config(
-            text="Not Available",
+            text="⚫ Not Available",
             foreground=DarkTheme.FG_MUTED
         )
         
@@ -629,7 +629,7 @@ class GameVisionComponent:
     def _show_error(self, message: str):
         """Show error message"""
         self.status_label.config(
-            text=f"{message}",
+            text=f"❌ {message}",
             foreground=DarkTheme.ACCENT_RED
         )
         self.logger.error(f"[Game Vision] {message}")

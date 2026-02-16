@@ -20,12 +20,12 @@ External Services (filesystem, GitHub, databases, etc.)
 
 ## Features
 
-**Dynamic Tool Discovery** - Automatically discovers tools from connected servers
-**Multiple Server Support** - Connect to multiple MCP servers simultaneously
-**Persistent Configuration** - Server configs saved in `~/.mcp/servers/config.json`
-**Health Monitoring** - Background loop monitors server connection status
-**Instruction Persistence** - Works with 6-minute instruction timer system
-**JSON-RPC Communication** - Standard MCP protocol implementation
+✅ **Dynamic Tool Discovery** - Automatically discovers tools from connected servers
+✅ **Multiple Server Support** - Connect to multiple MCP servers simultaneously
+✅ **Persistent Configuration** - Server configs saved in `~/.mcp/servers/config.json`
+✅ **Health Monitoring** - Background loop monitors server connection status
+✅ **Instruction Persistence** - Works with 6-minute instruction timer system
+✅ **JSON-RPC Communication** - Standard MCP protocol implementation
 
 ## Installation
 

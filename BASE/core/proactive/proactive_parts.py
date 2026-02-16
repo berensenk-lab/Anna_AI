@@ -34,11 +34,11 @@ These thoughts will be used to form a spoken response to the user later.
         """Instructions for urgency assessment"""
         return """
 ## SPEAK
-- YES or NO: Determines if you will form a spoken response to the user after this thought.
+- Determines if you will form a spoken response to the user after this thought.
 - Only speak when appropriate if your thoughts about the current situation indicate it is necessary.
-- If the user has been speaking, or if there is an urgent need to address something, respond with YES.
-- If there is no immediate need to respond, or if you are simply planning internally to yourself, respond with NO.
-- Your determination of YES or NO must be placed within the <speak> tags exactly as shown.
+- If the user has been speaking, or if there is an urgent need to address something, respond with SPEAK: YES.
+- If there is no immediate need to respond, or if you are simply planning internally to yourself, respond with SPEAK: NO.
+- You must write either SPEAK: YES or SPEAK: NO on its own line in your response.
 """
     
     @staticmethod
@@ -51,18 +51,13 @@ Generate your thought, decide whether to speak, and optionally include tool name
 
 Your thought (1-2 sentences) here.
 
-```xml
-<speak>
-YES or NO
-</speak>
-```
-```xml
+SPEAK: YES or SPEAK: NO
+
 <actions>
 [
   {"tool": "tool_name"}
 ]
 </actions>
-```
 
 **Tool Usage:**
 - Only list tool NAME you intend to use
@@ -124,7 +119,7 @@ YES or NO
 - Only form a spoken response if it adds value to the interaction and contributes to the conversation.
 - If the user has not said anything new or if the situation does not warrant a response, you may choose to remain silent.
 - If the user has not spoken in a while, do not spam responses; only respond when it is meaningful to do so or to check in with the user if you have not spoken recently.
-- If you have spoken very similar responses lately and have nothing new to add, remain silent and continue thinking
-- If you decide to speak, include <speak>YES</speak> in your response to indicate you will speak.
-- If you decide not to speak, include <speak>NO</speak> in your response to indicate you will continue thinking and respond later.
+- If you have spoken very similar responses lately and have nothing new to add, remain silent and continue thinking.
+- If you decide to speak, write SPEAK: YES on its own line.
+- If you decide not to speak, write SPEAK: NO on its own line.
 """

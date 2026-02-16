@@ -2,7 +2,7 @@
   "tool_name": "coding",
   "control_variable_name": "USE_CODING",
   "control_variable_value": false,
-  "tool_description": "Integrate with VS Code extension for AI-powered code editing",
+  "tool_description": "Integrate with VS Code extension for AI-powered code editing with project awareness",
   "priority": "MEDIUM",
   "available_commands": [
     {
@@ -34,46 +34,95 @@
       "args": [],
       "description": "Check VS Code extension connection status",
       "format": "{\"tool\": \"coding.status\", \"args\": []}"
+    },
+    {
+      "command": "search",
+      "args": ["query: str", "root: Optional[str]", "mode: Optional[str]"],
+      "description": "Search the codebase for text, a function name, or a filename. mode must be 'text' (default), 'function', or 'file'. root defaults to '.'.",
+      "format": "{\"tool\": \"coding.search\", \"args\": [\"handle_login\", \".\", \"function\"]}"
+    },
+    {
+      "command": "tree",
+      "args": ["root: Optional[str]", "max_depth: Optional[int]"],
+      "description": "Get the folder and file structure of the project. root defaults to '.', max_depth defaults to 3.",
+      "format": "{\"tool\": \"coding.tree\", \"args\": [\".\", 3]}"
+    },
+    {
+      "command": "patch",
+      "args": ["file_path: str", "start_line: int", "end_line: int", "new_content: str"],
+      "description": "Replace a specific line range (1-indexed, inclusive) with new_content. Use instead of full-file rewrites for targeted edits. ALWAYS fetch the file first to confirm line numbers.",
+      "format": "{\"tool\": \"coding.patch\", \"args\": [\"main.py\", 42, 55, \"def new_function():\\n    pass\\n\"]}"
     }
   ],
   "tool_usage_examples": [
-    "{\"tool\": \"coding.edit\", \"args\": [\"add error handling\", \"main.py\"]}",
-    "{\"tool\": \"coding.edit\", \"args\": [\"add three sections to the haunted houses article\"]}",
-    "{\"tool\": \"coding.edit\", \"args\": [\"change the h1 color to red\", \"index.html\"]}",
+    "{\"tool\": \"coding.edit\", \"args\": [\"add error handling following the pattern in utils.py\", \"main.py\"]}",
+    "{\"tool\": \"coding.fetch\", \"args\": [\"api/routes.py\"]}",
     "{\"tool\": \"coding.fetch\", \"args\": [\"config.py\", 0, 50]}",
     "{\"tool\": \"coding.verify\", \"args\": [\"main.py\", \"try-except\"]}",
-    "{\"tool\": \"coding.files\", \"args\": []}"
+    "{\"tool\": \"coding.files\", \"args\": []}",
+    "{\"tool\": \"coding.search\", \"args\": [\"authenticate_user\", \".\", \"function\"]}",
+    "{\"tool\": \"coding.search\", \"args\": [\"TODO\", \".\", \"text\"]}",
+    "{\"tool\": \"coding.search\", \"args\": [\"routes\", \".\", \"file\"]}",
+    "{\"tool\": \"coding.tree\", \"args\": [\".\", 3]}",
+    "{\"tool\": \"coding.patch\", \"args\": [\"services/auth.py\", 88, 102, \"def login(user, password):\\n    return check_credentials(user, password)\\n\"]}"
   ],
   "tool_usage_guidance": [
-    "Use edit to send coding instructions to VS Code for AI-powered code changes",
-    "Use fetch to retrieve and review current file contents",
-    "Use verify to check if specific changes were successfully applied",
-    "Use files to see what's currently open in VS Code",
-    "Use status to check VS Code extension connection health",
+    "STEP 1: On a new task, run coding.tree first to understand the project structure",
+    "STEP 2: Use coding.search to locate the relevant file and function before touching anything",
+    "STEP 3: ALWAYS fetch the target file (or the specific line range) before editing or patching",
+    "STEP 4: Prefer coding.patch over coding.edit for targeted changes — patch replaces exact lines, reducing errors",
+    "STEP 5: Use coding.verify after any edit or patch to confirm the change is present",
+    "Use coding.search mode='text' to find any string or keyword across all source files",
+    "Use coding.search mode='function' to locate where a function is defined (searches def/function keywords)",
+    "Use coding.search mode='file' to find files by name without scanning their contents",
+    "Use coding.tree to orient yourself in an unfamiliar project before asking questions",
+    "Use coding.patch when you know the exact lines to replace — always fetch first to confirm line numbers",
+    "Use coding.edit for natural-language instructions when exact line numbers are unknown",
+    "FILE PATHS: Use relative paths from project root (e.g., 'api/routes.py', 'services/db.py')",
+    "CONTEXT: Check personality/base_memory/base_personality/coding_context.py for project structure and conventions",
+    "SESSION FILES: Ask user to upload key project files (routes, models, config, types) as Session Files before coding",
+    "PATTERNS: Ask 'should I follow the same pattern as [related_file]?' before making style or structure choices",
     "Empty command defaults to 'edit' for convenience",
-    "File path is optional for edit - extension will use active file if not specified",
     "Requires VS Code with Ollama Code Editor extension running on localhost:3000"
   ],
   "proactive_triggers": [
-    "When user requests code changes or modifications",
+    "When user starts a new coding task — run coding.tree FIRST to understand project structure",
+    "When user mentions a function name — use coding.search mode='function' to locate it before editing",
+    "When user requests code changes or modifications — FETCH FILE FIRST, then patch or edit",
     "When debugging or fixing bugs in code",
     "When adding new features to existing code",
     "When refactoring code for better structure",
-    "When user mentions specific files by name",
-    "When user asks to see or review file contents"
+    "When user mentions specific files by name — search for the file if path is uncertain",
+    "When user asks to see or review file contents — use coding.fetch",
+    "When user describes project structure — ask to help set up coding_context.py",
+    "When user uploads files — check if they want to populate coding_context.py with file mappings",
+    "When user wants consistency — fetch related files to identify project patterns first"
   ],
   "cooldown_seconds": 3,
   "timeout_seconds": 30,
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Coding",
+    "category": "Development",
     "display_name": "VS Code Integration",
     "gui_label": "VS Code",
     "gui_icon": "",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "requires_api": false,
     "dependencies": ["requests"],
-    "notes": "Requires VS Code with Ollama Code Editor extension. Extension runs HTTP server on localhost:3000 by default. Refactored to modern modular architecture."
+    "notes": "Requires VS Code with Ollama Code Editor extension. Extension runs HTTP server on localhost:3000 by default. v3.0.0 adds search (text/function/file), tree (project structure), and patch (targeted line-range edits).",
+    "coding_best_practices": {
+      "orient_first": "Run coding.tree at the start of any new task to understand the project layout",
+      "search_before_edit": "Use coding.search to find the right file and function before making any changes",
+      "fetch_first": "Always fetch the target file (or line range) before editing or patching",
+      "patch_over_edit": "Prefer coding.patch for targeted changes — it replaces exact line ranges and is less error-prone than full rewrites",
+      "context_matters": "Use coding_context.py from base_memory to provide file mappings and coding conventions",
+      "relative_paths": "Use paths relative to project root; ask user for root directory if uncertain",
+      "describe_edits": "In edit instructions, mention project patterns, naming conventions, and architectural decisions",
+      "session_files": "Ask users to upload key project files (routes, models, config, types) as Session Files before coding",
+      "verify_changes": "After any edit or patch, use coding.verify to confirm the change is present",
+      "ask_about_patterns": "Always ask 'should I follow the same pattern as [related file]?' before making style choices"
+    },
+    "context_loading": "On startup, load personality/base_memory/base_personality/coding_context.py to get project structure and conventions"
   }
 }

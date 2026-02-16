@@ -64,15 +64,15 @@ URL: https://example.com/full/path
 ## Domain Diversity
 
 The tool ensures each result comes from a **different domain**:
-- example.com
-- wikipedia.org
-- github.com
-- stackoverflow.com
-- reddit.com
+- ✅ example.com
+- ✅ wikipedia.org
+- ✅ github.com
+- ✅ stackoverflow.com
+- ✅ reddit.com
 
 **Not allowed in same batch:**
-- example.com
-- example.com (duplicate domain)
+- ❌ example.com
+- ❌ example.com (duplicate domain)
 
 This provides diverse perspectives and prevents domain monopolization.
 
@@ -110,22 +110,22 @@ duckduckgo_search/
 ## Privacy
 
 DuckDuckGo search provides:
-- No tracking cookies
-- No user profiling
-- No search history storage
-- No personalized results
-- No filter bubble
+- ✅ No tracking cookies
+- ✅ No user profiling
+- ✅ No search history storage
+- ✅ No personalized results
+- ✅ No filter bubble
 
 ## Advantages over Bing
 
 | Feature | DuckDuckGo | Bing |
 |---------|------------|------|
-| Privacy | No tracking | ⚠️ Tracks users |
-| API Key | Not required | ⚠️ Required for API |
-| Always Available | Yes | ⚠️ Only with key |
-| Domain Diversity | Yes | Yes |
-| Pagination | Yes | Yes |
-| HTML Entity Decoding | Yes | Yes |
+| Privacy | ✅ No tracking | ⚠️ Tracks users |
+| API Key | ✅ Not required | ⚠️ Required for API |
+| Always Available | ✅ Yes | ⚠️ Only with key |
+| Domain Diversity | ✅ Yes | ✅ Yes |
+| Pagination | ✅ Yes | ✅ Yes |
+| HTML Entity Decoding | ✅ Yes | ✅ Yes |
 
 ## Troubleshooting
 

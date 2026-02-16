@@ -81,7 +81,7 @@ class CodingToolComponent:
         # Status icon and text
         self.status_label = tk.Label(
             status_frame,
-            text="Not Connected",
+            text="⚫ Not Connected",
             font=("Segoe UI", 9),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -92,7 +92,7 @@ class CodingToolComponent:
         # Info icon with tooltip
         info_label = tk.Label(
             status_frame,
-            text="",
+            text="ℹ️",
             font=("Segoe UI", 10),
             foreground=DarkTheme.ACCENT_PURPLE,
             background=DarkTheme.BG_DARKER,
@@ -103,8 +103,8 @@ class CodingToolComponent:
         self._create_tooltip(
             info_label,
             "VS Code Extension Status:\n\n"
-            "Connected: Extension responding\n"
-            "Not Connected: Extension not running\n\n"
+            "🟢 Connected: Extension responding\n"
+            "⚫ Not Connected: Extension not running\n\n"
             "Requirements:\n"
             "- VS Code with Ollama Code Editor extension\n"
             "- Extension server on localhost:3000\n"
@@ -119,7 +119,7 @@ class CodingToolComponent:
         # Test connection button
         self.test_button = ttk.Button(
             control_frame,
-            text="Test Connection",
+            text="🔍 Test Connection",
             command=self._test_connection,
             width=20
         )
@@ -128,7 +128,7 @@ class CodingToolComponent:
         # Refresh button
         refresh_button = ttk.Button(
             control_frame,
-            text="Refresh Status",
+            text="🔄 Refresh Status",
             command=self._refresh_status,
             width=20
         )
@@ -243,11 +243,11 @@ class CodingToolComponent:
         
         # Check availability
         if self.coding_tool.is_available():
-            self.logger.success("Connection test successful!")
+            self.logger.success("✅ Connection test successful!")
             self._update_status_connected()
             self._update_open_files()
         else:
-            self.logger.error("Connection test failed - server not responding")
+            self.logger.error("❌ Connection test failed - server not responding")
             self._update_status_disconnected()
         
         self.test_button.config(state=tk.NORMAL)
@@ -284,7 +284,7 @@ class CodingToolComponent:
             async def send_async():
                 result = await self.coding_tool.execute('edit', [instruction])
                 if result.get('success'):
-                    self.logger.success(f"{result.get('content', 'Instruction sent')}")
+                    self.logger.success(f"✅ {result.get('content', 'Instruction sent')}")
                     # Clear instruction entry
                     self.instruction_entry.delete("1.0", tk.END)
                 else:
@@ -316,9 +316,9 @@ class CodingToolComponent:
             self._update_status_disconnected()
     
     def _update_status_not_available(self):
-        """Update UI for tool not enabled"""
+        """Update UI for tool not available"""
         self.status_label.config(
-            text="Tool Not Enabled",
+            text="⚫ Tool Not Available",
             foreground=DarkTheme.FG_MUTED
         )
         self.test_button.config(state=tk.DISABLED)
@@ -333,7 +333,7 @@ class CodingToolComponent:
     def _update_status_connected(self):
         """Update UI for connected state"""
         self.status_label.config(
-            text="Connected to VS Code",
+            text="🟢 Connected to VS Code",
             foreground=DarkTheme.ACCENT_GREEN
         )
         self.test_button.config(state=tk.NORMAL)
@@ -342,7 +342,7 @@ class CodingToolComponent:
     def _update_status_disconnected(self):
         """Update UI for disconnected state"""
         self.status_label.config(
-            text="VS Code Not Responding",
+            text="⚫ VS Code Not Responding",
             foreground=DarkTheme.ACCENT_RED
         )
         self.test_button.config(state=tk.NORMAL)
@@ -425,7 +425,7 @@ class CodingToolComponent:
     def _show_error(self, message: str):
         """Show error message"""
         self.status_label.config(
-            text=f"{message}",
+            text=f"❌ {message}",
             foreground=DarkTheme.ACCENT_RED
         )
         self.logger.error(f"[Coding] {message}")

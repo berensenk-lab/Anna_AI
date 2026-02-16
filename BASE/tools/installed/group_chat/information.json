@@ -21,7 +21,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Chat",
+    "category": "Communication",
     "display_name": "Group Chat",
     "gui_label": "Group Chat",
     "gui_icon": "👥",

@@ -344,6 +344,68 @@ class WarudoManager:
         
         return success
 
+    def send_react(self, emotion: str, animation: str) -> bool:
+        """
+        Send combined emotion + animation reaction
+        
+        Args:
+            emotion: Emotion name
+            animation: Animation name
+            
+        Returns:
+            True if both sent successfully
+        """
+        if not self.enabled or not self.controller:
+            return False
+        
+        if emotion not in self.controller.available_emotions:
+            self.logger.warning(f"Unknown emotion: {emotion}")
+            return False
+        
+        if animation not in self.controller.available_animations:
+            self.logger.warning(f"Unknown animation: {animation}")
+            return False
+        
+        emotion_cmd = {"action": f"{self.agent_name}/emotion", "data": emotion}
+        animation_cmd = {"action": f"{self.agent_name}/animation", "data": animation}
+        
+        emotion_ok = self.controller.send_websocket_command(emotion_cmd)
+        animation_ok = self.controller.send_websocket_command(animation_cmd)
+        
+        success = emotion_ok and animation_ok
+        
+        if success:
+            self.logger.warudo(f"React sent: {emotion} + {animation}")
+        else:
+            self.logger.error(f"Failed to send react: {emotion} + {animation}")
+        
+        return success
+
+    def send_idle(self) -> bool:
+        """
+        Send a subtle idle animation chosen at random from calm options
+        
+        Returns:
+            True if sent successfully
+        """
+        import random
+        
+        if not self.enabled or not self.controller:
+            return False
+        
+        idle_animations = ['stretch', 'swing', 'nod', 'cat']
+        animation = random.choice(idle_animations)
+        
+        command = {"action": f"{self.agent_name}/animation", "data": animation}
+        success = self.controller.send_websocket_command(command)
+        
+        if success:
+            self.logger.warudo(f"Idle animation played: {animation}")
+        else:
+            self.logger.error(f"Failed to play idle animation: {animation}")
+        
+        return success
+
     def send_emotion(self, emotion: str) -> bool:
         """
         Send emotion with validation

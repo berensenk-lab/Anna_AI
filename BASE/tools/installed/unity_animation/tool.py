@@ -1,7 +1,7 @@
 # Filename: BASE/tools/installed/unity_animation/tool.py
 """
-Unity Animation Tool - Hybrid Animation System
-Controls Unity VRM character with both preset Animator animations and procedural gestures via WebSocket
+Unity Animation Tool - Simplified Architecture
+Single master class for controlling Unity VRM character animations and emotions
 """
 import asyncio
 import json
@@ -18,90 +18,131 @@ except ImportError:
 class UnityAnimationTool(BaseTool):
     """
     Unity animation tool for controlling VRM character via WebSocket
-    Supports both Animator preset animations and procedural gestures with optional targets
+    Manages connection to Unity and executes emotion/animation commands
     """
     
-    DEFAULT_EMOTIONS = ['happy','sad','angry','surprised','neutral','relaxed','excited','confused']
-    DEFAULT_GESTURES = ['wave','nod','shake_head','bow','shrug','think','point','reach']
-    DEFAULT_PRESET_ANIMATIONS = []
+    # Default available emotions and animations
+    DEFAULT_EMOTIONS = [
+        'happy', 'sad', 'angry', 'surprised', 'neutral', 
+        'relaxed', 'excited', 'confused'
+    ]
+    
+    DEFAULT_ANIMATIONS = [
+        'wave', 'nod', 'shake_head', 'bow', 'dance',
+        'jump', 'sit', 'stand', 'idle'
+    ]
     
     @property
-    def name(self)->str:
+    def name(self) -> str:
         return "unity"
     
-    async def initialize(self)->bool:
+    async def initialize(self) -> bool:
         """Initialize Unity WebSocket connection"""
         if not WEBSOCKETS_AVAILABLE:
             if self._logger:
-                self._logger.warning("[Unity] websockets library not installed - pip install websockets")
+                self._logger.warning(
+                    "[Unity] websockets library not installed - pip install websockets"
+                )
             return False
         
-        self.websocket_url=getattr(self._config,'unity_websocket_url','ws://127.0.0.1:19192')
-        self.connection_timeout=getattr(self._config,'unity_connection_timeout',5.0)
+        # Get WebSocket configuration
+        self.websocket_url = getattr(
+            self._config, 
+            'unity_websocket_url', 
+            'ws://127.0.0.1:19192'
+        )
+        self.connection_timeout = getattr(
+            self._config,
+            'unity_connection_timeout',
+            5.0
+        )
         
-        self.websocket=None
-        self.is_connected=False
-        self.emotions=self.DEFAULT_EMOTIONS.copy()
-        self.gestures=self.DEFAULT_GESTURES.copy()
-        self.preset_animations=self.DEFAULT_PRESET_ANIMATIONS.copy()
-        self.avatar_name="Unknown"
-        self.vrm_connected=False
+        # Initialize state
+        self.websocket = None
+        self.is_connected = False
         
+        # Available commands (updated from Unity on connect)
+        self.emotions = self.DEFAULT_EMOTIONS.copy()
+        self.animations = self.DEFAULT_ANIMATIONS.copy()
+        
+        # Avatar info
+        self.avatar_name = "Unknown"
+        self.vrm_connected = False
+        
+        # Attempt initial connection
         try:
             await self._connect()
+            
             if self._logger:
                 if self.is_connected:
-                    self._logger.system(f"[Unity] Connected: {self.avatar_name}, {len(self.emotions)} emotions, {len(self.gestures)} gestures, {len(self.preset_animations)} presets")
+                    self._logger.system(
+                        f"[Unity] Connected: {self.avatar_name}, "
+                        f"{len(self.emotions)} emotions, {len(self.animations)} animations"
+                    )
                 else:
-                    self._logger.warning("[Unity] Not connected - will attempt reconnection on use")
+                    self._logger.warning(
+                        "[Unity] Not connected - will attempt reconnection on use"
+                    )
         except Exception as e:
             if self._logger:
                 self._logger.warning(f"[Unity] Initial connection failed: {e}")
         
+        # Return True even if not connected - tool can retry later
         return True
     
     async def cleanup(self):
         """Cleanup Unity resources"""
         await self._disconnect()
+        
         if self._logger:
             self._logger.system("[Unity] Cleaned up WebSocket connection")
     
-    def is_available(self)->bool:
+    def is_available(self) -> bool:
         """Check if Unity WebSocket is connected"""
         return WEBSOCKETS_AVAILABLE and self.is_connected
     
-    async def _connect(self)->bool:
+    async def _connect(self) -> bool:
         """Connect to Unity WebSocket server"""
         if not WEBSOCKETS_AVAILABLE:
             return False
-        if self.is_connected and self.websocket:
+        
+        if self.is_connected:
             return True
+        
         try:
             if self._logger:
                 self._logger.system(f"[Unity] Connecting to {self.websocket_url}")
-            self.websocket=await asyncio.wait_for(websockets.connect(self.websocket_url,ping_interval=None,ping_timeout=None),timeout=self.connection_timeout)
-            self.is_connected=True
+            
+            self.websocket = await asyncio.wait_for(
+                websockets.connect(self.websocket_url),
+                timeout=self.connection_timeout
+            )
+            
+            self.is_connected = True
+            
+            # Perform health check to get avatar info
             await self._health_check()
+            
             if self._logger:
                 self._logger.success(f"[Unity] Connected: {self.avatar_name}")
+            
             return True
+        
         except asyncio.TimeoutError:
             if self._logger:
                 self._logger.warning(f"[Unity] Connection timeout")
-            self.is_connected=False
-            self.websocket=None
+            self.is_connected = False
             return False
+        
         except Exception as e:
             if self._logger:
                 self._logger.warning(f"[Unity] Connection failed: {e}")
-            self.is_connected=False
-            self.websocket=None
+            self.is_connected = False
             return False
     
     async def _disconnect(self):
         """Disconnect from Unity WebSocket"""
-        self.is_connected=False
-        if self.websocket:
+        if self.websocket and self.is_connected:
             try:
                 await self.websocket.close()
                 if self._logger:
@@ -110,95 +151,125 @@ class UnityAnimationTool(BaseTool):
                 if self._logger:
                     self._logger.error(f"[Unity] Disconnect error: {e}")
             finally:
-                self.websocket=None
+                self.websocket = None
+                self.is_connected = False
     
-    async def _health_check(self)->Dict[str,Any]:
+    async def _health_check(self) -> Dict[str, Any]:
         """Perform health check and update avatar info"""
         if not self.is_connected or not self.websocket:
             return {}
+        
         try:
-            cmd=json.dumps({"type":"health"})
+            cmd = json.dumps({"type": "health"})
             await self.websocket.send(cmd)
-            response=await asyncio.wait_for(self.websocket.recv(),timeout=2.0)
-            data=json.loads(response)
-            if data.get("status")=="success":
-                self.avatar_name=data.get("avatarName","Unknown")
-                self.vrm_connected=data.get("vrmConnected",False)
+            
+            response = await asyncio.wait_for(
+                self.websocket.recv(),
+                timeout=2.0
+            )
+            
+            data = json.loads(response)
+            
+            if data.get("status") == "success":
+                self.avatar_name = data.get("avatarName", "Unknown")
+                self.vrm_connected = data.get("vrmConnected", False)
+                
+                # Update available emotions/animations from Unity
                 if "emotions" in data:
-                    self.emotions=data["emotions"]
-                if "gestures" in data:
-                    self.gestures=data["gestures"]
-                if "presetAnimations" in data:
-                    self.preset_animations=data["presetAnimations"]
+                    self.emotions = data["emotions"]
+                if "animations" in data:
+                    self.animations = data["animations"]
+            
             return data
+        
         except Exception as e:
             if self._logger:
                 self._logger.warning(f"[Unity] Health check failed: {e}")
             return {}
     
-    async def _send_command(self,command_type:str,value:str,intensity:float=0.8,target:Optional[str]=None)->Dict[str,Any]:
+    async def _send_command(
+        self, 
+        command_type: str, 
+        value: str, 
+        intensity: float = 0.8
+    ) -> Dict[str, Any]:
         """Send command to Unity"""
-        max_attempts=2
-        for attempt in range(max_attempts):
-            if not self.is_connected or not self.websocket:
-                if self._logger and attempt==0:
-                    self._logger.system("[Unity] Connection lost, reconnecting...")
-                if not await self._connect():
-                    if attempt==max_attempts-1:
-                        return self._error_result('Not connected to Unity',guidance='Ensure Unity is running with WebSocket server')
-                    await asyncio.sleep(0.5)
-                    continue
-            try:
-                cmd_data={"type":command_type,"value":value,"intensity":intensity}
-                if target:
-                    cmd_data["target"]=target
-                cmd=json.dumps(cmd_data)
-                await self.websocket.send(cmd)
-                response=await asyncio.wait_for(self.websocket.recv(),timeout=2.0)
-                data=json.loads(response)
-                if data.get("status")=="success":
-                    result_msg=f'{command_type.capitalize()}: {value}'
-                    if target:
-                        result_msg+=f' (target: {target})'
-                    if self._logger:
-                        self._logger.success(f"[Unity] {result_msg}")
-                    return self._success_result(result_msg,metadata={'command_type':command_type,'value':value,'target':target})
-                else:
-                    error_msg=data.get("message","Unknown error")
-                    if self._logger:
-                        self._logger.error(f"[Unity] Command failed: {error_msg}")
-                    return self._error_result(f'{command_type} failed: {error_msg}',metadata=data)
-            except asyncio.TimeoutError:
-                if self._logger:
-                    self._logger.warning(f"[Unity] Command timeout: {command_type}")
-                await self._disconnect()
-                if attempt<max_attempts-1:
-                    await asyncio.sleep(0.5)
-                    continue
-                else:
-                    return self._error_result(f'{command_type} timed out',guidance='Check Unity responsiveness')
-            except Exception as e:
-                if self._logger:
-                    self._logger.error(f"[Unity] Command error: {e}")
-                await self._disconnect()
-                if attempt<max_attempts-1:
-                    await asyncio.sleep(0.5)
-                    continue
-                else:
-                    return self._error_result(f'Failed to send {command_type}: {str(e)}',metadata={'error':str(e)},guidance='Check WebSocket connection')
-        return self._error_result(f'Failed to send {command_type} after {max_attempts} attempts',guidance='Check Unity connection and restart if needed')
+        # Ensure connection
+        if not self.is_connected:
+            await self._connect()
         
-    async def execute(self,command:str,args:List[Any])->Dict[str,Any]:
+        if not self.is_connected:
+            return self._error_result(
+                'Not connected to Unity',
+                guidance='Ensure Unity is running with WebSocket server'
+            )
+        
+        try:
+            cmd = json.dumps({
+                "type": command_type,
+                "value": value,
+                "intensity": intensity
+            })
+            
+            await self.websocket.send(cmd)
+            
+            response = await asyncio.wait_for(
+                self.websocket.recv(),
+                timeout=2.0
+            )
+            
+            data = json.loads(response)
+            
+            if data.get("status") == "success":
+                if self._logger:
+                    self._logger.success(f"[Unity] {command_type.title()}: {value}")
+                
+                return self._success_result(
+                    f'{command_type.title()} set: {value}',
+                    metadata={
+                        'type': command_type,
+                        'value': value,
+                        'intensity': intensity,
+                        'avatar': self.avatar_name
+                    }
+                )
+            else:
+                error_msg = data.get("message", "Unknown error")
+                if self._logger:
+                    self._logger.warning(f"[Unity] Command rejected: {error_msg}")
+                
+                return self._error_result(
+                    f'Unity rejected {command_type}: {error_msg}',
+                    metadata={'type': command_type, 'value': value, 'error': error_msg},
+                    guidance='Check Unity console for errors'
+                )
+        
+        except asyncio.TimeoutError:
+            return self._error_result(
+                f'{command_type.title()} command timeout',
+                guidance='Unity may be unresponsive'
+            )
+        
+        except Exception as e:
+            if self._logger:
+                self._logger.error(f"[Unity] Send error: {e}")
+            
+            return self._error_result(
+                f'Failed to send {command_type}: {str(e)}',
+                metadata={'error': str(e)},
+                guidance='Check WebSocket connection'
+            )
+    
+    async def execute(self, command: str, args: List[Any]) -> Dict[str, Any]:
         """
         Execute Unity animation command
         
         Commands:
         - emotion: [emotion_name: str, intensity: Optional[float]]
-        - gesture: [gesture_name: str, target: Optional[str]]
-        - preset: [animation_name: str]
+        - animation: [animation_name: str, intensity: Optional[float]]
         
         Args:
-            command: Command name ('emotion', 'gesture', or 'preset')
+            command: Command name ('emotion' or 'animation')
             args: Command arguments
             
         Returns:
@@ -207,93 +278,190 @@ class UnityAnimationTool(BaseTool):
         if self._logger:
             self._logger.tool(f"[Unity] Command: '{command}', args: {args}")
         
+        # Validate command
         if not command:
             if not args:
-                return self._error_result('No command or arguments provided',guidance='Use: unity.emotion, unity.gesture, or unity.preset')
-            value=str(args[0]).lower()
+                return self._error_result(
+                    'No command or arguments provided',
+                    guidance='Use: unity.emotion or unity.animation'
+                )
+            
+            # Infer command from first argument
+            value = str(args[0]).lower()
             if value in self.emotions:
-                command='emotion'
-            elif value in self.gestures:
-                command='gesture'
-            elif value in self.preset_animations:
-                command='preset'
+                command = 'emotion'
+            elif value in self.animations:
+                command = 'animation'
             else:
-                return self._error_result(f'Unknown emotion/gesture/preset: {value}',metadata={'tried':value,'available_emotions':self.emotions,'available_gestures':self.gestures,'available_presets':self.preset_animations},guidance='Check available emotions/gestures/presets')
+                return self._error_result(
+                    f'Unknown emotion/animation: {value}',
+                    metadata={
+                        'tried': value,
+                        'available_emotions': self.emotions,
+                        'available_animations': self.animations
+                    },
+                    guidance='Check available emotions/animations'
+                )
         
-        if command=='emotion':
+        # Route to appropriate handler
+        if command == 'emotion':
             return await self._handle_emotion(args)
-        elif command=='gesture':
-            return await self._handle_gesture(args)
-        elif command=='preset':
-            return await self._handle_preset(args)
-        elif command=='connect':
+        elif command == 'animation':
+            return await self._handle_animation(args)
+        elif command == 'connect':
             return await self._handle_connect()
-        elif command=='disconnect':
+        elif command == 'disconnect':
             return await self._handle_disconnect()
-        elif command=='health':
+        elif command == 'health':
             return await self._handle_health()
         else:
-            return self._error_result(f'Unknown command: {command}',guidance='Available commands: emotion, gesture, preset')
+            return self._error_result(
+                f'Unknown command: {command}',
+                guidance='Available commands: emotion, animation'
+            )
     
-    async def _handle_emotion(self,args:List[Any])->Dict[str,Any]:
-        """Handle emotion command"""
+    async def _handle_emotion(self, args: List[Any]) -> Dict[str, Any]:
+        """
+        Handle emotion command
+        
+        Args:
+            args: [emotion_name: str, intensity: Optional[float]]
+            
+        Returns:
+            Result dict
+        """
         if not args:
-            return self._error_result('No emotion specified',metadata={'available':self.emotions},guidance=f'Available emotions: {", ".join(self.emotions)}')
-        emotion=str(args[0]).lower()
-        intensity=0.8
-        if len(args)>1:
+            return self._error_result(
+                'No emotion specified',
+                metadata={'available': self.emotions},
+                guidance=f'Available emotions: {", ".join(self.emotions)}'
+            )
+        
+        emotion = str(args[0]).lower()
+        
+        # Parse intensity (optional)
+        intensity = 0.8
+        if len(args) > 1:
             try:
-                intensity=float(args[1])
-                if not (0.0<=intensity<=1.0):
-                    return self._error_result(f'Intensity must be between 0.0 and 1.0, got {intensity}',guidance='Provide intensity in range 0.0 to 1.0')
-            except (ValueError,TypeError):
-                return self._error_result(f'Invalid intensity value: {args[1]}',guidance='Intensity must be a number between 0.0 and 1.0')
+                intensity = float(args[1])
+                if not (0.0 <= intensity <= 1.0):
+                    return self._error_result(
+                        f'Intensity must be between 0.0 and 1.0, got {intensity}',
+                        guidance='Provide intensity in range 0.0 to 1.0'
+                    )
+            except (ValueError, TypeError):
+                return self._error_result(
+                    f'Invalid intensity value: {args[1]}',
+                    guidance='Intensity must be a number between 0.0 and 1.0'
+                )
+        
+        # Validate emotion
         if emotion not in self.emotions:
-            return self._error_result(f'Unknown emotion: {emotion}',metadata={'available':self.emotions},guidance=f'Available emotions: {", ".join(self.emotions)}')
-        return await self._send_command('emotion',emotion,intensity)
+            return self._error_result(
+                f'Unknown emotion: {emotion}',
+                metadata={'available': self.emotions},
+                guidance=f'Available emotions: {", ".join(self.emotions)}'
+            )
+        
+        return await self._send_command('emotion', emotion, intensity)
     
-    async def _handle_gesture(self,args:List[Any])->Dict[str,Any]:
-        """Handle gesture command with optional target"""
+    async def _handle_animation(self, args: List[Any]) -> Dict[str, Any]:
+        """
+        Handle animation command
+        
+        Args:
+            args: [animation_name: str, intensity: Optional[float]]
+            
+        Returns:
+            Result dict
+        """
         if not args:
-            return self._error_result('No gesture specified',metadata={'available':self.gestures},guidance=f'Available gestures: {", ".join(self.gestures)}')
-        gesture=str(args[0]).lower()
-        target=None
-        if len(args)>1:
-            target=str(args[1])
-        if gesture not in self.gestures:
-            return self._error_result(f'Unknown gesture: {gesture}',metadata={'available':self.gestures},guidance=f'Available gestures: {", ".join(self.gestures)}')
-        return await self._send_command('gesture',gesture,target=target)
+            return self._error_result(
+                'No animation specified',
+                metadata={'available': self.animations},
+                guidance=f'Available animations: {", ".join(self.animations)}'
+            )
+        
+        animation = str(args[0]).lower()
+        
+        # Parse intensity (optional)
+        intensity = 0.8
+        if len(args) > 1:
+            try:
+                intensity = float(args[1])
+                if not (0.0 <= intensity <= 1.0):
+                    return self._error_result(
+                        f'Intensity must be between 0.0 and 1.0, got {intensity}',
+                        guidance='Provide intensity in range 0.0 to 1.0'
+                    )
+            except (ValueError, TypeError):
+                return self._error_result(
+                    f'Invalid intensity value: {args[1]}',
+                    guidance='Intensity must be a number between 0.0 and 1.0'
+                )
+        
+        # Validate animation
+        if animation not in self.animations:
+            return self._error_result(
+                f'Unknown animation: {animation}',
+                metadata={'available': self.animations},
+                guidance=f'Available animations: {", ".join(self.animations)}'
+            )
+        
+        return await self._send_command('animation', animation, intensity)
     
-    async def _handle_preset(self,args:List[Any])->Dict[str,Any]:
-        """Handle preset animation command"""
-        if not args:
-            return self._error_result('No preset animation specified',metadata={'available':self.preset_animations},guidance=f'Available preset animations: {", ".join(self.preset_animations)}')
-        preset=str(args[0]).lower().replace(' ','_')
-        if preset not in self.preset_animations:
-            return self._error_result(f'Unknown preset animation: {preset}',metadata={'available':self.preset_animations},guidance=f'Available preset animations: {", ".join(self.preset_animations)}')
-        return await self._send_command('preset',preset)
-    
-    async def _handle_connect(self)->Dict[str,Any]:
+    async def _handle_connect(self) -> Dict[str, Any]:
         """Handle connect command"""
-        success=await self._connect()
+        success = await self._connect()
+        
         if success:
-            return self._success_result(f'Connected to Unity: {self.avatar_name}',metadata={'avatar':self.avatar_name,'vrm_connected':self.vrm_connected})
+            return self._success_result(
+                f'Connected to Unity: {self.avatar_name}',
+                metadata={
+                    'avatar': self.avatar_name,
+                    'vrm_connected': self.vrm_connected
+                }
+            )
         else:
-            return self._error_result('Failed to connect to Unity',guidance='Ensure Unity is running with WebSocket server')
+            return self._error_result(
+                'Failed to connect to Unity',
+                guidance='Ensure Unity is running with WebSocket server'
+            )
     
-    async def _handle_disconnect(self)->Dict[str,Any]:
+    async def _handle_disconnect(self) -> Dict[str, Any]:
         """Handle disconnect command"""
         await self._disconnect()
         return self._success_result('Disconnected from Unity')
     
-    async def _handle_health(self)->Dict[str,Any]:
+    async def _handle_health(self) -> Dict[str, Any]:
         """Handle health check command"""
-        data=await self._health_check()
-        if data.get("status")=="success":
-            return self._success_result(f'Unity healthy: {self.avatar_name}',metadata={'avatar':self.avatar_name,'vrm_connected':self.vrm_connected,'emotions':self.emotions,'gestures':self.gestures,'preset_animations':self.preset_animations})
+        data = await self._health_check()
+        
+        if data.get("status") == "success":
+            return self._success_result(
+                f'Unity healthy: {self.avatar_name}',
+                metadata={
+                    'avatar': self.avatar_name,
+                    'vrm_connected': self.vrm_connected,
+                    'emotions': self.emotions,
+                    'animations': self.animations
+                }
+            )
         else:
-            return self._error_result('Health check failed',guidance='Check Unity connection')
+            return self._error_result(
+                'Health check failed',
+                guidance='Check Unity connection'
+            )
     
-    def get_status(self)->Dict[str,Any]:
-        """Get Unity system status"""
-        return {'available':self.is_available(),'websockets_available':WEBSOCKETS_AVAILABLE,'connected':self.is_connected,'websocket_url':self.websocket_url,'avatar_name':self.avatar_name,'vrm_connected':self.vrm_connected,'emotions':self.emotions,'gestures':self.gestures,'preset_animations':self.preset_animations}
+    def get_status(self) -> Dict[str, Any]:
+        """Get Unity system status (for debugging/monitoring)"""
+        return {
+            'available': self.is_available(),
+            'websockets_available': WEBSOCKETS_AVAILABLE,
+            'connected': self.is_connected,
+            'websocket_url': self.websocket_url,
+            'avatar_name': self.avatar_name,
+            'vrm_connected': self.vrm_connected,
+            'emotions': self.emotions,
+            'animations': self.animations
+        }

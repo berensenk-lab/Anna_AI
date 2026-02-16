@@ -37,7 +37,7 @@
   "retry_on_failure": true,
   "max_retries": 2,
   "metadata": {
-    "category": "Search",
+    "category": "Information Retrieval",
     "display_name": "Bing Search",
     "gui_label": "Bing",
     "gui_icon": "",

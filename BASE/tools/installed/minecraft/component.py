@@ -92,7 +92,7 @@ class MinecraftComponent:
         
         self.status_label = tk.Label(
             status_left,
-            text="Not Connected",
+            text="⚫ Not Connected",
             font=("Segoe UI", 9, "bold"),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -170,7 +170,7 @@ class MinecraftComponent:
         
         # Action buttons
         actions = [
-            ("Stop", lambda: self._execute_command("stop_movement", [])),
+            ("🛑 Stop", lambda: self._execute_command("stop_movement", [])),
             ("🪵 Get Wood", lambda: self._execute_command("gather_resource", ["oak_log", 5])),
             ("🪨 Get Stone", lambda: self._execute_command("gather_resource", ["stone", 10])),
             ("📊 Status", lambda: self._refresh_status()),
@@ -335,7 +335,7 @@ class MinecraftComponent:
         """Create activity log section"""
         log_frame = ttk.LabelFrame(
             self.panel_frame,
-            text="Activity Log",
+            text="📋 Activity Log",
             style="Dark.TLabelframe"
         )
         log_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
@@ -404,7 +404,7 @@ class MinecraftComponent:
         self.minecraft_tool = self._get_minecraft_tool()
         
         if not self.minecraft_tool:
-            self._add_log("Minecraft tool not enabled", 'error')
+            self._add_log("Minecraft tool not available", 'error')
             return
         
         if not self.minecraft_tool.is_available():
@@ -456,7 +456,7 @@ class MinecraftComponent:
         self.connected = False
         
         self.status_label.config(
-            text="Not Connected",
+            text="⚫ Not Connected",
             foreground=DarkTheme.FG_MUTED
         )
         
@@ -475,7 +475,7 @@ class MinecraftComponent:
         self.connected = True
         
         self.status_label.config(
-            text="Connected",
+            text="🟢 Connected",
             foreground=DarkTheme.ACCENT_GREEN
         )
     

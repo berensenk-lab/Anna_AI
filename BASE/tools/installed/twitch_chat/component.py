@@ -124,7 +124,7 @@ class TwitchChatComponent:
         # Info icon
         info_label = tk.Label(
             config_frame,
-            text="",
+            text="ℹ️",
             font=("Segoe UI", 10),
             foreground=DarkTheme.ACCENT_PURPLE,
             background=DarkTheme.BG_DARKER,
@@ -224,7 +224,7 @@ class TwitchChatComponent:
         # Status label
         self.status_label = tk.Label(
             control_frame,
-            text="Not Connected",
+            text="⚫ Not Connected",
             font=("Segoe UI", 9),
             foreground=DarkTheme.FG_MUTED,
             background=DarkTheme.BG_DARKER,
@@ -309,7 +309,7 @@ class TwitchChatComponent:
         # Clear button
         ttk.Button(
             message_frame,
-            text="Clear",
+            text="🗑️ Clear",
             command=self._clear_messages,
             width=10
         ).pack(pady=2)
@@ -437,7 +437,7 @@ With OAuth:
                 f.write(content)
             
             mode = "authenticated" if oauth else "anonymous (read-only)"
-            self.logger.twitch(f"Channel configured: #{channel} ({mode})")
+            self.logger.twitch(f"✅ Channel configured: #{channel} ({mode})")
             messagebox.showinfo("Success", f"Channel configured:\n#{channel}\nMode: {mode}")
             
         except Exception as e:
@@ -461,7 +461,7 @@ With OAuth:
                 result = await self.twitch_tool.execute('start', [])
                 if result.get('success'):
                     self._update_status_connected()
-                    self.logger.twitch("Monitoring started")
+                    self.logger.twitch("✅ Monitoring started")
                 else:
                     error = result.get('content', 'Unknown error')
                     self._show_error(f"Failed to start: {error}")
@@ -506,7 +506,7 @@ With OAuth:
                 if result.get('success'):
                     self.message_entry.delete(0, tk.END)
                     self._log_message("[You]", message, "system")
-                    self.logger.twitch(f"Sent: {message}")
+                    self.logger.twitch(f"✅ Sent: {message}")
                 else:
                     error = result.get('content', 'Unknown error')
                     messagebox.showerror("Send Failed", f"Failed to send:\n{error}")
@@ -518,7 +518,7 @@ With OAuth:
         self.message_display.config(state=tk.NORMAL)
         self.message_display.delete("1.0", tk.END)
         self.message_display.config(state=tk.DISABLED)
-        self.logger.twitch("Messages cleared")
+        self.logger.twitch("🗑️ Messages cleared")
     
     def _update_status(self):
         """Update status display"""
@@ -536,9 +536,9 @@ With OAuth:
             self._update_status_disconnected()
     
     def _update_status_not_available(self):
-        """Update UI for tool not enabled"""
+        """Update UI for tool not available"""
         self.status_label.config(
-            text="Tool Not Enabled",
+            text="⚫ Tool Not Available",
             foreground=DarkTheme.FG_MUTED
         )
         self.start_button.config(state=tk.DISABLED)
@@ -547,7 +547,7 @@ With OAuth:
     def _update_status_connected(self):
         """Update UI for connected state"""
         self.status_label.config(
-            text="Monitoring Active",
+            text="🟢 Monitoring Active",
             foreground=DarkTheme.ACCENT_GREEN
         )
         self.start_button.config(state=tk.DISABLED)
@@ -562,7 +562,7 @@ With OAuth:
     def _update_status_disconnected(self):
         """Update UI for disconnected state"""
         self.status_label.config(
-            text="Not Connected",
+            text="⚫ Not Connected",
             foreground=DarkTheme.FG_MUTED
         )
         self.start_button.config(state=tk.NORMAL)
@@ -680,7 +680,7 @@ With OAuth:
     def _show_error(self, message: str):
         """Show error message"""
         self.status_label.config(
-            text=f"{message}",
+            text=f"❌ {message}",
             foreground=DarkTheme.ACCENT_RED
         )
         self.logger.error(f"[Twitch] {message}")
