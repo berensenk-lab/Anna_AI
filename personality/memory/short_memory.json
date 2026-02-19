@@ -1,66 +1,6 @@
 [
   {
     "role": "user",
-    "content": "Been working on that a while ago. Now I'm just making sure your fully ready.",
-    "timestamp": "Wednesday, February 18, 2026 at 09:18:14 PM",
-    "date": "2026-02-18"
-  },
-  {
-    "role": "assistant",
-    "content": "Oh, that's so thoughtful of you! I'm excited to see what you've been building—maybe we can celebrate with a super cool Warudo animation?",
-    "timestamp": "Wednesday, February 18, 2026 at 09:19:09 PM",
-    "date": "2026-02-18"
-  },
-  {
-    "role": "user",
-    "content": "Hello, how are you performing?",
-    "timestamp": "Thursday, February 19, 2026 at 06:56:02 AM",
-    "date": "2026-02-19"
-  },
-  {
-    "role": "assistant",
-    "content": "I'm doing fantastic, Almoo! I'm thinking we could check out some new game releases soon, what do you say?",
-    "timestamp": "Thursday, February 19, 2026 at 06:56:23 AM",
-    "date": "2026-02-19"
-  },
-  {
-    "role": "user",
-    "content": "Sure, what new game releases for pc are out there?",
-    "timestamp": "Thursday, February 19, 2026 at 06:57:04 AM",
-    "date": "2026-02-19"
-  },
-  {
-    "role": "assistant",
-    "content": "Ooh, exciting! Deathloop, Starfield, or Celeste: Ever After - which one grabs your attention the most?",
-    "timestamp": "Thursday, February 19, 2026 at 06:57:34 AM",
-    "date": "2026-02-19"
-  },
-  {
-    "role": "user",
-    "content": "Celeste does",
-    "timestamp": "Thursday, February 19, 2026 at 06:58:15 AM",
-    "date": "2026-02-19"
-  },
-  {
-    "role": "user",
-    "content": "Celeste does grab my attention.",
-    "timestamp": "Thursday, February 19, 2026 at 07:01:26 AM",
-    "date": "2026-02-19"
-  },
-  {
-    "role": "user",
-    "content": "Hello Anna, do you remember what we were talking about previously?",
-    "timestamp": "Thursday, February 19, 2026 at 07:21:17 AM",
-    "date": "2026-02-19"
-  },
-  {
-    "role": "user",
-    "content": "Something about Celeste?",
-    "timestamp": "Thursday, February 19, 2026 at 07:22:49 AM",
-    "date": "2026-02-19"
-  },
-  {
-    "role": "user",
     "content": "Hello Anna, checking to see if your chat interface and audio is working.",
     "timestamp": "Thursday, February 19, 2026 at 07:50:39 AM",
     "date": "2026-02-19"
@@ -147,6 +87,66 @@
     "role": "assistant",
     "content": "Sweet dreams, Almoo! Maybe we can design a dream-walking game when you wake up?",
     "timestamp": "Thursday, February 19, 2026 at 08:44:16 AM",
+    "date": "2026-02-19"
+  },
+  {
+    "role": "user",
+    "content": "Hooray I'm awake.",
+    "timestamp": "Thursday, February 19, 2026 at 11:15:02 AM",
+    "date": "2026-02-19"
+  },
+  {
+    "role": "user",
+    "content": "Sorry, I think I fixed it now.",
+    "timestamp": "Thursday, February 19, 2026 at 11:15:51 AM",
+    "date": "2026-02-19"
+  },
+  {
+    "role": "user",
+    "content": "Can you summarize our chat?",
+    "timestamp": "Thursday, February 19, 2026 at 11:16:31 AM",
+    "date": "2026-02-19"
+  },
+  {
+    "role": "assistant",
+    "content": "Oh, sure! We were just chatting about you fixing something, and now you want a summary—super interesting! I'm thinking maybe we could explore some new game mods next?",
+    "timestamp": "Thursday, February 19, 2026 at 11:17:00 AM",
+    "date": "2026-02-19"
+  },
+  {
+    "role": "user",
+    "content": "What else can you remember?",
+    "timestamp": "Thursday, February 19, 2026 at 11:24:40 AM",
+    "date": "2026-02-19"
+  },
+  {
+    "role": "assistant",
+    "content": "Hmm, let me see… I remember we were talking about mods! Maybe we can find some cool ones for your favorite game?",
+    "timestamp": "Thursday, February 19, 2026 at 11:25:11 AM",
+    "date": "2026-02-19"
+  },
+  {
+    "role": "user",
+    "content": "Mods would be good for a game called Warudo, to see if you can interact and move around in there.",
+    "timestamp": "Thursday, February 19, 2026 at 11:34:23 AM",
+    "date": "2026-02-19"
+  },
+  {
+    "role": "assistant",
+    "content": "Oh, Warudo mods sound awesome! I'm thinking maybe we could find some that let us mess around with the physics—that’d be wild!",
+    "timestamp": "Thursday, February 19, 2026 at 11:34:56 AM",
+    "date": "2026-02-19"
+  },
+  {
+    "role": "user",
+    "content": "Be back later",
+    "timestamp": "Thursday, February 19, 2026 at 11:38:22 AM",
+    "date": "2026-02-19"
+  },
+  {
+    "role": "assistant",
+    "content": "Okay, sounds good! I'm excited to see what you think of Warudo mods when you're back—maybe we can find some seriously crazy ones!",
+    "timestamp": "Thursday, February 19, 2026 at 11:38:56 AM",
     "date": "2026-02-19"
   }
 ]
