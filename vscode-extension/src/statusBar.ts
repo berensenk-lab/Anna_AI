@@ -1,0 +1,63 @@
+/**
+ * Status Bar Manager for Anna AI VSCode Extension
+ * ===============================================
+ * Manages the VSCode status bar item
+ */
+
+import * as vscode from "vscode";
+
+export type StatusType = "ready" | "busy" | "error" | "initializing";
+
+export class StatusBarManager {
+  private _statusBar: vscode.StatusBarItem;
+  private _currentStatus: StatusType = "ready";
+
+  constructor() {
+    this._statusBar = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Right,
+      100,
+    );
+    this._statusBar.command = "anna-ai.chat";
+    this._statusBar.tooltip = "Anna AI - Click to chat";
+    this._statusBar.show();
+  }
+
+  /**
+   * Show status in status bar
+   */
+  public showStatus(status: StatusType): void {
+    this._currentStatus = status;
+
+    switch (status) {
+      case "ready":
+        this._statusBar.text = "$(robot) Anna AI";
+        this._statusBar.backgroundColor = undefined;
+        break;
+
+      case "busy":
+        this._statusBar.text = "$(sync~spin) Anna AI";
+        this._statusBar.backgroundColor = new vscode.ThemeColor(
+          "statusbarItem.warningBackground",
+        );
+        break;
+
+      case "error":
+        this._statusBar.text = "$(error) Anna AI";
+        this._statusBar.backgroundColor = new vscode.ThemeColor(
+          "statusbarItem.errorBackground",
+        );
+        break;
+
+      case "initializing":
+        this._statusBar.text = "$(sync~spin) Initializing...";
+        break;
+    }
+  }
+
+  /**
+   * Dispose the status bar item
+   */
+  public dispose(): void {
+    this._statusBar.dispose();
+  }
+}

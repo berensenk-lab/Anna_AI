@@ -1,0 +1,23 @@
+{
+  "name": "browser",
+  "display_name": "Browser Automation",
+  "description": "Control web browser for automation tasks",
+  "version": "1.0.0",
+  "author": "Anna AI Team",
+  "category": "automation",
+  "capabilities": [
+    "web_navigation",
+    "form_filling",
+    "screenshot",
+    "element_interaction"
+  ],
+  "requirements": {
+    "python": ["playwright", "Pillow"],
+    "system": ["chromium", "firefox"]
+  },
+  "configuration": {
+    "browser_type": "chromium",
+    "headless": false,
+    "viewport": { "width": 1280, "height": 720 }
+  }
+}

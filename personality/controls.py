@@ -58,6 +58,7 @@ USE_GAME_VISION = False
 USE_CODING = False
 USE_MCP_BRIDGE = False
 USE_UNITY_ANIMATION = False
+USE_GIT = True
 
 
 # Thinking pace configuration
@@ -124,19 +125,19 @@ MAX_BASE_MEMORIES = 1
 # ========================================================================
 # TOOL CONTROLS - DYNAMICALLY CREATED
 # ========================================================================
-# 
+#
 # Tool control variables (USE_XTTS, USE_GPT_SOVITS, USE_WHISPER, etc.)
 # are automatically created by BASE.core.dynamic_control_initializer
-# 
+#
 # Internal tools (TTS, voice input):
 #   - Created from BASE/tools/internal/*/information.json
 #   - Mutual exclusivity enforced by service_type
 #   - Highest priority tool enabled by default
-# 
+#
 # External tools (web search, integrations):
 #   - Created from BASE/tools/installed/*/information.json
 #   - Defaults from control_variable_value field
-# 
+#
 # Examples of dynamically created controls:
 #   USE_GPT_SOVITS = True   (priority=15, highest in 'tts')
 #   USE_XTTS = False        (priority=10)
@@ -146,12 +147,12 @@ MAX_BASE_MEMORIES = 1
 #   USE_VOSK = False        (priority=5)
 #   USE_WEB_SEARCH = True   (external tool)
 #   USE_TWITCH = False      (external tool)
-# 
+#
 # To add a new tool control:
 #   1. Add tool directory to tools/internal/ or tools/installed/
 #   2. Include information.json with control_variable_name
 #   3. Restart agent - control variable created automatically
-# 
+#
 # DO NOT manually define tool controls here - they are created dynamically!
 #
 # ========================================================================

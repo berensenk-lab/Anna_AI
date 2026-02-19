@@ -1,0 +1,24 @@
+{
+  "tool_name": "git",
+  "control_variable_name": "USE_GIT",
+  "tool_description": "Git integration tool for version control operations - commit, branch, status, diff, log, and more",
+  "timeout_seconds": 30,
+  "cooldown_seconds": 0,
+  "version": "1.0.0",
+  "author": "Anna AI Team",
+  "commands": {
+    "status": "Get git status of repository",
+    "diff": "Get git diff of changes",
+    "branch": "List, create, or switch branches",
+    "commit": "Create a git commit",
+    "log": "Get commit history",
+    "stash": "Stash changes",
+    "fetch": "Fetch from remote",
+    "pull": "Pull from remote",
+    "push": "Push to remote",
+    "remote": "Manage remote repositories"
+  },
+  "required_dependencies": [],
+  "optional_dependencies": [],
+  "auto_start": false
+}

@@ -1,0 +1,112 @@
+{
+  "name": "anna-ai",
+  "displayName": "Anna AI",
+  "description": "AI assistant integration for VS Code - powered by Anna AI",
+  "version": "1.0.0",
+  "publisher": "anna-ai",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "ai",
+    "assistant",
+    "chat",
+    "llm",
+    "anna"
+  ],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:python",
+    "onLanguage:java",
+    "onLanguage:csharp",
+    "onStartupFinished"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "anna-ai.chat",
+        "title": "Anna AI: Open Chat"
+      },
+      {
+        "command": "anna-ai.explain",
+        "title": "Anna AI: Explain Code"
+      },
+      {
+        "command": "anna-ai.refactor",
+        "title": "Anna AI: Refactor Selection"
+      },
+      {
+        "command": "anna-ai.generateTests",
+        "title": "Anna AI: Generate Tests"
+      },
+      {
+        "command": "anna-ai.checkHealth",
+        "title": "Anna AI: Check Status"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "anna-ai.explain",
+          "when": "editorHasSelection",
+          "group": "anna-ai"
+        },
+        {
+          "command": "anna-ai.refactor",
+          "when": "editorHasSelection",
+          "group": "anna-ai"
+        },
+        {
+          "command": "anna-ai.generateTests",
+          "when": "editorHasSelection",
+          "group": "anna-ai"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "anna-ai.chat",
+          "when": "true"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Anna AI",
+      "properties": {
+        "annaAI.endpoint": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Ollama API endpoint"
+        },
+        "annaAI.model": {
+          "type": "string",
+          "default": "llama2",
+          "description": "Default model to use"
+        },
+        "annaAI.maxTokens": {
+          "type": "number",
+          "default": 2000,
+          "description": "Maximum tokens in response"
+        },
+        "annaAI.temperature": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Response creativity (0-2)"
+        },
+        "annaAI.enableInlineCompletion": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable inline code completion"
+        }
+      }
+    }
+  }
+}
