@@ -1,21 +1,4 @@
 {
-  "reminders": [
-    {
-      "id": "1771307664963",
-      "description": "game with Almoo",
-      "trigger_time": 1771344000.0,
-      "created_at": 1771307664.9634507,
-      "notification_count": 0,
-      "last_notified": null
-    },
-    {
-      "id": "1771471178522",
-      "description": "start streaming",
-      "trigger_time": 1771478378.522643,
-      "created_at": 1771471178.522643,
-      "notification_count": 0,
-      "last_notified": null
-    }
-  ],
-  "last_saved": 1771471178.522643
+  "reminders": [],
+  "last_saved": 0
 }

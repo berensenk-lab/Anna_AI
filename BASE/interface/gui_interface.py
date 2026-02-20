@@ -39,34 +39,34 @@ except ImportError as e:
 class OllamaGUI:
     # PERFORMANCE: Maximum log lines to keep in system log (actual Text widget lines)
     MAX_LOG_LINES = 6000
-    
+
     def __init__(self, root):
         """
         Initialize GUI with VERIFIED singleton Config and Logger
         """
         self.root = root
-        
+
         from personality.bot_info import agentname
         self.agentname = agentname
-        
+
         import personality.controls as controls
         self.controls = controls
-        
+
         self.root.title(f"{agentname} - Ollama Agent GUI")
         self.root.geometry("1600x1000")
-        
+
         self.twitch_chat = None
         self.youtube_chat = None
 
         # Create singleton Config
         from BASE.core.config import Config
         self.config = Config()
-        
+
         print(f"[Init] Created singleton Config: {id(self.config)}")
 
         # Create Logger with Config reference
         from BASE.core.logger import Logger
-        
+
         self.logger = Logger(
             name="GUI",
             enable_timestamps=True,
@@ -74,26 +74,26 @@ class OllamaGUI:
             gui_callback=self._gui_log_callback,
             config=self.config
         )
-        
+
         # Verify logger has config reference
         if not hasattr(self.logger, 'config') or self.logger.config is None:
             raise RuntimeError("CRITICAL: Logger initialization failed - no config reference!")
-        
+
         if id(self.logger.config) != id(self.config):
             raise RuntimeError(f"CRITICAL: Logger has DIFFERENT config instance!")
-        
+
         print(f"[Init] Logger has correct config: {id(self.logger.config)}")
 
         # Create AI Core with same Config
         from BASE.core.ai_core import AICore
-        
+
         self.ai_core = AICore(
             config=self.config,
             controls_module=controls,
             project_root=project_root,
             gui_logger=self._gui_log_callback
         )
-        
+
         self._verify_config_chain()
 
         # Verify tool execution manager
@@ -112,13 +112,13 @@ class OllamaGUI:
         # CRITICAL FIX: Initialize Hot-Reload Manager
         # ====================================================================
         from BASE.core.tool_hot_reload_manager import HotReloadManager
-        
+
         self.hot_reload_manager = HotReloadManager(
             project_root=project_root,
             logger=self.logger,
             config=self.config
         )
-        
+
         # Register with tool manager
         if hasattr(self.ai_core, 'tool_manager'):
             self.hot_reload_manager.register_tool_manager(self.ai_core.tool_manager)
@@ -157,13 +157,13 @@ class OllamaGUI:
         # Inject AI core into control manager
         if hasattr(self.ai_core, 'control_manager') and self.ai_core.control_manager:
             self.ai_core.control_manager.set_ai_core(self.ai_core)
-            
+
             if hasattr(self.ai_core, 'tool_manager'):
                 self.ai_core.control_manager.set_tool_manager(
                     self.ai_core.tool_manager
                 )
                 self.logger.system("[SUCCESS] Control manager connected to tool manager")
-            
+
             self.logger.system("[SUCCESS] AI Core injected into ControlManager")
         else:
             self.logger.warning("[WARNING] Control manager not found")
@@ -221,22 +221,22 @@ class OllamaGUI:
     def _verify_config_chain(self):
         """Verify all components share the same config instance"""
         print("CONFIG CHAIN VERIFICATION")
-        
+
         base_id = id(self.config)
         all_match = True
-        
+
         components = {
             "Main Config": self.config,
             "Logger Config": self.logger.config if hasattr(self.logger, 'config') else None,
             "AICore Config": self.ai_core.config if hasattr(self.ai_core, 'config') else None,
         }
-        
+
         if hasattr(self.ai_core, 'control_manager') and self.ai_core.control_manager:
             components["ControlManager Config"] = self.ai_core.control_manager.config if hasattr(self.ai_core.control_manager, 'config') else None
-        
+
         print(f"\nBase Config ID: {base_id}\n")
         print("Component Verification:")
-        
+
         for name, component_config in components.items():
             if component_config is None:
                 print(f"  {name}: Missing")
@@ -246,7 +246,7 @@ class OllamaGUI:
             else:
                 print(f"  {name}: MISMATCH ({id(component_config)})")
                 all_match = False
-        
+
         if all_match:
             print("[SUCCESS] SUCCESS: All components share same config instance")
         else:
@@ -261,11 +261,11 @@ class OllamaGUI:
                 "Temp (Action/Cognitive/Response)": f"{getattr(self.config, 'ollama_temperature_action', 0.2)}/{getattr(self.config, 'ollama_temperature_cognitive', 0.6)}/{getattr(self.config, 'ollama_temperature_response', 0.9)}",
                 "Max Tokens": self.config.ollama_max_tokens,
             }
-            
+
             self.logger.system("=== Configuration ===")
             for key, value in settings.items():
                 self.logger.system(f"  {key}: {value}")
-                
+
         except Exception as e:
             self.logger.warning(f"Could not print config summary: {e}")
 
@@ -280,43 +280,43 @@ class OllamaGUI:
                 self.logger.warning("[TTS] Internal tool manager not available - TTS disabled")
                 self.ai_core.tts_tool = None
                 return
-            
+
             if not self.ai_core.internal_tool_manager:
                 self.logger.warning("[TTS] Internal tool manager is None - TTS disabled")
                 self.ai_core.tts_tool = None
                 return
-            
+
             # Get active TTS tool from internal tool manager
             # The tool is already initialized by the internal tool manager
             tts_tool = self.ai_core.internal_tool_manager.get_active_tts_tool()
-            
+
             if tts_tool:
                 # Tool is initialized and available
                 info = tts_tool.get_voice_info()
                 backend_name = info.get('name', 'Unknown')
                 backend_type = info.get('type', 'Unknown')
-                
+
                 # The ai_core.tts_tool reference is already set by internal tool manager
                 # but we also set it here for clarity
                 self.ai_core.tts_tool = tts_tool
                 self.tts_tool = tts_tool
-                
+
                 # Log status based on AVATAR_SPEECH control
                 if self.controls.AVATAR_SPEECH:
                     self.logger.success(f"[TTS] Initialized and enabled: {backend_name} ({backend_type})")
                 else:
                     self.logger.system(f"[TTS] Initialized but disabled: {backend_name} ({backend_type})")
-                
+
                 # Log additional info
                 if 'volume_percent' in info:
                     self.logger.system(f"[TTS] Volume: {info['volume_percent']}")
-                    
+
             else:
                 # No TTS tool active
                 self.logger.system("[TTS] No TTS tool active - speech disabled")
                 self.ai_core.tts_tool = None
                 self.tts_tool = None
-                
+
         except Exception as e:
             self.logger.error(f"[TTS] Setup failed: {e}")
             import traceback
@@ -346,20 +346,20 @@ class OllamaGUI:
         try:
             # Get actual line count from widget
             actual_lines = self._get_actual_line_count()
-            
+
             if actual_lines <= self.MAX_LOG_LINES:
                 return
-            
+
             # Calculate how many lines to remove
             lines_to_remove = actual_lines - self.MAX_LOG_LINES
-            
+
             self.system_log.config(state=tk.NORMAL)
-            
+
             # Delete from start (line 1.0 to line N.0)
             self.system_log.delete("1.0", f"{lines_to_remove + 1}.0")
-            
+
             self.system_log.config(state=tk.DISABLED)
-            
+
         except Exception as e:
             self.logger.warning(f"Error trimming system log: {e}")
 
@@ -370,29 +370,29 @@ class OllamaGUI:
                 self._pending_log_messages = []
             self._pending_log_messages.append((message, msg_type, color))
             return
-        
+
         from datetime import datetime
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_message = f"[{timestamp}] {message}\n"
-        
+
         def update_log():
             try:
                 self.system_log.config(state=tk.NORMAL)
-                
+
                 # Insert with color tag
                 tag_name = f"color_{color.replace('#', '')}"
                 self.system_log.tag_config(tag_name, foreground=color)
                 self.system_log.insert(tk.END, formatted_message, tag_name)
-                
+
                 self.system_log.see(tk.END)
                 self.system_log.config(state=tk.DISABLED)
-                
+
                 # Trim log if needed (performance optimization)
                 self._trim_system_log()
-                
+
             except Exception as e:
                 print(f"Error updating system log: {e}")
-        
+
         if threading.current_thread() != threading.main_thread():
             self.root.after(0, update_log)
         else:
@@ -416,13 +416,13 @@ class OllamaGUI:
         """
         if not response or not response.strip():
             return
-        
+
         try:
             # Queue for GUI display - use string "agent" for compatibility
             self.message_queue.put(("agent", self.agentname, response))
-            
+
             self.logger.system(f"[Autonomous] Queued for display: {response[:60]}...")
-            
+
             # Handle TTS if enabled
             import personality.controls as controls
             if controls.AVATAR_SPEECH and len(response) < 1000:
@@ -430,7 +430,7 @@ class OllamaGUI:
                 self.logger.speech(f"[Autonomous] Speaking: {response[:60]}...")
             else:
                 self.logger.system(f"[Autonomous] No TTS (disabled or too long)")
-            
+
         except Exception as e:
             self.logger.error(f"Error handling autonomous response: {e}")
             import traceback
@@ -473,17 +473,17 @@ class OllamaGUI:
                             self.processing_label.config(text="")
                         self.current_message = None
                         continue
-                    
+
                     # Import MessageType for type checking
                     from BASE.core.logger import MessageType
-                    
+
                     # Handle voice input (legacy string type)
                     if msg_type == "voice_input":
                         ChatView.add_chat_message(self, sender, message, MessageType.USER)
                         continue
-                    
+
                     # CRITICAL FIX: Check if msg_type is already a MessageType enum
-                    
+
                     if isinstance(msg_type, MessageType):
                         # Already an enum - use directly
                         if msg_type == MessageType.AGENT:
@@ -506,10 +506,10 @@ class OllamaGUI:
                             "twitch": MessageType.TWITCH,
                         }
                         display_type = type_map.get(msg_type, MessageType.SYSTEM)
-                        
+
                         # if msg_type == "agent":
                         #     self.logger.system(f"[Display] Agent string response: {message[:60]}...")
-                    
+
                     # Display message with correct type
                     ChatView.add_chat_message(self, sender, message, display_type)
 
@@ -519,7 +519,7 @@ class OllamaGUI:
                     self.logger.error(f"Error processing message from queue: {e}")
                     import traceback
                     traceback.print_exc()
-            
+
             # Log queue processing if messages were processed
             if messages_processed > 0:
                 self.logger.system(f"[Queue] Processed {messages_processed} message(s)")
@@ -594,7 +594,7 @@ class OllamaGUI:
         if hasattr(self.ai_core, 'processing_delegator'):
             if hasattr(self.ai_core.processing_delegator, 'thought_processor'):
                 thought_processor = self.ai_core.processing_delegator.thought_processor
-                
+
                 # Use new method to register callback
                 thought_processor.set_autonomous_response_callback(self.handle_autonomous_response)
                 self.logger.system("[Init] Autonomous response callback registered via thought_processor")
@@ -620,13 +620,23 @@ class OllamaGUI:
         except Exception as e:
             self.logger.error(f"Error checking memory stats: {e}")
 
+        # START COGNITIVE LOOP
+        try:
+            thought_processor = self.ai_core.processing_delegator.thought_processor
+            thought_processor.event_loop = self.ai_core.main_loop
+            thought_processor.set_ai_core_reference(self.ai_core)
+            thought_processor.start_continuous_thinking()
+            self.logger.system("[Init] Cognitive loop started")
+        except Exception as e:
+            self.logger.error(f"[Init] Failed to start cognitive loop: {e}")
+
     def on_closing(self):
         try:
             self.voice_manager.stop_voice_input()
 
             if hasattr(self, 'tts_tool') and self.tts_tool:
                 self.tts_tool.stop()
-            
+
             # Disconnect from Voice Hub if connected (NEW)
             if hasattr(self.voice_manager, 'hub_client') and \
             self.voice_manager.hub_client and \

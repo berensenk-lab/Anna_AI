@@ -1,0 +1,81 @@
+{
+  "tool_name": "log_watcher",
+  "control_variable_name": "USE_LOG_WATCHER",
+  "control_variable_value": true,
+  "tool_description": "Real-time log file monitoring. Auto-discovers .log files under C:/Users/beren and watches them for errors, exceptions, crashes, log spam and fast growth. Alerts injected into thought buffer proactively.",
+  "priority": "MEDIUM",
+  "available_commands": [
+    {
+      "command": "watch_file",
+      "args": ["path: str", "label: str"],
+      "description": "Start watching a specific log file",
+      "format": "{\"tool\": \"log_watcher.watch_file\", \"args\": [\"C:/Users/beren/Anna_AI/app.log\", \"Anna\"]}"
+    },
+    {
+      "command": "unwatch_file",
+      "args": ["path: str"],
+      "description": "Stop watching a log file",
+      "format": "{\"tool\": \"log_watcher.unwatch_file\", \"args\": [\"C:/Users/beren/Anna_AI/app.log\"]}"
+    },
+    {
+      "command": "list_watched",
+      "args": [],
+      "description": "List all watched log files with error counts",
+      "format": "{\"tool\": \"log_watcher.list_watched\", \"args\": []}"
+    },
+    {
+      "command": "get_tail",
+      "args": ["path: str", "lines: int"],
+      "description": "Get the last N lines from a log file",
+      "format": "{\"tool\": \"log_watcher.get_tail\", \"args\": [\"C:/Users/beren/Anna_AI/app.log\", 50]}"
+    },
+    {
+      "command": "search_log",
+      "args": ["path: str", "query: str"],
+      "description": "Search a log file for a keyword",
+      "format": "{\"tool\": \"log_watcher.search_log\", \"args\": [\"C:/Users/beren/Anna_AI/app.log\", \"timeout\"]}"
+    },
+    {
+      "command": "discover",
+      "args": [],
+      "description": "Auto-discover and watch all .log files under C:/Users/beren",
+      "format": "{\"tool\": \"log_watcher.discover\", \"args\": []}"
+    }
+  ],
+  "tool_usage_examples": [
+    "{\"tool\": \"log_watcher.list_watched\", \"args\": []}",
+    "{\"tool\": \"log_watcher.get_tail\", \"args\": [\"C:/Users/beren/Anna_AI/app.log\", 100]}",
+    "{\"tool\": \"log_watcher.search_log\", \"args\": [\"C:/Users/beren/Anna_AI/app.log\", \"error\"]}",
+    "{\"tool\": \"log_watcher.discover\", \"args\": []}",
+    "{\"tool\": \"log_watcher.watch_file\", \"args\": [\"C:/Users/beren/myapp/server.log\", \"Server\"]}"
+  ],
+  "tool_usage_guidance": [
+    "Auto-discovers all .log files on startup — no manual setup needed",
+    "Polls every 5 seconds for new log content",
+    "Detects: ERROR/EXCEPTION keywords, crash patterns, log spam (20+ repeats in 60s), fast growth (10MB/min)",
+    "Use get_tail to read recent log output",
+    "Use search_log to find specific errors or events",
+    "Use list_watched to see all monitored files and their error counts"
+  ],
+  "proactive_triggers": [
+    "When an error or exception appears in any watched log file",
+    "When a crash pattern is detected (exit code, killed by signal)",
+    "When the same log line repeats 20+ times in 60 seconds",
+    "When a log file grows faster than 10MB per minute",
+    "When user asks 'check my logs' or 'any errors in the logs?'"
+  ],
+  "cooldown_seconds": 0,
+  "timeout_seconds": 15,
+  "retry_on_failure": false,
+  "max_retries": 0,
+  "metadata": {
+    "category": "System",
+    "display_name": "Log Watcher",
+    "gui_label": "Log Watcher",
+    "gui_icon": "📋",
+    "version": "1.0.0",
+    "requires_api": false,
+    "dependencies": [],
+    "notes": "Auto-discovers logs on startup. Background context loop polls all watched files every 5 seconds."
+  }
+}

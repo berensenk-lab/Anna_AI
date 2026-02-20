@@ -1,0 +1,111 @@
+{
+  "tool_name": "process_monitor",
+  "control_variable_name": "USE_PROCESS_MONITOR",
+  "control_variable_value": true,
+  "tool_description": "System process monitoring and management. Lists processes sorted by CPU or RAM, finds resource hogs, identifies which process owns a port, watches specific processes for crashes, and handles termination with mandatory confirmation.",
+  "priority": "MEDIUM",
+  "available_commands": [
+    {
+      "command": "list_processes",
+      "args": ["sort_by: str", "limit: int"],
+      "description": "List running processes sorted by cpu or ram",
+      "format": "{\"tool\": \"process_monitor.list_processes\", \"args\": [\"cpu\", 20]}"
+    },
+    {
+      "command": "find_hogs",
+      "args": [],
+      "description": "Find processes exceeding CPU (50%) or RAM (500MB) thresholds",
+      "format": "{\"tool\": \"process_monitor.find_hogs\", \"args\": []}"
+    },
+    {
+      "command": "find_by_port",
+      "args": ["port: int"],
+      "description": "Find which process is using a specific port",
+      "format": "{\"tool\": \"process_monitor.find_by_port\", \"args\": [8080]}"
+    },
+    {
+      "command": "find_by_name",
+      "args": ["query: str"],
+      "description": "Find all processes matching a name",
+      "format": "{\"tool\": \"process_monitor.find_by_name\", \"args\": [\"python\"]}"
+    },
+    {
+      "command": "propose_kill",
+      "args": ["pid_or_name"],
+      "description": "Propose killing a process — REQUIRES confirm_kill before executing",
+      "format": "{\"tool\": \"process_monitor.propose_kill\", \"args\": [\"notepad.exe\"]}"
+    },
+    {
+      "command": "confirm_kill",
+      "args": [],
+      "description": "Execute the previously proposed kill after user confirmation",
+      "format": "{\"tool\": \"process_monitor.confirm_kill\", \"args\": []}"
+    },
+    {
+      "command": "cancel_kill",
+      "args": [],
+      "description": "Cancel the pending kill without taking action",
+      "format": "{\"tool\": \"process_monitor.cancel_kill\", \"args\": []}"
+    },
+    {
+      "command": "watch_process",
+      "args": ["proc_name: str", "label: str"],
+      "description": "Watch a process and alert via thought buffer if it stops running",
+      "format": "{\"tool\": \"process_monitor.watch_process\", \"args\": [\"ollama.exe\", \"Ollama\"]}"
+    },
+    {
+      "command": "unwatch_process",
+      "args": ["proc_name: str"],
+      "description": "Stop watching a process",
+      "format": "{\"tool\": \"process_monitor.unwatch_process\", \"args\": [\"ollama.exe\"]}"
+    },
+    {
+      "command": "list_watched",
+      "args": [],
+      "description": "List all watched processes and their current status",
+      "format": "{\"tool\": \"process_monitor.list_watched\", \"args\": []}"
+    },
+    {
+      "command": "system_overview",
+      "args": [],
+      "description": "Get CPU, RAM, disk, network stats and top 5 processes",
+      "format": "{\"tool\": \"process_monitor.system_overview\", \"args\": []}"
+    }
+  ],
+  "tool_usage_examples": [
+    "{\"tool\": \"process_monitor.system_overview\", \"args\": []}",
+    "{\"tool\": \"process_monitor.find_hogs\", \"args\": []}",
+    "{\"tool\": \"process_monitor.find_by_port\", \"args\": [8080]}",
+    "{\"tool\": \"process_monitor.list_processes\", \"args\": [\"ram\", 10]}",
+    "{\"tool\": \"process_monitor.propose_kill\", \"args\": [\"notepad.exe\"]}"
+  ],
+  "tool_usage_guidance": [
+    "Always use propose_kill first — never confirm_kill without a prior proposal",
+    "Protected processes cannot be killed: System, csrss, lsass, services, svchost, explorer, python.exe",
+    "Use watch_process to monitor critical processes like ollama — Anna will alert if they crash",
+    "Use find_by_port when something is blocking a port you need",
+    "system_overview gives the fastest snapshot of overall system state",
+    "Background context loop checks watched processes every 30 seconds"
+  ],
+  "proactive_triggers": [
+    "When user asks 'what is using the most CPU/RAM?'",
+    "When user asks 'what is on port X?'",
+    "When a watched process stops running",
+    "When user asks to kill or stop a process",
+    "When user asks for a system overview or resource usage"
+  ],
+  "cooldown_seconds": 1,
+  "timeout_seconds": 15,
+  "retry_on_failure": false,
+  "max_retries": 0,
+  "metadata": {
+    "category": "System",
+    "display_name": "Process Monitor",
+    "gui_label": "Process Monitor",
+    "gui_icon": "⚙️",
+    "version": "1.0.0",
+    "requires_api": false,
+    "dependencies": ["psutil"],
+    "notes": "Kill workflow requires two steps: propose_kill then confirm_kill. Protected system processes are blocked from termination."
+  }
+}

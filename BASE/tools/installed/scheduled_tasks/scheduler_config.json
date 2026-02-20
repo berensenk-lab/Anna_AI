@@ -1,0 +1,33 @@
+{
+  "tasks": {
+    "daily_health": {
+      "id": "daily_health",
+      "name": "Daily System Health Report",
+      "task_type": "builtin",
+      "task_fn": "system_health_report",
+      "schedule": "cron",
+      "hour": 9,
+      "minute": 0,
+      "enabled": true
+    },
+    "morning_repos": {
+      "id": "morning_repos",
+      "name": "Morning Repo Scan",
+      "task_type": "builtin",
+      "task_fn": "repo_scan",
+      "schedule": "cron",
+      "hour": 9,
+      "minute": 15,
+      "enabled": true
+    },
+    "hourly_logs": {
+      "id": "hourly_logs",
+      "name": "Hourly Log Summary",
+      "task_type": "builtin",
+      "task_fn": "log_summary",
+      "schedule": "interval",
+      "hours": 1,
+      "enabled": true
+    }
+  }
+}

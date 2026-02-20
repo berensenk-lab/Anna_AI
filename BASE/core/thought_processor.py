@@ -270,7 +270,7 @@ class ThoughtProcessor:
     # THOUGHT PROCESSING - SIMPLIFIED TRIGGER
     # ========================================================================
     
-    async def process_thoughts(self, context_parts: List[str] = None) -> bool:
+    async def process_thoughts(self, context_parts: List[str] = None, force: bool = False) -> bool:
         """
         Core thought processing with mode-specific temperatures
         
@@ -286,7 +286,7 @@ class ThoughtProcessor:
         
         # PROCESSING RATE LIMITING
         LIMIT_PROCESSING = getattr(self.controls, 'LIMIT_PROCESSING', False)
-        if LIMIT_PROCESSING:
+        if LIMIT_PROCESSING and not force:
             current_time = time.time()
             time_since_last = current_time - self._last_processing_time
             processing_delay = getattr(self.controls, 'PROCESSING_DELAY', 30)
@@ -627,7 +627,11 @@ class ThoughtProcessor:
         if actions_match:
             try:
                 actions_text = actions_match.group(1).strip()
-                actions_text = re.sub(r'```json\s*|\s*```', '', actions_text)
+                actions_text = re.sub(r'^```(?:json|xml)?\s*', '', actions_text, flags=re.IGNORECASE)
+                actions_text = re.sub(r'\s*```$', '', actions_text)
+                if not actions_text:
+                    actions = []
+                    return thoughts, actions, should_speak
                 actions = json.loads(actions_text)
                 if not isinstance(actions, list):
                     actions = [actions]
@@ -764,7 +768,10 @@ class ThoughtProcessor:
             actions_text = actions_match.group(1).strip()
             
             # Remove any markdown code fences
-            actions_text = re.sub(r'```json\s*|\s*```', '', actions_text)
+            actions_text = re.sub(r'^```(?:json|xml)?\s*', '', actions_text, flags=re.IGNORECASE)
+            actions_text = re.sub(r'\s*```$', '', actions_text)
+            if not actions_text:
+                return []
             
             # Parse JSON
             actions = json.loads(actions_text)

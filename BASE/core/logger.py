@@ -1,4 +1,4 @@
-# Filename: BASE/core/logger.py
+﻿# Filename: BASE/core/logger.py
 """
 Unified logging system for Anna AI
 Converted to singleton pattern with proper config reference handling
@@ -239,7 +239,8 @@ class Logger:
         message: str,
         msg_type: MessageType = MessageType.SYSTEM,
         level: LogLevel = LogLevel.INFO,
-        prefix: Optional[str] = None
+        prefix: Optional[str] = None,
+        extra_info: Optional[dict] = None
     ):
         """Main logging method with centralized filtering"""
         

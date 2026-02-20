@@ -130,3 +130,4 @@ build/
 # Performance profiling
 *.prof
 *.lprof
+.aider*

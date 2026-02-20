@@ -1,0 +1,75 @@
+{
+  "tool_name": "docker",
+  "control_variable_name": "USE_DOCKER",
+  "control_variable_value": false,
+  "tool_description": "Docker container monitoring, health checks, log viewing, and container management",
+  "priority": "MEDIUM",
+
+  "available_commands": [
+    {
+      "command": "list_containers",
+      "args": ["all_containers: bool"],
+      "description": "List Docker containers (running or all)",
+      "format": "{\"tool\": \"docker.list_containers\", \"args\": [false]}"
+    },
+    {
+      "command": "get_container_logs",
+      "args": ["container_name: str", "lines: int"],
+      "description": "Get recent log output from a container",
+      "format": "{\"tool\": \"docker.get_container_logs\", \"args\": [\"postgres\", 50]}"
+    },
+    {
+      "command": "get_container_health",
+      "args": ["container_name: str"],
+      "description": "Get detailed health and resource usage for a container",
+      "format": "{\"tool\": \"docker.get_container_health\", \"args\": [\"postgres\"]}"
+    },
+    {
+      "command": "restart_container",
+      "args": ["container_name: str"],
+      "description": "Restart a Docker container",
+      "format": "{\"tool\": \"docker.restart_container\", \"args\": [\"postgres\"]}"
+    }
+  ],
+
+  "tool_usage_examples": [
+    "{\"tool\": \"docker.list_containers\", \"args\": [false]}",
+    "{\"tool\": \"docker.list_containers\", \"args\": [true]}",
+    "{\"tool\": \"docker.get_container_logs\", \"args\": [\"postgres\", 100]}",
+    "{\"tool\": \"docker.get_container_health\", \"args\": [\"postgres\"]}",
+    "{\"tool\": \"docker.restart_container\", \"args\": [\"postgres\"]}"
+  ],
+
+  "tool_usage_guidance": [
+    "Use list_containers to see all running containers",
+    "Use get_container_logs to diagnose container issues",
+    "Use get_container_health to monitor CPU and RAM usage",
+    "Use restart_container to fix unhealthy or unresponsive containers",
+    "Background monitor automatically alerts when containers go down",
+    "Requires Docker Desktop to be running"
+  ],
+
+  "proactive_triggers": [
+    "When user asks 'what containers are running?' or 'list docker'",
+    "When container is unhealthy or not responding",
+    "When user asks for logs or diagnostic info",
+    "When background monitor detects a container going down",
+    "When user needs to restart a misbehaving container"
+  ],
+
+  "cooldown_seconds": 2,
+  "timeout_seconds": 30,
+  "retry_on_failure": false,
+  "max_retries": 0,
+
+  "metadata": {
+    "category": "Infrastructure",
+    "display_name": "Docker",
+    "gui_label": "Docker",
+    "gui_icon": "🐳",
+    "version": "2.0.0",
+    "requires_api": false,
+    "dependencies": ["docker"],
+    "notes": "Includes background monitor that alerts when containers change state. Requires Docker Desktop running."
+  }
+}

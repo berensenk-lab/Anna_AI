@@ -47,7 +47,7 @@ USE_REMINDERS = True
 USE_CALENDAR = True
 USE_MEMORY_SEARCH = True
 USE_DICE_ROLLER = True
-USE_GAME_GUIDE = True
+USE_GAME_GUIDE = False
 USE_SCREENSHOT_VISION = True
 USE_OPENCV_VISION = False
 USE_GROUP_CHAT = False
@@ -59,7 +59,7 @@ USE_CODING = False
 USE_MCP_BRIDGE = False
 USE_UNITY_ANIMATION = False
 USE_GIT = True
-
+USE_BROWSER_TOOL = True
 
 # Thinking pace configuration
 MIN_PROACTIVE_INTERVAL = 2.0
@@ -80,11 +80,11 @@ AUTO_RESTART = False
 
 # Processing rate limiting (how fast agent can think)
 LIMIT_PROCESSING = True
-PROCESSING_DELAY = 2
+PROCESSING_DELAY = 60
 
 # Speaking rate limiting (how often agent can speak)
-LIMIT_SPEAKING = False
-SPEAKING_DELAY = 30
+LIMIT_SPEAKING = True
+SPEAKING_DELAY = 60
 
 # ========================================================================
 # AUTO-RESPONSE (GUI/CLI)

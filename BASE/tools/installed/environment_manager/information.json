@@ -1,0 +1,80 @@
+{
+  "tool_name": "environment_manager",
+  "control_variable_name": "USE_ENVIRONMENT_MANAGER",
+  "control_variable_value": false,
+  "tool_description": "Python environment management for conda and venv. Discovers all environments under C:/Users/beren, compares package lists, checks health with pip check, and suggests the right environment for each project.",
+  "priority": "LOW",
+  "available_commands": [
+    {
+      "command": "list_environments",
+      "args": [],
+      "description": "Discover and list all conda and venv environments",
+      "format": "{\"tool\": \"environment_manager.list_environments\", \"args\": []}"
+    },
+    {
+      "command": "get_packages",
+      "args": ["env_name: str"],
+      "description": "List all packages installed in a specific environment",
+      "format": "{\"tool\": \"environment_manager.get_packages\", \"args\": [\"base\"]}"
+    },
+    {
+      "command": "compare_environments",
+      "args": ["env_name_a: str", "env_name_b: str"],
+      "description": "Compare two environments — shows packages only in each and version differences",
+      "format": "{\"tool\": \"environment_manager.compare_environments\", \"args\": [\"base\", \"venv\"]}"
+    },
+    {
+      "command": "check_health",
+      "args": ["env_name: str"],
+      "description": "Run pip check on an environment to find broken dependencies",
+      "format": "{\"tool\": \"environment_manager.check_health\", \"args\": [\"base\"]}"
+    },
+    {
+      "command": "check_project_environment",
+      "args": ["project_path: str"],
+      "description": "Detect which environment a project uses (local venv, conda env, etc.)",
+      "format": "{\"tool\": \"environment_manager.check_project_environment\", \"args\": [\"C:/Users/beren/Anna_AI\"]}"
+    },
+    {
+      "command": "find_duplicates",
+      "args": [],
+      "description": "Find packages installed at different versions across environments",
+      "format": "{\"tool\": \"environment_manager.find_duplicates\", \"args\": []}"
+    }
+  ],
+  "tool_usage_examples": [
+    "{\"tool\": \"environment_manager.list_environments\", \"args\": []}",
+    "{\"tool\": \"environment_manager.check_health\", \"args\": [\"base\"]}",
+    "{\"tool\": \"environment_manager.compare_environments\", \"args\": [\"base\", \"venv\"]}",
+    "{\"tool\": \"environment_manager.check_project_environment\", \"args\": [\"C:/Users/beren/Anna_AI\"]}",
+    "{\"tool\": \"environment_manager.find_duplicates\", \"args\": []}"
+  ],
+  "tool_usage_guidance": [
+    "Use list_environments first to see all available environment names",
+    "Use check_health on an environment before running Anna to catch broken dependencies early",
+    "Use compare_environments to understand differences between conda base and a project venv",
+    "Use check_project_environment to confirm which Python Anna is using for a project",
+    "find_duplicates checks the first 8 environments to avoid being too slow",
+    "Requires conda to be on PATH for conda environment discovery"
+  ],
+  "proactive_triggers": [
+    "When user asks 'what Python environments do I have?'",
+    "When user asks which environment to use for a project",
+    "When user asks to compare two environments",
+    "When user asks if their environment is healthy or has broken dependencies"
+  ],
+  "cooldown_seconds": 5,
+  "timeout_seconds": 60,
+  "retry_on_failure": false,
+  "max_retries": 0,
+  "metadata": {
+    "category": "Development",
+    "display_name": "Environment Manager",
+    "gui_label": "Environment Manager",
+    "gui_icon": "🐍",
+    "version": "1.0.0",
+    "requires_api": false,
+    "dependencies": [],
+    "notes": "Disabled by default — listing packages runs pip list in each environment which can be slow. Enable when needed."
+  }
+}

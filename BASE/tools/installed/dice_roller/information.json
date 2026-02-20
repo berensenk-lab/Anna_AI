@@ -125,7 +125,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Gaming",
+    "category": "Utility",
     "display_name": "Dice Roller",
     "gui_label": "Dice Roller",
     "gui_icon": "",

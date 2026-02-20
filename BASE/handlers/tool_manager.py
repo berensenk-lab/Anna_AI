@@ -7,7 +7,6 @@ CRITICAL FIX: Maps control variables (USE_WIKI_SEARCH) to tool names (wiki_searc
 from typing import List, Dict, Any, Optional
 import asyncio
 import time
-from pathlib import Path
 
 from BASE.handlers.tool_lifecycle import ToolLifecycleManager
 
@@ -43,7 +42,8 @@ class ToolManager:
         # Lifecycle manager
         self.lifecycle_manager = ToolLifecycleManager(
             project_root=project_root,
-            logger=logger
+            logger=logger,
+            config=config
         )
         self.lifecycle_manager.set_active_tools(self._active_tools)
         
@@ -55,13 +55,18 @@ class ToolManager:
         self.tool_instances = self._active_tools
         
         # Discover available tools and build control mapping
+        discovery_start = time.perf_counter()
         discovered = self.lifecycle_manager.discover_tools()
+        discovery_ms = (time.perf_counter() - discovery_start) * 1000
         self._build_control_mapping(discovered)
         
         if self.logger:
             discovered_count = len(self.lifecycle_manager.get_all_metadata())
             self.logger.system(
                 f"[Tool Manager] Initialized with {discovered_count} tools discovered"
+            )
+            self.logger.system(
+                f"[StartupTiming] tool_discovery: {discovery_ms:.1f}ms"
             )
 
     def _build_control_mapping(self, discovered_tools: Dict[str, Dict]):

@@ -307,10 +307,8 @@ class ProcessingDelegator:
             self.logger.memory("[Memory] Retrieved context")
         
         # STAGE 1: THOUGHT PROCESSING
-        await self.thought_processor.process_thoughts(context_parts=context_parts)
-        
-        # Process tool results
-        await self.thought_processor.process_thoughts(context_parts=context_parts)
+        await self.thought_processor.process_thoughts(context_parts=context_parts, force=True)
+        # User input always processes immediately
         
         # STAGE 2: CHECK IF RESPONSE NEEDED
         should_respond = self.thought_processor.thought_buffer.response_trigger.should_respond()

@@ -1,0 +1,92 @@
+{
+  "tool_name": "aider",
+  "control_variable_name": "USE_AIDER",
+  "control_variable_value": false,
+  "tool_description": "Aider AI Code Assistant for proposing and executing code fixes and feature implementations",
+  "priority": "MEDIUM",
+
+  "available_commands": [
+    {
+      "command": "propose_fix",
+      "args": ["file_path: str", "issue_description: str"],
+      "description": "Propose an Aider command to fix a specific issue in a file",
+      "format": "{\"tool\": \"aider.propose_fix\", \"args\": [\"C:/path/to/file.py\", \"Fix the authentication bug\"]}"
+    },
+    {
+      "command": "propose_feature",
+      "args": ["file_paths: list[str]", "feature_description: str"],
+      "description": "Propose an Aider command to implement a new feature across files",
+      "format": "{\"tool\": \"aider.propose_feature\", \"args\": [[\"auth.py\", \"user.py\"], \"Add JWT authentication\"]}"
+    },
+    {
+      "command": "propose_fix_from_scan",
+      "args": ["scan_results: dict"],
+      "description": "Propose fixes for issues found by scan_code",
+      "format": "{\"tool\": \"aider.propose_fix_from_scan\", \"args\": [{\"path\": \"file.py\", \"issues\": [...]}]}"
+    },
+    {
+      "command": "confirm_and_run",
+      "args": [],
+      "description": "Run the pending Aider command after user confirmation",
+      "format": "{\"tool\": \"aider.confirm_and_run\", \"args\": []}"
+    },
+    {
+      "command": "cancel_pending",
+      "args": [],
+      "description": "Cancel the pending Aider command without running",
+      "format": "{\"tool\": \"aider.cancel_pending\", \"args\": []}"
+    },
+    {
+      "command": "view_aider_history",
+      "args": ["lines: int"],
+      "description": "View recent Aider chat history",
+      "format": "{\"tool\": \"aider.view_aider_history\", \"args\": [50]}"
+    },
+    {
+      "command": "get_pending_command",
+      "args": [],
+      "description": "Check if there is a pending Aider command waiting for confirmation",
+      "format": "{\"tool\": \"aider.get_pending_command\", \"args\": []}"
+    }
+  ],
+
+  "tool_usage_examples": [
+    "{\"tool\": \"aider.propose_fix\", \"args\": [\"C:/Users/beren/Anna_AI/main.py\", \"Add error handling for missing config\"]}",
+    "{\"tool\": \"aider.propose_feature\", \"args\": [[\"core.py\", \"utils.py\"], \"Implement async/await support\"]}",
+    "{\"tool\": \"aider.confirm_and_run\", \"args\": []}",
+    "{\"tool\": \"aider.cancel_pending\", \"args\": []}",
+    "{\"tool\": \"aider.view_aider_history\", \"args\": [100]}"
+  ],
+
+  "tool_usage_guidance": [
+    "Always PROPOSE first with propose_fix or propose_feature",
+    "Never auto-run without explicit user approval",
+    "Wait for user to say 'confirm' or 'yes' before calling confirm_and_run",
+    "Use propose_fix_from_scan to auto-propose fixes for issues Anna found",
+    "IMPORTANT: Aider requires 'aider-chat' package installed: pip install aider-chat",
+    "Configuration is in .env: AIDER_MODEL (default: ollama/qwen2.5-coder:7b)"
+  ],
+
+  "proactive_triggers": [
+    "When user asks 'fix this code' or 'implement this feature'",
+    "After code scanning detects issues that can be automatically fixed",
+    "When user explicitly requests Aider assistance with code",
+    "When proposing major refactoring or new implementations"
+  ],
+
+  "cooldown_seconds": 5,
+  "timeout_seconds": 300,
+  "retry_on_failure": false,
+  "max_retries": 0,
+
+  "metadata": {
+    "category": "Development",
+    "display_name": "Aider Code Assistant",
+    "gui_label": "Aider",
+    "gui_icon": "🔧",
+    "version": "2.0.0",
+    "requires_api": false,
+    "dependencies": ["aider-chat"],
+    "notes": "Requires Aider CLI installed. Always proposes commands and waits for user confirmation before executing."
+  }
+}

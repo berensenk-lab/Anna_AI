@@ -206,8 +206,6 @@ class AICore:
             ollama_endpoint=config.ollama_endpoint,
             use_ai_filter=controls_module.USE_AI_CONTENT_FILTER
         )
-        
-        self.logger.system("[Init] AI Core initialization complete")
     
     # ========================================================================
     # INTERNAL TOOL MANAGER (NEW)
@@ -227,14 +225,14 @@ class AICore:
                 logger=self.logger
             )
             
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                loop.run_until_complete(
-                    self.internal_tool_manager.discover_and_initialize()
+            if self.main_loop and self.main_loop.is_running():
+                future = asyncio.run_coroutine_threadsafe(
+                    self.internal_tool_manager.discover_and_initialize(),
+                    self.main_loop
                 )
-            finally:
-                loop.close()
+                future.result(timeout=60)
+            else:
+                raise RuntimeError("Main event loop is not running")
             
             self._setup_tts_from_internal_tools()
             
@@ -406,12 +404,15 @@ class AICore:
         
         # Stop internal tools
         if self.internal_tool_manager:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
             try:
-                loop.run_until_complete(self.internal_tool_manager.cleanup_all())
-            finally:
-                loop.close()
+                if self.main_loop and self.main_loop.is_running():
+                    future = asyncio.run_coroutine_threadsafe(
+                        self.internal_tool_manager.cleanup_all(),
+                        self.main_loop
+                    )
+                    future.result(timeout=15)
+            except Exception as e:
+                self.logger.warning(f"Error cleaning up internal tools: {e}")
         
         # Stop TTS (legacy)
         if self.tts_tool:

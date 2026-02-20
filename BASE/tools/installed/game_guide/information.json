@@ -59,7 +59,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Game Information",
+    "category": "Memory",
     "display_name": "Game Guide",
     "gui_label": "Game Guides",
     "gui_icon": "",

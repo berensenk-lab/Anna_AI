@@ -1,23 +1,45 @@
 {
-  "name": "browser",
-  "display_name": "Browser Automation",
-  "description": "Control web browser for automation tasks",
-  "version": "1.0.0",
-  "author": "Anna AI Team",
-  "category": "automation",
-  "capabilities": [
-    "web_navigation",
-    "form_filling",
-    "screenshot",
-    "element_interaction"
-  ],
-  "requirements": {
-    "python": ["playwright", "Pillow"],
-    "system": ["chromium", "firefox"]
-  },
-  "configuration": {
-    "browser_type": "chromium",
-    "headless": false,
-    "viewport": { "width": 1280, "height": 720 }
-  }
+    "tool_name": "browser_tool",
+    "control_variable_name": "USE_BROWSER_TOOL",
+    "display_name": "Browser Automation",
+    "description": "Headless browser control for web navigation, form automation, screenshots, and JavaScript execution via Playwright.",
+    "version": "1.0.0",
+    "priority": 0,
+    "commands": [
+        {
+            "name": "navigate",
+            "description": "Navigate to a URL",
+            "args": ["url"]
+        },
+        {
+            "name": "screenshot",
+            "description": "Take a screenshot of the current page",
+            "args": ["path (optional)"]
+        },
+        {
+            "name": "click",
+            "description": "Click an element by CSS selector",
+            "args": ["selector"]
+        },
+        {
+            "name": "fill",
+            "description": "Fill an input field",
+            "args": ["selector", "value"]
+        },
+        {
+            "name": "get_text",
+            "description": "Get text content of an element",
+            "args": ["selector"]
+        },
+        {
+            "name": "execute_js",
+            "description": "Execute JavaScript on the page",
+            "args": ["script"]
+        },
+        {
+            "name": "get_page_info",
+            "description": "Get current page URL and title",
+            "args": []
+        }
+    ]
 }

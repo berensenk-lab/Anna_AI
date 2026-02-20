@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Anna AI - Main Application Entry Point
 
@@ -13,10 +13,12 @@ Usage:
 """
 
 import argparse
+import asyncio
 import sys
 import os
 import logging
 import traceback
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -46,6 +48,17 @@ class AnnaAIApp:
         self.config: Optional[Config] = None
         self.ai_core = None
         self.gui = None
+        self.startup_timings = {}
+
+    def _record_startup_timing(self, stage: str, started_at: float) -> None:
+        """Record and log a startup timing stage in milliseconds."""
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        self.startup_timings[stage] = elapsed_ms
+        message = f"[StartupTiming] {stage}: {elapsed_ms:.1f}ms"
+        if self.logger:
+            self.logger.log(message, MessageType.SYSTEM)
+        else:
+            print(f"[INFO] {message}")
 
     def setup_environment(self) -> bool:
         """
@@ -91,7 +104,9 @@ class AnnaAIApp:
         """
         try:
             print("[INFO] Initializing configuration...")
+            config_start = time.perf_counter()
             self.config = Config()
+            self._record_startup_timing("config_load", config_start)
 
             print("[INFO] Initializing logger...")
             self.logger = Logger(self.config)
@@ -105,8 +120,11 @@ class AnnaAIApp:
             )
 
             print("[INFO] Initializing AI core...")
-            core_initializer = CoreInitializer(self.config, self.logger)
-            self.ai_core = core_initializer.initialize()
+            import personality.controls as controls
+            from BASE.core.ai_core import AICore
+            core_start = time.perf_counter()
+            self.ai_core = AICore(self.config, controls, PROJECT_ROOT)
+            self._record_startup_timing("ai_core_init", core_start)
 
             if not self.ai_core:
                 self.logger.log(
@@ -119,6 +137,14 @@ class AnnaAIApp:
                 "AI core initialized successfully",
                 MessageType.SYSTEM
             )
+            if self.startup_timings:
+                summary = ", ".join(
+                    f"{k}={v:.1f}ms" for k, v in self.startup_timings.items()
+                )
+                self.logger.log(
+                    f"[StartupTiming] Summary: {summary}",
+                    MessageType.SYSTEM
+                )
             return True
 
         except Exception as e:
@@ -239,10 +265,11 @@ class AnnaAIApp:
                 print("[ERROR] AI core not initialized")
                 return False
 
+            gui_start = time.perf_counter()
             print("[INFO] Initializing GUI...")
             import tkinter as tk
             from BASE.interface.gui_interface import OllamaGUI
-            
+
             root = tk.Tk()
             self.gui = OllamaGUI(root)
             self.gui.setup_chat_with_history()
@@ -252,6 +279,7 @@ class AnnaAIApp:
                 "GUI interface initialized",
                 MessageType.SYSTEM
             )
+            self._record_startup_timing("gui_ready", gui_start)
 
             print("[INFO] Starting GUI event loop...")
             root.mainloop()
@@ -280,7 +308,9 @@ class AnnaAIApp:
                 print("[ERROR] AI core not initialized")
                 return False
 
+            cli_start = time.perf_counter()
             print("[INFO] Starting CLI mode (type 'exit' to quit)...\n")
+            self._record_startup_timing("cli_ready", cli_start)
 
             while True:
                 try:
@@ -293,8 +323,12 @@ class AnnaAIApp:
                     if not user_input:
                         continue
 
-                    # Process message through AI core
-                    self.ai_core.process_user_message(user_input)
+                    # Process message through AI core event loop
+                    future = asyncio.run_coroutine_threadsafe(
+                        self.ai_core.process_user_message(user_input),
+                        self.ai_core.main_loop
+                    )
+                    future.result(timeout=30)
 
                     # In CLI mode, just wait for cognitive loop to process
                     # The response will be logged/printed via the logger

@@ -151,86 +151,6 @@ class WarudoAnimationTool(BaseTool):
                 self._logger.error(f"[Warudo] Reconnection error: {e}")
             return False
     
-    async def _handle_react(self, args: List[Any]) -> Dict[str, Any]:
-        """Handle react command - combined emotion + animation"""
-        if len(args) < 2:
-            return self._error_result(
-                'react requires two args: emotion and animation',
-                guidance='Example: {"tool": "warudo.react", "args": ["happy", "wave"]}'
-            )
-        
-        emotion = str(args[0]).lower()
-        animation = str(args[1]).lower()
-        
-        available_emotions = self.manager.controller.available_emotions
-        available_animations = self.manager.controller.available_animations
-        
-        if emotion not in available_emotions:
-            return self._error_result(
-                f'Unknown emotion: {emotion}',
-                metadata={'available_emotions': available_emotions},
-                guidance=f'Available emotions: {", ".join(available_emotions)}'
-            )
-        
-        if animation not in available_animations:
-            return self._error_result(
-                f'Unknown animation: {animation}',
-                metadata={'available_animations': available_animations},
-                guidance=f'Available animations: {", ".join(available_animations)}'
-            )
-        
-        if self._logger:
-            self._logger.tool(f"[Warudo] React: {emotion} + {animation}")
-        
-        loop = asyncio.get_event_loop()
-        success = await loop.run_in_executor(
-            None,
-            self.manager.send_react,
-            emotion,
-            animation
-        )
-        
-        if success:
-            if self._logger:
-                self._logger.success(f"[Warudo] React played: {emotion} + {animation}")
-            return self._success_result(
-                f'Reacted with {emotion} + {animation}',
-                metadata={'emotion': emotion, 'animation': animation}
-            )
-        else:
-            if self._logger:
-                self._logger.error(f"[Warudo] Failed to react: {emotion} + {animation}")
-            self.manager.controller.ws_connected = False
-            return self._error_result(
-                'Failed to send react (WebSocket send failed)',
-                metadata={'emotion': emotion, 'animation': animation},
-                guidance='Connection may have been lost - will reconnect on next attempt'
-            )
-    
-    async def _handle_idle(self) -> Dict[str, Any]:
-        """Handle idle command - play a subtle ambient animation"""
-        if self._logger:
-            self._logger.tool("[Warudo] Playing idle animation")
-        
-        loop = asyncio.get_event_loop()
-        success = await loop.run_in_executor(
-            None,
-            self.manager.send_idle
-        )
-        
-        if success:
-            if self._logger:
-                self._logger.success("[Warudo] Idle animation played")
-            return self._success_result('Played idle animation')
-        else:
-            if self._logger:
-                self._logger.error("[Warudo] Failed to play idle animation")
-            self.manager.controller.ws_connected = False
-            return self._error_result(
-                'Failed to play idle animation (WebSocket send failed)',
-                guidance='Connection may have been lost - will reconnect on next attempt'
-            )
-
     async def cleanup(self):
         """Cleanup Warudo resources"""
         if hasattr(self, 'manager') and self.manager:
@@ -303,14 +223,10 @@ class WarudoAnimationTool(BaseTool):
             return await self._handle_emotion(args)
         elif command == 'animation':
             return await self._handle_animation(args)
-        elif command == 'react':
-            return await self._handle_react(args)
-        elif command == 'idle':
-            return await self._handle_idle()
         else:
             return self._error_result(
                 f'Unknown command: {command}',
-                guidance='Available commands: emotion, animation, react, idle'
+                guidance='Available commands: emotion, animation'
             )
     
     async def _handle_emotion(self, args: List[Any]) -> Dict[str, Any]:

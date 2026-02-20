@@ -6,6 +6,7 @@ FIXED: Proper initialization order for PromptBuilder creation
 from typing import Optional
 from pathlib import Path
 import asyncio
+import time
 import requests
 
 
@@ -18,7 +19,8 @@ class CoreInitializer:
         'ai_core', 'config', 'controls', 'project_root', 'logger', 'main_loop',
         'memory_manager', 'memory_search', 'session_file_manager',
         'processing_delegator', 'control_manager', 'tool_manager',
-        'action_state_manager', 'instruction_persistence_manager'
+        'action_state_manager', 'instruction_persistence_manager',
+        'startup_timings'
     )
     
     def __init__(self, ai_core, config, controls, project_root, logger, main_loop):
@@ -39,6 +41,13 @@ class CoreInitializer:
         self.tool_manager = None
         self.action_state_manager = None
         self.instruction_persistence_manager = None
+        self.startup_timings = {}
+
+    def _record_startup_timing(self, stage: str, started_at: float):
+        """Record and log startup stage duration."""
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        self.startup_timings[stage] = elapsed_ms
+        self.logger.system(f"[StartupTiming] {stage}: {elapsed_ms:.1f}ms")
     
     # ========================================================================
     # MAIN INITIALIZATION
@@ -46,6 +55,7 @@ class CoreInitializer:
     
     def initialize_all_systems(self):
         """Initialize all core systems in correct order"""
+        init_started_at = time.perf_counter()
         self._init_memory_system()
         self._init_tool_system()
         self._init_processing_system()  # CRITICAL: This must fully complete first
@@ -54,6 +64,11 @@ class CoreInitializer:
         self._start_continuous_thinking()
         self._preload_models()
         self._log_initialization_summary()
+        self._record_startup_timing("core_initializer_total", init_started_at)
+        summary = ", ".join(
+            f"{k}={v:.1f}ms" for k, v in self.startup_timings.items()
+        )
+        self.logger.system(f"[StartupTiming] Core summary: {summary}")
     
     # ========================================================================
     # SUBSYSTEM INITIALIZATION
@@ -75,6 +90,10 @@ class CoreInitializer:
             
             self.memory_search = MemorySearch(self.memory_manager)
             
+            # CRITICAL: Attach to ai_core NOW so tools can find them during initialization
+            self.ai_core.memory_manager = self.memory_manager
+            self.ai_core.memory_search = self.memory_search
+            
             self.session_file_manager = SessionFileManager(
                 self.logger, self.memory_manager, self.project_root
             )
@@ -86,6 +105,7 @@ class CoreInitializer:
     
     def _init_tool_system(self):
         """Initialize simplified tool system with persistence"""
+        started_at = time.perf_counter()
         try:
             from BASE.handlers.tool_manager import ToolManager
             from BASE.core.action_state_manager import ActionStateManager
@@ -137,6 +157,8 @@ class CoreInitializer:
             import traceback
             traceback.print_exc()
             raise
+        finally:
+            self._record_startup_timing("tool_system_init", started_at)
     
     def _init_processing_system(self):
         """
@@ -281,18 +303,8 @@ class CoreInitializer:
                 "[Init] [SUCCESS] Thought buffer set for tool manager"
             )
             
-            # NOW start enabled tools (they'll have access to thought buffer)
-            enabled_tools = self.tool_manager.get_enabled_tool_names()
-            for tool_name in enabled_tools:
-                asyncio.run_coroutine_threadsafe(
-                    self.tool_manager._start_tool(tool_name),
-                    self.main_loop
-                )
-            
-            if enabled_tools:
-                self.logger.system(
-                    f"[Init] Starting {len(enabled_tools)} enabled tool(s)..."
-                )
+            # Tools are auto-started once in _init_tool_system().
+            # Avoid re-starting here to prevent duplicate initialization races.
 
             # NEW: Verify injection worked
             if hasattr(self.processing_delegator.thought_processor, 'verify_tool_injection'):
@@ -361,6 +373,7 @@ class CoreInitializer:
     
     def _preload_models(self):
         """Preload models into VRAM"""
+        started_at = time.perf_counter()
         try:
             models_to_preload = list(set([
                 self.config.thought_model,
@@ -381,16 +394,21 @@ class CoreInitializer:
                     response = requests.post(
                         f"{self.config.ollama_endpoint}/api/generate",
                         json=payload,
-                        timeout=60
+                        timeout=getattr(self.config, 'ollama_preload_timeout', 20)
                     )
                     response.raise_for_status()
                     self.logger.system(f"Model loaded: {model}")
                 except Exception as e:
-                    self.logger.warning(f"Could not preload {model}: {e}")
+                    timeout_val = getattr(self.config, 'ollama_preload_timeout', 20)
+                    self.logger.warning(
+                        f"Could not preload {model} (timeout={timeout_val}s): {e}"
+                    )
             
             self.logger.system("Model preloading complete")
         except Exception as e:
             self.logger.warning(f"Model preload failed: {e}")
+        finally:
+            self._record_startup_timing("model_preload", started_at)
     
     def _log_initialization_summary(self):
         """Log summary of initialized systems"""

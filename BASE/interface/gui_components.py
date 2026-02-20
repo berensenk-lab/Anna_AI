@@ -1,4 +1,4 @@
-# Filename: BASE/interface/gui_components.py
+﻿# Filename: BASE/interface/gui_components.py
 """
 Component managers for control panel functionality.
 ENHANCED: Dynamic internal tool discovery with mutual exclusivity
@@ -366,7 +366,7 @@ class ControlPanelManager:
                 continue
             
             try:
-                with open(info_file, 'r') as f:
+                with open(info_file, 'r', encoding='utf-8') as f:
                     info = json.load(f)
                 
                 tool_name = info.get('tool_name')
@@ -734,7 +734,7 @@ class ControlPanelManager:
                     continue
                 
                 try:
-                    with open(info_file, 'r') as f:
+                    with open(info_file, 'r', encoding='utf-8') as f:
                         info = json.load(f)
                     
                     tool_name = info.get('tool_name')
@@ -759,6 +759,7 @@ class ControlPanelManager:
                     })
                     
                 except Exception as e:
+                    print(f'[GUI DEBUG] Failed to load tool: {e}')
                     continue
             
             # Group by category

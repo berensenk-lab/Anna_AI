@@ -1,4 +1,4 @@
-# BASE/handlers/internal_tool_manager.py
+﻿# BASE/handlers/internal_tool_manager.py
 """
 Internal Tool Manager - Service-per-Tool Architecture
 Manages mutually exclusive service categories
@@ -69,7 +69,7 @@ class InternalToolManager:
                 continue
             
             # Load metadata
-            with open(info_file, 'r') as f:
+            with open(info_file, 'r', encoding='utf-8') as f:
                 metadata = json.load(f)
             
             tool_name = metadata.get('tool_name')

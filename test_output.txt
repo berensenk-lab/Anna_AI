@@ -1,0 +1,38 @@
+[INFO] Initializing configuration...
+Traceback (most recent call last):
+[WARNING] Discord enabled but no bot_token provided in config.json
+[INFO] Ollama keep_alive: 24h
+[INFO] Ollama max_loaded_models: 2
+[INFO] Ollama context_length: 1024
+[Config] Singleton instance created: 2846223642512
+[Config] [WARNING] Invalid tool metadata in browser_tool
+[Config] [SUCCESS] Created 9 dynamic control variables:
+  - IN_DISCORD_CHAT=False
+  - IN_GROUP_CHAT=False
+  - PLAYING_LEAGUE=False
+  - PLAYING_MINECRAFT=False
+  - SPECTATING_MINECRAFT=False
+  - USE_VISION=False
+  - IN_TWITCH_CHAT=False
+  - USE_WARUDO_ANIMATION=False
+  - IN_YOUTUBE_CHAT=False
+[Config] [SUCCESS] Registered 26 tools dynamically
+[INFO] Initializing logger...
+[Logger] Singleton instance created: 2846224688288
+[20:22:53] [ERROR] Core initialization failed: Logger.log() got an unexpected keyword argument 'extra_info'
+  File "C:\Users\beren\Anna_AI\main.py", line 101, in initialize_core
+    self.logger.log(
+    ~~~~~~~~~~~~~~~^
+        "Application started",
+        ^^^^^^^^^^^^^^^^^^^^^^
+        MessageType.SYSTEM,
+        ^^^^^^^^^^^^^^^^^^^
+        extra_info={"version": "1.0.0", "mode": "GUI" if self.gui_enabled else "CLI"}
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+TypeError: Logger.log() got an unexpected keyword argument 'extra_info'
+
+[INFO] Initiating shutdown sequence...
+[20:22:53] [SYSTEM] Application shutdown
+[INFO] Shutdown complete

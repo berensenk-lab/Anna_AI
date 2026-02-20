@@ -41,7 +41,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Communication",
+    "category": "Chat",
     "display_name": "Twitch",
     "gui_label": "Twitch",
     "gui_icon": "",

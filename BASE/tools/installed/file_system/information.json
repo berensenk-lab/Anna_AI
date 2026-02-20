@@ -1,0 +1,82 @@
+{
+  "tool_name": "file_system",
+  "control_variable_name": "USE_FILE_SYSTEM",
+  "control_variable_value": false,
+  "tool_description": "File system operations, directory listing, file searching, code scanning, and system health monitoring",
+  "priority": "HIGH",
+
+  "available_commands": [
+    {
+      "command": "get_system_health",
+      "args": [],
+      "description": "Get current CPU, RAM, and disk usage metrics",
+      "format": "{\"tool\": \"file_system.get_system_health\", \"args\": []}"
+    },
+    {
+      "command": "read_file",
+      "args": ["path: str"],
+      "description": "Read and return file contents",
+      "format": "{\"tool\": \"file_system.read_file\", \"args\": [\"C:/Users/beren/file.py\"]}"
+    },
+    {
+      "command": "list_directory",
+      "args": ["path: str"],
+      "description": "List files and folders in a directory",
+      "format": "{\"tool\": \"file_system.list_directory\", \"args\": [\"C:/Users/beren\"]}"
+    },
+    {
+      "command": "search_files",
+      "args": ["query: str", "root: str", "extension: str"],
+      "description": "Search for files containing a query string",
+      "format": "{\"tool\": \"file_system.search_files\", \"args\": [\"TODO\", \"C:/Users/beren\", \".py\"]}"
+    },
+    {
+      "command": "scan_code",
+      "args": ["path: str"],
+      "description": "Scan a Python file for code issues, security risks, and quality problems",
+      "format": "{\"tool\": \"file_system.scan_code\", \"args\": [\"C:/Users/beren/main.py\"]}"
+    }
+  ],
+
+  "tool_usage_examples": [
+    "{\"tool\": \"file_system.get_system_health\", \"args\": []}",
+    "{\"tool\": \"file_system.read_file\", \"args\": [\"C:/Users/beren/Anna_AI/main.py\"]}",
+    "{\"tool\": \"file_system.list_directory\", \"args\": [\"C:/Users/beren/Anna_AI\"]}",
+    "{\"tool\": \"file_system.search_files\", \"args\": [\"import psutil\", \"C:/Users/beren\", \".py\"]}",
+    "{\"tool\": \"file_system.scan_code\", \"args\": [\"C:/Users/beren/Anna_AI/main.py\"]}"
+  ],
+
+  "tool_usage_guidance": [
+    "Use get_system_health when asked about CPU, memory, or disk usage",
+    "Use read_file to summarize or analyze specific files",
+    "Use list_directory to explore project structure",
+    "Use search_files to find code patterns or specific content across files",
+    "Use scan_code to find potential bugs, security issues, or code quality problems",
+    "Supported file types: .py, .txt, .md, .json, .yaml, .yml, .toml, .cfg, .ini, .html, .js, .ts, .bat",
+    "Maximum file size: 100,000 bytes (to prevent reading huge files)"
+  ],
+
+  "proactive_triggers": [
+    "When user asks 'how's my system running?' or 'check CPU/RAM/disk'",
+    "When user wants to understand code structure or look at specific files",
+    "When user needs to find code patterns or specific text across projects",
+    "When scanning code for bugs, security issues, or code quality",
+    "When exploring project directories or file lists"
+  ],
+
+  "cooldown_seconds": 1,
+  "timeout_seconds": 30,
+  "retry_on_failure": false,
+  "max_retries": 0,
+
+  "metadata": {
+    "category": "System",
+    "display_name": "File System",
+    "gui_label": "FileSystem",
+    "gui_icon": "📁",
+    "version": "2.0.0",
+    "requires_api": false,
+    "dependencies": ["psutil"],
+    "notes": "Core tool for system exploration and monitoring. No external APIs required."
+  }
+}

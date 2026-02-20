@@ -93,7 +93,13 @@ class ReactiveConstructor:
         prompt = "\n".join(sections)
         
         if self.logger:
-            self.logger.reactive(f"{prompt}")
+            log_full = bool(
+                getattr(getattr(self.logger, 'config', None), 'LOG_FULL_PROMPTS', False)
+            )
+            if log_full:
+                self.logger.reactive(prompt)
+            else:
+                self.logger.reactive(f"[Reactive Prompt] length={len(prompt)} chars")
         
         return prompt
 

@@ -10,7 +10,7 @@ class ProactivePromptParts:
     """Reusable prompt parts for proactive thinking"""
 
     __slots__ = ()  # Static methods only, no instance variables
-    
+
     @staticmethod
     def get_mode_instructions() -> str:
         """Proactive mode instructions"""
@@ -34,13 +34,13 @@ These thoughts will be used to form a spoken response to the user later.
         """Instructions for urgency assessment"""
         return """
 ## SPEAK
-- Determines if you will form a spoken response to the user after this thought.
+- YES or NO: Determines if you will form a spoken response to the user after this thought.
 - Only speak when appropriate if your thoughts about the current situation indicate it is necessary.
-- If the user has been speaking, or if there is an urgent need to address something, respond with SPEAK: YES.
-- If there is no immediate need to respond, or if you are simply planning internally to yourself, respond with SPEAK: NO.
-- You must write either SPEAK: YES or SPEAK: NO on its own line in your response.
+- If the user has been speaking, or if there is an urgent need to address something, respond with YES.
+- If there is no immediate need to respond, or if you are simply planning internally to yourself, respond with NO.
+- Your determination of YES or NO must be placed within the <speak> tags exactly as shown.
 """
-    
+
     @staticmethod
     def get_output_format() -> str:
         """Output format with minimal tool instructions"""
@@ -51,13 +51,18 @@ Generate your thought, decide whether to speak, and optionally include tool name
 
 Your thought (1-2 sentences) here.
 
-SPEAK: YES or SPEAK: NO
-
+```xml
+<speak>
+YES or NO
+</speak>
+```
+```xml
 <actions>
 [
   {"tool": "tool_name"}
 ]
 </actions>
+```
 
 **Tool Usage:**
 - Only list tool NAME you intend to use
@@ -66,7 +71,7 @@ SPEAK: YES or SPEAK: NO
 - Leave actions empty [] if no tools needed
 - Example: {"tool": "calendar"} NOT {"tool": "calendar", "args": ["add", "..."]}
 """
-    
+
     @staticmethod
     def get_proactive_guidelines() -> str:
         """Additional proactive guidelines"""
@@ -91,7 +96,7 @@ SPEAK: YES or SPEAK: NO
 - Setting up helpful actions
 - Maintaining conversation readiness
 - Come up with new ideas based on recent thoughts"""
-    
+
     @staticmethod
     def get_grounding_rules() -> str:
         """Grounding rules for proactive"""
@@ -120,6 +125,6 @@ SPEAK: YES or SPEAK: NO
 - If the user has not said anything new or if the situation does not warrant a response, you may choose to remain silent.
 - If the user has not spoken in a while, do not spam responses; only respond when it is meaningful to do so or to check in with the user if you have not spoken recently.
 - If you have spoken very similar responses lately and have nothing new to add, remain silent and continue thinking.
-- If you decide to speak, write SPEAK: YES on its own line.
-- If you decide not to speak, write SPEAK: NO on its own line.
+- If you decide to speak, include <speak>YES</speak> in your response to indicate you will speak.
+- If you decide not to speak, include <speak>NO</speak> in your response to indicate you will continue thinking and respond later.
 """

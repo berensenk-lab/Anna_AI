@@ -124,7 +124,15 @@ class ReflectiveConstructor:
         
         if self.logger:
             mode = "Startup" if is_actually_startup else "Standard"
-            self.logger.reflective(f"[{mode}]\n{prompt}")
+            log_full = bool(
+                getattr(getattr(self.logger, 'config', None), 'LOG_FULL_PROMPTS', False)
+            )
+            if log_full:
+                self.logger.reflective(f"[{mode}]\n{prompt}")
+            else:
+                self.logger.reflective(
+                    f"[Reflective Prompt:{mode}] length={len(prompt)} chars"
+                )
         
         return prompt
 

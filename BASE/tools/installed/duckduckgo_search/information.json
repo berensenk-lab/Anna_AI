@@ -64,7 +64,7 @@
   "retry_on_failure": true,
   "max_retries": 2,
   "metadata": {
-    "category": "Information Retrieval",
+    "category": "Search",
     "display_name": "DuckDuckGo",
     "gui_label": "DuckDuckGo",
     "gui_icon": "",

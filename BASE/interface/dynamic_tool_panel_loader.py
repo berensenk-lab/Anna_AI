@@ -1,4 +1,4 @@
-# Filename: BASE/interface/dynamic_tool_panel_loader.py
+﻿# Filename: BASE/interface/dynamic_tool_panel_loader.py
 """
 Dynamic Tool Panel Loader
 Discovers and loads GUI components from installed tools
@@ -79,16 +79,15 @@ class DynamicToolPanelLoader:
             # Check if component exists
             has_component = component_file.exists()
             
-            # FIX: Ensure display_name is never None
-            tool_name = metadata.get('tool_name', tool_dir.name)
+            # Ensure display_name is never None
+            tool_name = metadata.get('tool_name') or tool_dir.name
             display_name = metadata.get('display_name')
             if not display_name:
-                # Fallback: convert tool_name to readable format
                 display_name = tool_name.replace('_', ' ').title()
             
             panel_info = {
                 'tool_name': tool_name,
-                'display_name': display_name,  # Guaranteed non-None
+                'display_name': display_name,
                 'category': metadata.get('category', 'Other Tools'),
                 'control_variable_name': metadata.get('control_variable_name'),
                 'has_component': has_component,
@@ -133,21 +132,22 @@ class DynamicToolPanelLoader:
         try:
             import json
             
-            with open(info_file, 'r') as f:
+            with open(info_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
             metadata = data.get('metadata', {})
             
             # Extract display name with multiple fallbacks
+            tool_name = data.get('tool_name') or tool_dir.name
             display_name = (
                 metadata.get('gui_label') or 
                 metadata.get('display_name') or
-                data.get('tool_name', '').replace('_', ' ').title()
+                tool_name.replace('_', ' ').title()
             )
             
             return {
-                'tool_name': data.get('tool_name'),
-                'display_name': display_name,  # Never None
+                'tool_name': tool_name,
+                'display_name': display_name,
                 'category': metadata.get('category', 'Other Tools'),
                 'control_variable_name': data.get('control_variable_name'),
                 'description': data.get('tool_description', ''),
@@ -172,14 +172,12 @@ class DynamicToolPanelLoader:
         Returns:
             Component instance or None
         """
-        # Check if already loaded
         if tool_name in self._components:
             if self.logger:
                 self.logger.system(f"[Panel Loader] Component already loaded: {tool_name}")
             return self._components[tool_name]
         
         try:
-            # Load module
             module_name = f"tool_component_{tool_name}"
             spec = importlib.util.spec_from_file_location(module_name, str(component_path))
             
@@ -190,7 +188,6 @@ class DynamicToolPanelLoader:
             sys.modules[module_name] = module
             spec.loader.exec_module(module)
             
-            # Look for create_component factory function
             if not hasattr(module, 'create_component'):
                 if self.logger:
                     self.logger.error(
@@ -198,11 +195,9 @@ class DynamicToolPanelLoader:
                     )
                 return None
             
-            # Create component instance
             create_func = getattr(module, 'create_component')
             component = create_func(parent_gui, ai_core, self.logger)
             
-            # Store component
             self._components[tool_name] = component
             
             if self.logger:
@@ -218,30 +213,16 @@ class DynamicToolPanelLoader:
             return None
     
     def get_component(self, tool_name: str) -> Optional[Any]:
-        """
-        Get loaded component instance
-        
-        Args:
-            tool_name: Name of tool
-            
-        Returns:
-            Component instance or None
-        """
+        """Get loaded component instance"""
         return self._components.get(tool_name)
     
     def unload_component(self, tool_name: str):
-        """
-        Unload a component and cleanup resources
-        
-        Args:
-            tool_name: Name of tool
-        """
+        """Unload a component and cleanup resources"""
         if tool_name not in self._components:
             return
         
         component = self._components[tool_name]
         
-        # Call cleanup if available
         if hasattr(component, 'cleanup'):
             try:
                 component.cleanup()
@@ -249,7 +230,6 @@ class DynamicToolPanelLoader:
                 if self.logger:
                     self.logger.warning(f"[Panel Loader] Error cleaning up {tool_name}: {e}")
         
-        # Remove from cache
         del self._components[tool_name]
         
         if self.logger:
@@ -258,12 +238,8 @@ class DynamicToolPanelLoader:
     def cleanup_all(self):
         """Cleanup all loaded components"""
         tool_names = list(self._components.keys())
-        
         for tool_name in tool_names:
             self.unload_component(tool_name)
-        
-        # if self.logger:
-        #     self.logger.system("[Panel Loader] Cleaned up all components")
     
     def get_loaded_components(self) -> Dict[str, Any]:
         """Get all loaded components"""
@@ -272,7 +248,7 @@ class DynamicToolPanelLoader:
     def create_reload_button_for_tool(self, parent, tool_name: str):
         """
         Create a reload button for a specific tool
-        
+
         Args:
             parent: Parent widget (tkinter)
             tool_name: Name of tool

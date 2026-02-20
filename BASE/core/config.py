@@ -1,4 +1,4 @@
-# Filename: BASE/core/config.py
+﻿# Filename: BASE/core/config.py
 # Converted to singleton pattern
 
 import os
@@ -106,6 +106,9 @@ class Config:
         self.ollama_context_length: int = int(os.getenv("OLLAMA_CONTEXT_LENGTH", str(ollama_config.get("num_ctx", "8192"))))
         self.ollama_concurrent_requests: int = int(os.getenv("OLLAMA_CONCURRENT_REQUESTS", "1"))
         self.ollama_num_ctx: int = int(os.getenv("OLLAMA_NUM_CTX", str(ollama_config.get("num_ctx", "3000"))))
+        self.ollama_preload_timeout: int = int(
+            os.getenv("OLLAMA_PRELOAD_TIMEOUT", str(ollama_config.get("preload_timeout", "20")))
+        )
         
         # Override seed with environment variable if provided
         if os.getenv("OLLAMA_SEED"):
@@ -131,6 +134,7 @@ class Config:
         self.LOG_PROACTIVE_PROMPT: bool = logging_config.get("log_proactive_prompt", True)
         self.LOG_RESPONSIVE_PROMPT: bool = logging_config.get("log_responsive_prompt", True)
         self.LOG_ACTION_PROMPT: bool = logging_config.get("log_action_prompt", True)
+        self.LOG_FULL_PROMPTS: bool = logging_config.get("log_full_prompts", False)
         self.LOG_RESPONSE_PROCESSING: bool = logging_config.get("log_response_processing", True)
         self.LOG_SYSTEM_INFORMATION: bool = logging_config.get("log_system_information", True)
         self.SHOW_CHAT: bool = logging_config.get("show_chat", True)
@@ -255,7 +259,7 @@ class Config:
                 
                 # Load metadata
                 try:
-                    with open(info_file, 'r') as f:
+                    with open(info_file, 'r', encoding='utf-8') as f:
                         info = json.load(f)
                     
                     tool_name = info.get('tool_name')
@@ -439,7 +443,8 @@ class Config:
             'LOG_TOOL_EXECUTION', 'LOG_PROMPT_CONSTRUCTION',
             'LOG_RESPONSE_PROCESSING', 'LOG_SYSTEM_INFORMATION', 'SHOW_CHAT',
             'LOG_REACTIVE_PROMPT', 'LOG_REFLECTIVE_PROMPT', 'LOG_PROACTIVE_PROMPT',
-            'LOG_RESPONSIVE_PROMPT', 'LOG_ACTION_PROMPT', 'LOG_CODING_EXECUTION',
+            'LOG_RESPONSIVE_PROMPT', 'LOG_ACTION_PROMPT', 'LOG_FULL_PROMPTS',
+            'LOG_CODING_EXECUTION',
             'LOG_DISCORD_EXECUTION', 'LOG_MINECRAFT_EXECUTION'
         ]
         

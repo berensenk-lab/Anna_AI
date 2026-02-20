@@ -183,7 +183,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Utilities",
+    "category": "Utility",
     "display_name": "Calculator",
     "gui_label": "Calculator",
     "gui_icon": "",

@@ -1,4 +1,4 @@
-# Filename: BASE/tools/installed/dice_roller/tool.py
+﻿# Filename: BASE/tools/installed/dice_roller/tool.py
 """
 Dice Roller Tool - For tabletop RPGs and gaming
 Supports standard RPG dice (d4, d6, d8, d10, d12, d20, d100)
@@ -511,6 +511,20 @@ class DiceRollerTool:
     
     # ==================== LIFECYCLE MANAGEMENT ====================
     
+    
+    @property
+    def name(self) -> str:
+        return self.tool_name
+
+    async def initialize(self) -> bool:
+        return True
+
+    async def cleanup(self):
+        pass
+
+    def is_available(self) -> bool:
+        return self._running
+
     async def start(self, thought_buffer=None, event_loop=None):
         """Start the dice roller tool"""
         if self._running:

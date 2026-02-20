@@ -10,44 +10,14 @@
       "args": [],
       "description": "Get current monitoring status, FPS, and capture statistics",
       "format": "{\"tool\": \"opencv_vision.get_status\", \"args\": []}"
-    },
-    {
-      "command": "capture_now",
-      "args": [],
-      "description": "Force immediate capture and analysis outside regular interval",
-      "format": "{\"tool\": \"opencv_vision.capture_now\", \"args\": []}"
-    },
-    {
-      "command": "set_fps",
-      "args": ["fps: int"],
-      "description": "Change capture frame rate (1-60 FPS)",
-      "format": "{\"tool\": \"opencv_vision.set_fps\", \"args\": [15]}"
-    },
-    {
-      "command": "set_interval",
-      "args": ["seconds: float"],
-      "description": "Change analysis interval in seconds (minimum 1.0)",
-      "format": "{\"tool\": \"opencv_vision.set_interval\", \"args\": [3.0]}"
     }
   ],
   "tool_usage_examples": [
-    "{\"tool\": \"opencv_vision.get_status\", \"args\": []}",
-    "{\"tool\": \"opencv_vision.capture_now\", \"args\": []}",
-    "{\"tool\": \"opencv_vision.set_fps\", \"args\": [20]}",
-    "{\"tool\": \"opencv_vision.set_interval\", \"args\": [5.0]}"
+    "{\"tool\": \"opencv_vision.get_status\", \"args\": []}"
   ],
   "tool_usage_guidance": [
-    "Automatic continuous monitoring - captures screen at target FPS",
-    "Analyzes frames at configurable intervals (default 5 seconds)",
-    "Screen descriptions automatically injected into thought buffer with HIGH priority",
-    "Change detection prevents redundant analysis of static screens",
-    "Non-blocking threaded capture - AI continues thinking while capturing",
-    "10-20x faster than PyAutoGUI (10-50ms vs 200ms per capture)",
-    "Perfect for VTuber streaming and real-time game awareness",
-    "Use get_status to monitor performance and statistics",
-    "Use capture_now to force immediate analysis for important moments",
-    "Adjust FPS based on CPU load (lower = less overhead)",
-    "Adjust interval based on how frequently you need updates"
+    "This tool automatically captures and analyzes screenshots of the user's screen.",
+    "Use get_status to monitor performance and statistics"
   ],
   "proactive_triggers": [
     "Automatically monitors screen every [interval] seconds",
@@ -60,9 +30,11 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Computer Vision",
-    "display_name": "OpenCV Vision Monitor",
-    "version": "1.0.0",
+    "category": "Vision",
+    "display_name": "OpenCV Vision",
+    "gui_label": "OpenCV Vision Monitor",
+    "gui_icon": "",
+    "version": "2.0.0",
     "requires_api": false,
     "dependencies": ["mss", "opencv-python", "numpy", "Pillow", "requests"],
     "performance": {
@@ -84,6 +56,14 @@
         "opencv_vision_width",
         "opencv_vision_height",
         "opencv_vision_change_threshold"
+      ],
+      "configurable_via_gui": [
+        "target_fps",
+        "analysis_interval",
+        "capture_width",
+        "capture_height",
+        "change_threshold",
+        "analysis_prompt"
       ]
     },
     "notes": [
@@ -93,7 +73,9 @@
       "Thought buffer integration via context_loop (BaseTool architecture)",
       "Change detection reduces unnecessary API calls",
       "Suitable for real-time VTuber and gaming applications",
-      "Can coexist with other vision tools (vision, game_vision)"
+      "Can coexist with other vision tools (vision, game_vision)",
+      "GUI component supports hot-reload with Watchdog",
+      "Custom analysis prompts persist across tool reloads"
     ]
   }
 }

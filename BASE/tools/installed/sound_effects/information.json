@@ -52,7 +52,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Avatar Control",
+    "category": "Effects",
     "display_name": "Sound Effects",
     "gui_label": "Sounds",
     "gui_icon": "",

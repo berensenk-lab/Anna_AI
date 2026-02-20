@@ -18,11 +18,12 @@
   },
   "models": {
     "_comment": "Model assignments - should match bot_info.py",
-    "thought_model": "gemma3:12b-it-q4_K_M",
+    "thought_model": "qwen2.5-coder:7b",
     "response_model": "gemma3:12b-it-q4_K_M",
     "vision_model": "gemma3:12b-it-q4_K_M",
-    "embed_model": "nomic-embed-text",
-    "tool_model": "gemma3:12b-it-q4_K_M"
+    "embed_model": "nomic-embed-text:latest",
+    "tool_model": "qwen2.5-coder:7b",
+    "action_model": "qwen2.5-coder:7b"
   },
   "bot": {
     "_comment": "Bot identity - should match bot_info.py",
@@ -115,10 +116,7 @@
     "enabled": true,
     "file_watching": false,
     "debounce_seconds": 2.0,
-    "watch_directories": [
-      "tools/",
-      "BASE/core/"
-    ]
+    "watch_directories": ["tools/", "BASE/core/"]
   },
   "_architecture_notes": {
     "dynamic_tools": "Tool controls (USE_*) created from information.json files",

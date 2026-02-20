@@ -1,0 +1,74 @@
+{
+  "tool_name": "scheduled_tasks",
+  "control_variable_name": "USE_SCHEDULED_TASKS",
+  "control_variable_value": true,
+  "tool_description": "Background task scheduler. Runs daily system health reports, morning repo scans and hourly log summaries automatically. Schedules persist in scheduler_config.json across restarts. Tasks can be added via conversation.",
+  "priority": "MEDIUM",
+  "available_commands": [
+    {
+      "command": "list_tasks",
+      "args": [],
+      "description": "List all scheduled tasks and their next run times",
+      "format": "{\"tool\": \"scheduled_tasks.list_tasks\", \"args\": []}"
+    },
+    {
+      "command": "add_task",
+      "args": ["name: str", "schedule: str", "hour: int", "minute: int", "task_fn: str", "prompt: str"],
+      "description": "Add a new scheduled task. schedule: 'cron' or 'interval'. task_fn: system_health_report, repo_scan, log_summary or empty for custom prompt.",
+      "format": "{\"tool\": \"scheduled_tasks.add_task\", \"args\": [\"Morning Check\", \"cron\", 9, 0, \"system_health_report\", \"\"]}"
+    },
+    {
+      "command": "remove_task",
+      "args": ["task_id: str"],
+      "description": "Remove a scheduled task by ID",
+      "format": "{\"tool\": \"scheduled_tasks.remove_task\", \"args\": [\"daily_health\"]}"
+    },
+    {
+      "command": "run_now",
+      "args": ["task_id: str"],
+      "description": "Run a scheduled task immediately outside its normal schedule",
+      "format": "{\"tool\": \"scheduled_tasks.run_now\", \"args\": [\"daily_health\"]}"
+    },
+    {
+      "command": "enable_task",
+      "args": ["task_id: str", "enabled: bool"],
+      "description": "Enable or disable a task without removing it",
+      "format": "{\"tool\": \"scheduled_tasks.enable_task\", \"args\": [\"hourly_logs\", false]}"
+    }
+  ],
+  "tool_usage_examples": [
+    "{\"tool\": \"scheduled_tasks.list_tasks\", \"args\": []}",
+    "{\"tool\": \"scheduled_tasks.run_now\", \"args\": [\"daily_health\"]}",
+    "{\"tool\": \"scheduled_tasks.run_now\", \"args\": [\"morning_repos\"]}",
+    "{\"tool\": \"scheduled_tasks.enable_task\", \"args\": [\"hourly_logs\", false]}",
+    "{\"tool\": \"scheduled_tasks.add_task\", \"args\": [\"Evening Check\", \"cron\", 18, 0, \"system_health_report\", \"\"]}"
+  ],
+  "tool_usage_guidance": [
+    "Three default tasks run automatically: daily health (9:00am), repo scan (9:15am), log summary (every hour)",
+    "Use list_tasks to see all tasks and when they next run",
+    "Use run_now to trigger any task immediately for testing",
+    "Use enable_task with false to pause a task without deleting it",
+    "Requires APScheduler: pip install APScheduler",
+    "Schedules are saved to scheduler_config.json and survive restarts"
+  ],
+  "proactive_triggers": [
+    "When a scheduled task fires and produces results",
+    "When user asks 'what tasks are scheduled?' or 'run the health report now'",
+    "When user asks to schedule something at a specific time",
+    "When user asks to disable or remove a scheduled task"
+  ],
+  "cooldown_seconds": 0,
+  "timeout_seconds": 30,
+  "retry_on_failure": false,
+  "max_retries": 0,
+  "metadata": {
+    "category": "System",
+    "display_name": "Scheduled Tasks",
+    "gui_label": "Scheduled Tasks",
+    "gui_icon": "⏰",
+    "version": "1.0.0",
+    "requires_api": false,
+    "dependencies": ["APScheduler", "psutil"],
+    "notes": "Default tasks created on first run. Edit scheduler_config.json to manually configure schedules."
+  }
+}

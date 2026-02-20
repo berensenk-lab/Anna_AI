@@ -40,7 +40,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Communication",
+    "category": "Chat",
     "display_name": "YouTube Chat",
     "gui_label": "YouTube",
     "gui_icon": "",

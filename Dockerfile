@@ -56,9 +56,10 @@ RUN mkdir -p logs \
     && mkdir -p personality/base_memory \
     && mkdir -p models
 
-# Health check
+# Health check: verify Python can import core modules
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:5000/health', timeout=5)" || exit 1
+    CMD python -c "from BASE.core.config import Config; print('health ok')" || exit 1
 
-# Default command runs GUI, override for CLI with --no-gui
-CMD ["python", "main.py"]
+# Default command runs in headless CLI mode (no GUI in container)
+# For local development with GUI, use: docker run -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <image>
+CMD ["python", "main.py", "--no-gui"]

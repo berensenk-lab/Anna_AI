@@ -1,0 +1,86 @@
+{
+  "tool_name": "dependency_auditor",
+  "control_variable_name": "USE_DEPENDENCY_AUDITOR",
+  "control_variable_value": false,
+  "tool_description": "Audits Python and Node.js dependencies across all projects under C:/Users/beren. Checks for outdated packages, security vulnerabilities, version conflicts between projects, and missing or unused imports.",
+  "priority": "LOW",
+  "available_commands": [
+    {
+      "command": "list_projects",
+      "args": [],
+      "description": "Discover all projects with requirements.txt or package.json files",
+      "format": "{\"tool\": \"dependency_auditor.list_projects\", \"args\": []}"
+    },
+    {
+      "command": "check_outdated",
+      "args": ["project_path: str", "check_all: bool"],
+      "description": "Check for outdated Python packages by comparing pinned versions against PyPI latest",
+      "format": "{\"tool\": \"dependency_auditor.check_outdated\", \"args\": [\"C:/Users/beren/Anna_AI\", false]}"
+    },
+    {
+      "command": "check_vulnerabilities",
+      "args": ["project_path: str"],
+      "description": "Scan for known security vulnerabilities using pip-audit",
+      "format": "{\"tool\": \"dependency_auditor.check_vulnerabilities\", \"args\": [\"C:/Users/beren/Anna_AI\"]}"
+    },
+    {
+      "command": "check_conflicts",
+      "args": [],
+      "description": "Find packages pinned at different versions across multiple projects",
+      "format": "{\"tool\": \"dependency_auditor.check_conflicts\", \"args\": []}"
+    },
+    {
+      "command": "check_missing",
+      "args": ["project_path: str"],
+      "description": "Scan Python files for imports and compare against requirements.txt to find missing or unused packages",
+      "format": "{\"tool\": \"dependency_auditor.check_missing\", \"args\": [\"C:/Users/beren/Anna_AI\"]}"
+    },
+    {
+      "command": "audit_npm",
+      "args": ["project_path: str"],
+      "description": "Run npm audit on Node.js projects",
+      "format": "{\"tool\": \"dependency_auditor.audit_npm\", \"args\": [\"C:/Users/beren/my_node_project\"]}"
+    },
+    {
+      "command": "full_audit",
+      "args": ["project_path: str"],
+      "description": "Run a complete audit: outdated, vulnerabilities, conflicts and missing packages",
+      "format": "{\"tool\": \"dependency_auditor.full_audit\", \"args\": [\"C:/Users/beren/Anna_AI\"]}"
+    }
+  ],
+  "tool_usage_examples": [
+    "{\"tool\": \"dependency_auditor.list_projects\", \"args\": []}",
+    "{\"tool\": \"dependency_auditor.full_audit\", \"args\": [\"C:/Users/beren/Anna_AI\"]}",
+    "{\"tool\": \"dependency_auditor.check_vulnerabilities\", \"args\": [\"\"]}",
+    "{\"tool\": \"dependency_auditor.check_conflicts\", \"args\": []}",
+    "{\"tool\": \"dependency_auditor.check_missing\", \"args\": [\"C:/Users/beren/Anna_AI\"]}"
+  ],
+  "tool_usage_guidance": [
+    "Use full_audit for a comprehensive overview of a single project",
+    "Use check_outdated with check_all=true to scan all projects (slow — queries PyPI per package)",
+    "check_vulnerabilities requires pip-audit: pip install pip-audit",
+    "check_conflicts compares requirements.txt files across all discovered projects",
+    "check_missing scans .py imports and flags packages not in requirements.txt",
+    "audit_npm requires npm to be on PATH"
+  ],
+  "proactive_triggers": [
+    "When user asks 'are my packages up to date?' or 'any security issues?'",
+    "When user asks to audit a specific project",
+    "When user asks about version conflicts between projects",
+    "When user asks what packages might be missing from requirements.txt"
+  ],
+  "cooldown_seconds": 30,
+  "timeout_seconds": 120,
+  "retry_on_failure": false,
+  "max_retries": 0,
+  "metadata": {
+    "category": "Development",
+    "display_name": "Dependency Auditor",
+    "gui_label": "Dependency Auditor",
+    "gui_icon": "📦",
+    "version": "1.0.0",
+    "requires_api": false,
+    "dependencies": ["pip-audit", "packaging", "requests"],
+    "notes": "check_outdated queries PyPI for each package — may be slow on large projects. Disabled by default to avoid startup overhead."
+  }
+}

@@ -45,7 +45,7 @@ console.log('💾 Memory limits:');
 console.log(`   Total heap: ${Math.round(process.memoryUsage().heapTotal / 1024 / 1024)}MB`);
 console.log(`   Used heap: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`);
 if (!global.gc) {
-  console.log('ℹ️  Tip: Run with NODE_OPTIONS="--expose-gc --max-old-space-size=4096" for better memory management');
+  console.log(' Tip: Run with NODE_OPTIONS="--expose-gc --max-old-space-size=4096" for better memory management');
 }
 
 // Find project root directory
@@ -382,7 +382,7 @@ app.use((req, res) => {
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully');
+  console.log('SIGTERM received, shutting down gracefully');
   clearInterval(memoryCheckInterval);
   if (bot) {
     bot.end();
@@ -391,7 +391,7 @@ process.on('SIGTERM', () => {
 });
 
 process.on('SIGINT', () => {
-  console.log('🛑 SIGINT received, shutting down gracefully');
+  console.log('SIGINT received, shutting down gracefully');
   clearInterval(memoryCheckInterval);
   if (bot) {
     bot.end();
@@ -403,7 +403,7 @@ process.on('SIGINT', () => {
 async function start() {
   const server = app.listen(LISTEN_PORT, "127.0.0.1", () => {
     console.log(
-      `🌐 Minecraft Bot API listening on http://127.0.0.1:${LISTEN_PORT}` +
+      `Minecraft Bot API listening on http://127.0.0.1:${LISTEN_PORT}` +
       (API_KEY ? " (API key required)" : " (no API key configured)")
     );
     console.log(`🤖 Bot name configured as: ${BOT_NAME}`);

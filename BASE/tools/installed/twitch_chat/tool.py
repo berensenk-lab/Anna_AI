@@ -1,4 +1,4 @@
-# Filename: BASE/tools/installed/twitch_chat/tool.py
+﻿# Filename: BASE/tools/installed/twitch_chat/tool.py
 """
 Twitch Chat Tool - FIXED Initialization Order
 Thought buffer is now captured BEFORE monitor initialization
@@ -374,6 +374,20 @@ class TwitchChatTool(BaseTool):
     def name(self) -> str:
         return "twitch_chat"
     
+    
+    @property
+    def name(self) -> str:
+        return self.tool_name
+
+    async def initialize(self) -> bool:
+        return True
+
+    async def cleanup(self):
+        pass
+
+    def is_available(self) -> bool:
+        return self._running
+
     async def start(self, thought_buffer=None, event_loop=None):
         """
         CRITICAL FIX: Override start() to capture thought_buffer FIRST

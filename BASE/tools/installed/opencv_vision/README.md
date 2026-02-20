@@ -14,7 +14,7 @@ This tool provides **high-performance continuous screen monitoring** for your AI
 | **Update Rate** | On-demand | 0.1 FPS (10s) | **10-30 FPS** |
 | **Architecture** | Blocking | Blocking | **Non-blocking** |
 | **CPU Overhead** | Medium | Medium | **Low (5-10%)** |
-| **Real-time** | ❌ No | ❌ No | **✅ Yes** |
+| **Real-time** | No | No | **Yes** |
 
 ### Speed Improvement
 - **12x faster capture** than PyAutoGUI

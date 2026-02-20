@@ -62,7 +62,7 @@
   "retry_on_failure": false,
   "max_retries": 0,
   "metadata": {
-    "category": "Productivity",
+    "category": "Memory",
     "display_name": "Reminders & Timers",
     "gui_label": "Reminders",
     "gui_icon": "",
