@@ -80,11 +80,11 @@ AUTO_RESTART = False
 
 # Processing rate limiting (how fast agent can think)
 LIMIT_PROCESSING = True
-PROCESSING_DELAY = 60
+PROCESSING_DELAY = 30
 
 # Speaking rate limiting (how often agent can speak)
 LIMIT_SPEAKING = True
-SPEAKING_DELAY = 60
+SPEAKING_DELAY = 30
 
 # ========================================================================
 # AUTO-RESPONSE (GUI/CLI)

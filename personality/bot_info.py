@@ -31,12 +31,12 @@ game_username = "Player"
 #   - Faster than mistral-nemo:12b, freeing VRAM headroom
 
 thoughtmodel = "qwen2.5-coder:7b"
-responsemodel = "gemma3:12b-it-q4_K_M"
+responsemodel = "qwen2.5:7b"
 toolmodel = "qwen2.5-coder:7b"
 actionmodel = "qwen2.5-coder:7b"
 
 # SPECIALIZED MODELS
-visionmodel = "gemma3:12b-it-q4_K_M"
+visionmodel = "qwen2.5:7b"
 embedmodel = "nomic-embed-text:latest"
 
 # ========================================================================
