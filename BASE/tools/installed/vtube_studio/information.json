@@ -1,0 +1,63 @@
+{
+  "tool_name": "vtube_studio",
+  "control_variable_name": "USE_VTUBE_STUDIO",
+  "control_variable_value": true,
+  "tool_description": "Control VTube Studio avatar expressions/animations via WebSocket API hotkeys.",
+  "priority": "LOW",
+  "available_commands": [
+    {
+      "command": "emotion",
+      "args": ["hotkey_name: str"],
+      "description": "Trigger an emotion hotkey in VTube Studio",
+      "format": "{\"tool\": \"vtube_studio.emotion\", \"args\": [\"happy\"]}"
+    },
+    {
+      "command": "animation",
+      "args": ["hotkey_name: str"],
+      "description": "Trigger an animation hotkey in VTube Studio",
+      "format": "{\"tool\": \"vtube_studio.animation\", \"args\": [\"wave\"]}"
+    },
+    {
+      "command": "list_hotkeys",
+      "args": [],
+      "description": "List available hotkeys for current model",
+      "format": "{\"tool\": \"vtube_studio.list_hotkeys\", \"args\": []}"
+    },
+    {
+      "command": "status",
+      "args": [],
+      "description": "Check API connectivity/auth status",
+      "format": "{\"tool\": \"vtube_studio.status\", \"args\": []}"
+    },
+    {
+      "command": "connect",
+      "args": [],
+      "description": "Force reconnect and authentication",
+      "format": "{\"tool\": \"vtube_studio.connect\", \"args\": []}"
+    }
+  ],
+  "tool_usage_examples": [
+    "{\"tool\": \"vtube_studio.emotion\", \"args\": [\"happy\"]}",
+    "{\"tool\": \"vtube_studio.animation\", \"args\": [\"wave\"]}",
+    "{\"tool\": \"vtube_studio.list_hotkeys\", \"args\": []}"
+  ],
+  "tool_usage_guidance": [
+    "Use exact hotkey names configured in VTube Studio.",
+    "Run vtube_studio.list_hotkeys first if you are unsure of names.",
+    "The first auth request may require user approval inside VTube Studio."
+  ],
+  "cooldown_seconds": 2,
+  "timeout_seconds": 10,
+  "retry_on_failure": false,
+  "max_retries": 0,
+  "metadata": {
+    "category": "Avatar Control",
+    "display_name": "VTube Studio",
+    "gui_label": "VTube",
+    "gui_icon": "",
+    "version": "1.0.0",
+    "requires_api": true,
+    "dependencies": ["websocket-client"],
+    "notes": "Uses VTube Studio Public API over WebSocket."
+  }
+}

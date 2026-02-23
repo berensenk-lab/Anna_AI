@@ -16,31 +16,27 @@ class BrowserTool(BaseTool):
     screenshots, and JavaScript execution.
     """
 
-    __slots__ = ('_browser', '_context', '_page', '_playwright')
+    __slots__ = ('_browser', '_context', '_page', '_playwright', '_playwright_available', '_headless')
 
     @property
     def name(self) -> str:
         return "browser_tool"
 
     async def initialize(self) -> bool:
-        """Initialize Playwright browser"""
+        """Initialize tool without launching browser window (lazy launch)."""
         self._browser = None
         self._context = None
         self._page = None
         self._playwright = None
+        self._playwright_available = False
+        self._headless = bool(getattr(self._config, "browser_headless", True))
 
         try:
-            from playwright.async_api import async_playwright
-            self._playwright = await async_playwright().start()
-            self._browser = await self._playwright.chromium.launch(headless=False)
-            self._context = await self._browser.new_context(
-                viewport={"width": 1280, "height": 720},
-                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            )
-            self._page = await self._context.new_page()
-
+            from playwright.async_api import async_playwright  # noqa: F401
+            self._playwright_available = True
             if self._logger:
-                self._logger.success("[BrowserTool] Playwright browser ready (Chromium)")
+                mode = "headless" if self._headless else "visible"
+                self._logger.success(f"[BrowserTool] Playwright ready ({mode}, lazy launch)")
             return True
 
         except ImportError:
@@ -52,7 +48,7 @@ class BrowserTool(BaseTool):
             return False
         except Exception as e:
             if self._logger:
-                self._logger.error(f"[BrowserTool] Failed to start browser: {e}")
+                self._logger.error(f"[BrowserTool] Initialization failed: {e}")
             return False
 
     async def cleanup(self):
@@ -79,7 +75,7 @@ class BrowserTool(BaseTool):
             self._logger.system("[BrowserTool] Browser closed")
 
     def is_available(self) -> bool:
-        return self._page is not None
+        return self._running and self._playwright_available
 
     async def execute(self, command: str, args: List[Any]) -> Dict[str, Any]:
         """Execute browser command"""
@@ -88,6 +84,14 @@ class BrowserTool(BaseTool):
                 'Browser not available',
                 guidance='Browser failed to initialize. Check Playwright installation.'
             )
+
+        if self._page is None:
+            ok = await self._ensure_browser_ready()
+            if not ok:
+                return self._error_result(
+                    'Browser launch failed',
+                    guidance='Check Playwright browser installation and system graphics support.'
+                )
 
         if self._logger:
             self._logger.tool(f"[BrowserTool] Command: '{command}', args: {args}")
@@ -126,6 +130,29 @@ class BrowserTool(BaseTool):
             if self._logger:
                 self._logger.error(f"[BrowserTool] Command error: {e}")
             return self._error_result(f'Browser error: {str(e)}')
+
+    async def _ensure_browser_ready(self) -> bool:
+        """Start Playwright browser/page on first use."""
+        if self._page is not None:
+            return True
+
+        try:
+            from playwright.async_api import async_playwright
+            self._playwright = await async_playwright().start()
+            self._browser = await self._playwright.chromium.launch(headless=self._headless)
+            self._context = await self._browser.new_context(
+                viewport={"width": 1280, "height": 720},
+                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            )
+            self._page = await self._context.new_page()
+
+            if self._logger:
+                self._logger.success("[BrowserTool] Browser session started")
+            return True
+        except Exception as e:
+            if self._logger:
+                self._logger.error(f"[BrowserTool] Failed to launch browser session: {e}")
+            return False
 
     # =========================================================================
     # COMMAND IMPLEMENTATIONS

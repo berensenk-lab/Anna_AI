@@ -87,10 +87,11 @@ class WarudoAnimationTool(BaseTool):
         if not self.manager.controller.ws_connected:
             if self._logger:
                 self._logger.warning(
-                    "[Warudo] Initial connection failed. "
+                    "[Warudo] Initial connection failed; starting in standby mode. "
+                    "Will retry on first warudo command. "
                     "Ensure Warudo is running with WebSocket enabled."
                 )
-            return False
+            return True
         
         if self._logger:
             emotions = len(self.manager.controller.available_emotions)
@@ -162,21 +163,23 @@ class WarudoAnimationTool(BaseTool):
     
     def is_available(self) -> bool:
         """
-        Check if Warudo WebSocket is connected
+        Check if Warudo tool is ready to accept commands.
+
+        Important:
+        - Do NOT require an active socket here.
+        - ToolManager gates execute() on is_available(), and execute()
+          already handles reconnect via _ensure_connection().
         
         Returns:
-            True if connected and ready, False otherwise
+            True if initialized and manager/controller exist, False otherwise
         """
-        if not hasattr(self, 'manager'):
+        if not getattr(self, '_running', False):
             return False
-        
-        if not self.manager:
+        if not hasattr(self, 'manager') or not self.manager:
             return False
-        
         if not hasattr(self.manager, 'controller'):
             return False
-        
-        return self.manager.controller.ws_connected
+        return True
     
     async def execute(self, command: str, args: List[Any]) -> Dict[str, Any]:
         """

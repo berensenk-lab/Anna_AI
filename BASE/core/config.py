@@ -41,6 +41,8 @@ class Config:
         
         Config._initialized = True
         
+        project_root = Path(__file__).parent.parent.parent
+        self.project_root = project_root
         json_config = load_config()
         
         # Extract config sections
@@ -109,6 +111,7 @@ class Config:
         self.ollama_preload_timeout: int = int(
             os.getenv("OLLAMA_PRELOAD_TIMEOUT", str(ollama_config.get("preload_timeout", "20")))
         )
+        self.browser_headless: bool = os.getenv("BROWSER_HEADLESS", "true").lower() in ("1", "true", "yes", "on")
         
         # Override seed with environment variable if provided
         if os.getenv("OLLAMA_SEED"):
@@ -210,6 +213,20 @@ class Config:
                 print(f"[INFO] Restricted to channels: {self.discord_allowed_channels}")
             if self.discord_allowed_guilds:
                 print(f"[INFO] Restricted to guilds: {self.discord_allowed_guilds}")
+
+        # Warudo configuration
+        warudo_config = json_config.get("warudo", {})
+        self.warudo_websocket_url: str = warudo_config.get("websocket_url", "ws://127.0.0.1:19190")
+        self.warudo_enabled: bool = warudo_config.get("enabled", True)
+        self.warudo_auto_connect: bool = warudo_config.get("auto_connect", True)
+        self.warudo_connection_timeout: float = float(warudo_config.get("connection_timeout", 3.0))
+
+        # VTube Studio configuration
+        vtube_config = json_config.get("vtube_studio", {})
+        self.vtube_studio_ws_url: str = vtube_config.get("ws_url", "ws://127.0.0.1:8001")
+        self.vtube_studio_plugin_name: str = vtube_config.get("plugin_name", "Anna AI")
+        self.vtube_studio_plugin_developer: str = vtube_config.get("plugin_developer", "beren")
+        self.vtube_studio_timeout: float = float(vtube_config.get("timeout", 5.0))
         
         # Log Ollama performance settings
         print(f"[INFO] Ollama keep_alive: {self.ollama_keep_alive}")

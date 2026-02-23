@@ -53,10 +53,12 @@ class FileSystemTool(BaseTool):
         
         # Verify psutil is available
         if psutil is None:
-            self.logger.warning("[FileSystem] psutil not installed - health monitoring disabled")
+            if self._logger:
+                self._logger.warning("[FileSystem] psutil not installed - health monitoring disabled")
         
-        self.is_available = True
-        self.logger.success("[FileSystem] Tool initialized")
+        self._running = True
+        if self._logger:
+            self._logger.success("[FileSystem] Tool initialized")
     
     async def execute(self, command: str, args: List[Any]) -> Dict[str, Any]:
         """Execute file system commands"""
@@ -84,7 +86,7 @@ class FileSystemTool(BaseTool):
     
     async def end(self):
         """Cleanup"""
-        self.is_available = False
+        self._running = False
     
     # ─────────────────────────────────────────────
     # IMPLEMENTATION

@@ -51,9 +51,16 @@
   "warudo": {
     "_comment": "Warudo VTuber integration - external tool",
     "websocket_url": "ws://127.0.0.1:19190",
-    "enabled": true,
+    "enabled": false,
     "auto_connect": true,
     "connection_timeout": 2.0
+  },
+  "vtube_studio": {
+    "_comment": "VTube Studio integration - external tool",
+    "ws_url": "ws://127.0.0.1:8001",
+    "plugin_name": "Anna AI",
+    "plugin_developer": "beren",
+    "timeout": 5.0
   },
   "chat_engagement": {
     "_comment": "Autonomous chat engagement system",
@@ -107,7 +114,7 @@
     "_note_search": "Search via USE_WEB_SEARCH (dynamically created from tool)",
     "use_search": false,
     "use_vision": false,
-    "use_warudo": true,
+    "use_warudo": false,
     "use_sound_effects": true,
     "sound_effects_directory": "./BASE/tools/installed/sound_effects/effects"
   },
