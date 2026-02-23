@@ -18,7 +18,7 @@ class MemorySearchTool(BaseTool):
     Date filtering available for medium and long memory tiers
     """
     
-    __slots__ = ('memory_manager', 'memory_search')
+    __slots__ = ('memory_manager', 'memory_search', '_vector_repair_attempted')
     
     @property
     def name(self) -> str:
@@ -29,6 +29,7 @@ class MemorySearchTool(BaseTool):
         # Get memory manager and memory search from config
         self.memory_manager = None
         self.memory_search = None
+        self._vector_repair_attempted = {'medium': False, 'long': False}
         
         # Try multiple ways to access memory system
         if hasattr(self._config, 'ai_core'):
@@ -462,6 +463,23 @@ class MemorySearchTool(BaseTool):
                 # If vector search succeeds, return results
                 if results:
                     return results
+
+                # One-shot embedding repair + retry before keyword fallback
+                if not self._vector_repair_attempted.get('medium', False):
+                    repaired = self._repair_memory_embeddings('medium')
+                    self._vector_repair_attempted['medium'] = True
+                    if repaired > 0:
+                        if self._logger:
+                            self._logger.system(
+                                f"[MemorySearch] Repaired {repaired} medium embeddings; retrying vector search"
+                            )
+                        retry_results = self.memory_search.search_medium_memory(query, k=k)
+                        if self._logger:
+                            self._logger.system(
+                                f"[MemorySearch] Vector retry returned {len(retry_results)} results"
+                            )
+                        if retry_results:
+                            return retry_results
                 
                 if self._logger:
                     self._logger.system("[MemorySearch] Vector search returned 0 results, falling back to keyword search")
@@ -597,6 +615,23 @@ class MemorySearchTool(BaseTool):
                 
                 if results:
                     return results
+
+                # One-shot embedding repair + retry before keyword fallback
+                if not self._vector_repair_attempted.get('long', False):
+                    repaired = self._repair_memory_embeddings('long')
+                    self._vector_repair_attempted['long'] = True
+                    if repaired > 0:
+                        if self._logger:
+                            self._logger.system(
+                                f"[MemorySearch] Repaired {repaired} long embeddings; retrying vector search"
+                            )
+                        retry_results = self.memory_search.search_long_memory(query, k=k)
+                        if self._logger:
+                            self._logger.system(
+                                f"[MemorySearch] Vector retry returned {len(retry_results)} results"
+                            )
+                        if retry_results:
+                            return retry_results
                 
                 if self._logger:
                     self._logger.system("[MemorySearch] Vector search returned 0 results, falling back to keyword search")
@@ -703,6 +738,66 @@ class MemorySearchTool(BaseTool):
                     self._logger.warning(f"[MemorySearch] Base search failed: {e}")
         
         return []
+
+    def _repair_memory_embeddings(self, tier: str) -> int:
+        """
+        Ensure memory tier embeddings are present and dimension-consistent with current model.
+        Returns number of entries repaired.
+        """
+        if not self.memory_search or not hasattr(self.memory_search, 'get_embedding_vector'):
+            return 0
+
+        if tier == 'medium':
+            entries = getattr(self.memory_manager, 'medium_memory', None)
+            text_key = 'content'
+            save_fn_name = '_save_medium_memory'
+        elif tier == 'long':
+            entries = getattr(self.memory_manager, 'long_memory', None)
+            text_key = 'summary'
+            save_fn_name = '_save_long_memory'
+        else:
+            return 0
+
+        if not isinstance(entries, list) or not entries:
+            return 0
+
+        probe_embedding = self.memory_search.get_embedding_vector("embedding consistency check")
+        if not probe_embedding:
+            if self._logger:
+                self._logger.warning(
+                    f"[MemorySearch] Could not fetch probe embedding; skipping {tier} repair"
+                )
+            return 0
+
+        expected_dim = len(probe_embedding)
+        repaired = 0
+
+        for entry in entries:
+            existing = entry.get('embedding')
+            content = entry.get(text_key, '')
+            needs_repair = (
+                not isinstance(existing, list)
+                or not existing
+                or len(existing) != expected_dim
+            )
+            if not needs_repair or not content:
+                continue
+
+            new_embedding = self.memory_search.get_embedding_vector(content)
+            if new_embedding and len(new_embedding) == expected_dim:
+                entry['embedding'] = new_embedding
+                repaired += 1
+
+        if repaired > 0:
+            save_fn = getattr(self.memory_manager, save_fn_name, None)
+            if callable(save_fn):
+                save_fn()
+            if self._logger:
+                self._logger.warning(
+                    f"[MemorySearch] Rebuilt {repaired} {tier} embeddings (dim={expected_dim})"
+                )
+
+        return repaired
     
     # ========================================================================
     # HELPER METHODS
