@@ -2,19 +2,19 @@
   "tool_name": "coding",
   "control_variable_name": "USE_CODING",
   "control_variable_value": false,
-  "tool_description": "Integrate with VS Code extension for AI-powered code editing",
+  "tool_description": "Integrate with Cursor extension for AI-powered code editing (VS Code-compatible bridge supported)",
   "priority": "MEDIUM",
   "available_commands": [
     {
       "command": "edit",
       "args": ["instruction: str", "file_path: Optional[str]", "selection: Optional[Dict]"],
-      "description": "Send edit instruction to VS Code (default command)",
+      "description": "Send edit instruction to Cursor (default command)",
       "format": "{\"tool\": \"coding.edit\", \"args\": [\"add error handling\", \"main.py\"]}"
     },
     {
       "command": "fetch",
       "args": ["file_path: str", "start_line: Optional[int]", "end_line: Optional[int]"],
-      "description": "Fetch file contents from VS Code",
+      "description": "Fetch file contents from Cursor",
       "format": "{\"tool\": \"coding.fetch\", \"args\": [\"config.py\", 0, 50]}"
     },
     {
@@ -26,13 +26,13 @@
     {
       "command": "files",
       "args": [],
-      "description": "List files currently open in VS Code",
+      "description": "List files currently open in Cursor",
       "format": "{\"tool\": \"coding.files\", \"args\": []}"
     },
     {
       "command": "status",
       "args": [],
-      "description": "Check VS Code extension connection status",
+      "description": "Check Cursor extension connection status",
       "format": "{\"tool\": \"coding.status\", \"args\": []}"
     }
   ],
@@ -45,14 +45,15 @@
     "{\"tool\": \"coding.files\", \"args\": []}"
   ],
   "tool_usage_guidance": [
-    "Use edit to send coding instructions to VS Code for AI-powered code changes",
+    "Use edit to send coding instructions to Cursor for AI-powered code changes",
     "Use fetch to retrieve and review current file contents",
     "Use verify to check if specific changes were successfully applied",
-    "Use files to see what's currently open in VS Code",
-    "Use status to check VS Code extension connection health",
+    "Use files to see what's currently open in Cursor",
+    "Use status to check Cursor extension connection health",
     "Empty command defaults to 'edit' for convenience",
     "File path is optional for edit - extension will use active file if not specified",
-    "Requires VS Code with Ollama Code Editor extension running on localhost:3000"
+    "Requires Cursor (or VS Code-compatible editor) with extension HTTP server",
+    "Auto-probes common local bridge ports if the configured URL is unavailable"
   ],
   "proactive_triggers": [
     "When user requests code changes or modifications",
@@ -68,12 +69,12 @@
   "max_retries": 0,
   "metadata": {
     "category": "Coding",
-    "display_name": "VS Code Integration",
-    "gui_label": "VS Code",
+    "display_name": "Cursor Integration",
+    "gui_label": "Cursor",
     "gui_icon": "",
     "version": "2.0.0",
     "requires_api": false,
     "dependencies": ["requests"],
-    "notes": "Requires VS Code with Ollama Code Editor extension. Extension runs HTTP server on localhost:3000 by default. Refactored to modern modular architecture."
+    "notes": "Cursor-first setup. Also supports VS Code-compatible bridges. HTTP server runs on localhost:3000 by default."
   }
 }

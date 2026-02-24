@@ -232,11 +232,11 @@ dependencies = """
 RUNTIME:
 - Python 3.11+
 - Ollama (local LLM server) — models: qwen2.5-coder:7b, gemma3:12b-it-q4_K_M, nomic-embed-text
-- requests — HTTP calls to VS Code extension and Ollama
+- requests — HTTP calls to Cursor/VS Code extension bridge and Ollama
 - asyncio — async runtime throughout
 
 VS CODE INTEGRATION:
-- Ollama Code Editor extension running on localhost:3000
+- Cursor (or VS Code-compatible editor) extension bridge running on localhost:3000
 - Endpoints: /edit (POST), /file (GET), /files (GET)
 
 TTS (optional, controlled via controls.py):
@@ -278,7 +278,7 @@ current_session_focus = ""
 # Example: "Adding search/tree/patch commands to the coding tool"
 
 current_session_goals = []
-# Example: ["Add _handle_search()", "Update information.json", "Test via coding.search"]
+# Example: ["Improve edit guidance", "Update information.json", "Test via coding.verify"]
 
 files_in_focus_this_session = []
 # Example: ["BASE/tools/installed/coding_VS_Code/tool.py",
@@ -289,16 +289,13 @@ files_in_focus_this_session = []
 # ========================================================================
 
 tool_usage_examples = {
-    "orient":        'coding.tree ["C:\\\\Users\\\\beren\\\\Anna_AI", 3]',
-    "search_func":   'coding.search ["_handle_edit", "C:\\\\Users\\\\beren\\\\Anna_AI", "function"]',
-    "search_text":   'coding.search ["BaseTool", "C:\\\\Users\\\\beren\\\\Anna_AI", "text"]',
-    "search_file":   'coding.search ["tool.py", "C:\\\\Users\\\\beren\\\\Anna_AI", "file"]',
+    "orient":        'coding.files []',
     "fetch_file":    'coding.fetch ["BASE/tools/installed/coding_VS_Code/tool.py"]',
     "fetch_range":   'coding.fetch ["BASE/core/ai_core.py", 1, 60]',
-    "patch":         'coding.patch ["BASE/handlers/base_tool.py", 42, 55, "replacement code\\n"]',
     "edit":          'coding.edit ["add error handling following BaseTool pattern", "BASE/core/config.py"]',
-    "verify":        'coding.verify ["BASE/tools/installed/coding_VS_Code/tool.py", "_handle_search"]',
+    "verify":        'coding.verify ["BASE/tools/installed/coding_VS_Code/tool.py", "_handle_edit"]',
     "files":         'coding.files []',
+    "status":        'coding.status []',
 }
 
 # ========================================================================
@@ -307,19 +304,14 @@ tool_usage_examples = {
 
 quick_reference = """
 MANDATORY WORKFLOW (never skip steps):
-  1. coding.tree    → understand layout
-  2. coding.search  → find the file/function
-  3. coding.fetch   → read before touching
-  4. coding.patch   → targeted edit (preferred) or coding.edit for natural language
-  5. coding.verify  → confirm the change landed
-
-SEARCH MODES:
-  "text"     → find any string in source files
-  "function" → find def/function declarations
-  "file"     → find files by name
+  1. coding.files   → get workspace context
+  2. coding.fetch   → read before touching
+  3. coding.edit    → apply focused instruction
+  4. coding.verify  → confirm the change landed
+  5. coding.status  → check tool state if needed
 
 WHEN UNSURE OF A PATH:
-  → coding.search ["filename", project_root, "file"]
+  → coding.files [] then coding.fetch [candidate_file]
   → Never guess paths
 
 SENSITIVE FILES (always ask before editing):
@@ -327,4 +319,7 @@ SENSITIVE FILES (always ask before editing):
 
 AFTER ANY EDIT:
   → coding.verify to confirm, then briefly summarize what changed and why
+
+IF CODING BRIDGE IS OFFLINE:
+  → Use file_system tools for directory scans, file reads, and workspace cleanup tasks
 """

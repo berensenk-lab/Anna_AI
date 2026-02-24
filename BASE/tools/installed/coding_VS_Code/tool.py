@@ -1,10 +1,11 @@
 # Filename: BASE/tools/installed/coding_VS_Code/tool.py
 """
-VS Code Coding Tool - Simplified Architecture
+Cursor Coding Tool - Simplified Architecture
 Single master class with start() and end() lifecycle
-Integrates with VS Code Ollama Code Editor extension via HTTP REST API
+Integrates with Cursor/VS Code extension via HTTP REST API
 """
 import asyncio
+import time
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from BASE.handlers.base_tool import BaseTool
@@ -18,53 +19,134 @@ except ImportError:
 
 class CodingTool(BaseTool):
     """
-    VS Code integration for AI-powered code editing
-    Communicates with VS Code extension via HTTP REST API
+    Cursor integration for AI-powered code editing
+    Communicates with editor extension via HTTP REST API
     """
 
     @property
     def name(self) -> str:
         return "coding"
 
+    @staticmethod
+    def _normalize_url(url: Optional[str]) -> Optional[str]:
+        """Normalize and validate server URL values."""
+        if not url:
+            return None
+        normalized = str(url).strip().rstrip('/')
+        if not normalized:
+            return None
+        if not normalized.startswith(("http://", "https://")):
+            normalized = f"http://{normalized}"
+        return normalized
+
+    def _set_server_url(self, url: str):
+        """Set server URL and refresh endpoint paths."""
+        self.server_url = url.rstrip('/')
+        self.edit_endpoint = f"{self.server_url}/edit"
+        self.file_endpoint = f"{self.server_url}/file"
+        self.files_endpoint = f"{self.server_url}/files"
+
+    def _build_candidate_urls(self, configured_urls: List[str]) -> List[str]:
+        """Build ordered probe list for bridge auto-discovery."""
+        candidates = []
+        seen = set()
+
+        def add(url: Optional[str]):
+            normalized = self._normalize_url(url)
+            if normalized and normalized not in seen:
+                candidates.append(normalized)
+                seen.add(normalized)
+
+        # Prefer explicit config first, then common local bridge ports.
+        for url in configured_urls:
+            add(url)
+
+        for port in (3000, 1337, 13331, 13333, 13344, 55000):
+            add(f"http://127.0.0.1:{port}")
+
+        return candidates
+
+    def _probe_server_url(self, base_url: str) -> bool:
+        """Check whether a given base URL exposes the expected /files endpoint."""
+        try:
+            response = requests.get(
+                f"{base_url}/files",
+                timeout=0.5,
+                headers={'Accept': 'application/json'}
+            )
+            response.raise_for_status()
+            payload = response.json()
+            return isinstance(payload, dict) and (
+                'success' in payload or 'files' in payload or 'activeFile' in payload
+            )
+        except requests.exceptions.RequestException as e:
+            self._last_availability_error = f"{base_url}/files -> {e}"
+            return False
+        except ValueError:
+            self._last_availability_error = f"{base_url}/files -> non-JSON response"
+            return False
+
+    def _probe_for_server(self) -> bool:
+        """Probe configured and fallback URLs, switching to the first reachable endpoint."""
+        current_url = self._normalize_url(getattr(self, "server_url", None))
+        if current_url and self._probe_server_url(current_url):
+            return True
+
+        for url in getattr(self, "_candidate_urls", []):
+            if current_url and url == current_url:
+                continue
+            if self._probe_server_url(url):
+                previous = current_url or "unset"
+                self._set_server_url(url)
+                if self._logger and previous != url:
+                    self._logger.system(
+                        f"[Coding] Auto-discovered bridge: {url} (previous: {previous})"
+                    )
+                return True
+
+        return False
+
     async def initialize(self) -> bool:
         """
-        Initialize VS Code coding system
+        Initialize coding system
 
         Returns:
             True if initialization successful (always returns True for graceful degradation)
         """
         # Server configuration
-        self.server_url = getattr(
-            self._config,
-            'vscode_server_url',
-            'http://localhost:3000'
-        ).rstrip('/')
-
-        self.timeout = getattr(self._config, 'vscode_timeout', 30)
-
-        # Endpoints
-        self.edit_endpoint = f"{self.server_url}/edit"
-        self.file_endpoint = f"{self.server_url}/file"
-        self.files_endpoint = f"{self.server_url}/files"
+        self.editor_name = getattr(self._config, 'coding_editor_name', 'Cursor')
+        configured_cursor_url = getattr(self._config, 'cursor_server_url', None)
+        configured_vscode_url = getattr(self._config, 'vscode_server_url', 'http://localhost:3000')
+        configured_urls = [configured_cursor_url, configured_vscode_url]
+        self._candidate_urls = self._build_candidate_urls(configured_urls)
+        self._set_server_url(self._candidate_urls[0] if self._candidate_urls else "http://localhost:3000")
+        self.timeout = (
+            getattr(self._config, 'cursor_timeout', None)
+            or getattr(self._config, 'vscode_timeout', 30)
+        )
 
         # Cache
         self._cached_files = None
         self._cache_time = 0
+        self._availability_cache = None
+        self._availability_checked_at = 0.0
+        self._availability_ttl = 3.0
+        self._last_availability_error = None
 
-        # Check initial connection
-        available = self.is_available()
+        # Check initial bridge connection
+        available = self.is_bridge_available()
 
         if self._logger:
             if available:
                 status = self._get_status_info()
                 self._logger.system(
-                    f"[Coding] VS Code extension ready: "
+                    f"[Coding] {self.editor_name} extension ready: "
                     f"{status.get('open_files', 0)} files open, "
                     f"active: {status.get('active_file', 'none')}"
                 )
             else:
                 self._logger.warning(
-                    f"[Coding] VS Code extension not available (server: {self.server_url})"
+                    f"[Coding] {self.editor_name} extension not available (server: {self.server_url})"
                 )
 
         # Always return True for graceful degradation
@@ -79,17 +161,40 @@ class CodingTool(BaseTool):
 
     def is_available(self) -> bool:
         """
-        Check if VS Code extension server is available
-        Returns:
-            True always - degrades gracefully if VS Code extension offline
+        ToolManager-level availability.
+
+        Important:
+        - ToolManager gates execute() on is_available().
+        - Bridge connectivity is handled separately in is_bridge_available()
+          so commands like coding.status can still execute while offline.
         """
-        if not REQUESTS_AVAILABLE:
+        return bool(getattr(self, "_running", False) and REQUESTS_AVAILABLE)
+
+    def is_bridge_available(self, force_check: bool = False) -> bool:
+        """
+        Check if editor extension server is available
+        Returns:
+            True when the editor extension server is reachable
+        """
+        if not self.is_available():
             return False
-        return True
+
+        now = time.monotonic()
+        if (
+            not force_check and
+            self._availability_cache is not None and
+            (now - self._availability_checked_at) < self._availability_ttl
+        ):
+            return self._availability_cache
+
+        self._availability_cache = self._probe_for_server()
+
+        self._availability_checked_at = now
+        return bool(self._availability_cache)
 
     def get_status(self) -> Dict[str, Any]:
         """
-        Get VS Code extension status
+        Get editor extension status
 
         Returns:
             Status dictionary with connection info
@@ -99,11 +204,14 @@ class CodingTool(BaseTool):
     def _get_status_info(self) -> Dict[str, Any]:
         """Internal method to get status info"""
         status = {
-            'available': self.is_available(),
+            'tool_ready': self.is_available(),
+            'available': self.is_bridge_available(),
             'requests_available': REQUESTS_AVAILABLE,
             'server_url': self.server_url,
+            'candidate_urls': self._candidate_urls,
             'open_files': 0,
-            'active_file': None
+            'active_file': None,
+            'last_error': self._last_availability_error
         }
 
         if status['available']:
@@ -138,15 +246,23 @@ class CodingTool(BaseTool):
         if self._logger:
             self._logger.tool(f"[Coding] Command: '{command}', args: {args}")
 
+        # Always allow status checks, even when extension is offline
+        if command == 'status':
+            return await self._handle_status()
+
         # Check availability
-        if not self.is_available():
+        if not self.is_bridge_available():
             return self._error_result(
-                'VS Code extension not available',
+                f'{self.editor_name} extension not available',
                 metadata={
                     'server_url': self.server_url,
-                    'requests_available': REQUESTS_AVAILABLE
+                    'requests_available': REQUESTS_AVAILABLE,
+                    'last_error': self._last_availability_error
                 },
-                guidance='Ensure VS Code is running with Ollama Code Editor extension on localhost:3000'
+                guidance=(
+                    f'Open {self.editor_name} and start the extension HTTP server on '
+                    f'{self.server_url}, then retry.'
+                )
             )
 
         # Handle empty command (default to edit if instruction provided)
@@ -168,8 +284,6 @@ class CodingTool(BaseTool):
                 return await self._handle_verify(args)
             elif command == 'files':
                 return await self._handle_files()
-            elif command == 'status':
-                return await self._handle_status()
             else:
                 return self._error_result(
                     f'Unknown command: {command}',
@@ -185,7 +299,7 @@ class CodingTool(BaseTool):
             return self._error_result(
                 f'Command execution failed: {str(e)}',
                 metadata={'error': str(e)},
-                guidance='Check VS Code extension and network connection'
+                guidance=f'Check {self.editor_name} extension and network connection'
             )
 
     async def _handle_edit(self, args: List[Any]) -> Dict[str, Any]:
@@ -210,7 +324,7 @@ class CodingTool(BaseTool):
                 self._logger.success(f"[Coding] Edit instruction sent: {instruction[:50]}...")
 
             # Format the response
-            message = result.get('message', 'Edit instruction sent to VS Code')
+            message = result.get('message', f'Edit instruction sent to {self.editor_name}')
 
             return self._success_result(
                 f'[OK] {message}',
@@ -229,7 +343,7 @@ class CodingTool(BaseTool):
             return self._error_result(
                 f'Edit failed: {error}',
                 metadata={'error': error},
-                guidance='Check VS Code extension status and file accessibility'
+                guidance=f'Check {self.editor_name} extension status and file accessibility'
             )
 
     async def _handle_fetch(self, args: List[Any]) -> Dict[str, Any]:
@@ -301,7 +415,7 @@ class CodingTool(BaseTool):
             return self._error_result(
                 f'Failed to fetch file: {error}',
                 metadata={'file': file_path, 'error': error},
-                guidance='Check file path and VS Code extension'
+                guidance=f'Check file path and {self.editor_name} extension'
             )
 
     async def _handle_verify(self, args: List[Any]) -> Dict[str, Any]:
@@ -356,7 +470,7 @@ class CodingTool(BaseTool):
         if not result.get('success'):
             return self._error_result(
                 f'Failed to get files: {result.get("error")}',
-                guidance='Check VS Code extension connection'
+                guidance=f'Check {self.editor_name} extension connection'
             )
 
         files = result.get('files', [])
@@ -364,7 +478,7 @@ class CodingTool(BaseTool):
 
         if not files:
             return self._success_result(
-                'No files open in VS Code',
+                f'No files open in {self.editor_name}',
                 metadata={'count': 0}
             )
 
@@ -398,7 +512,7 @@ class CodingTool(BaseTool):
         status = self._get_status_info()
 
         lines = [
-            "VS Code Extension Status:",
+            f"{self.editor_name} Extension Status:",
             f"  Available: {status['available']}",
             f"  Server: {status['server_url']}",
             f"  Open files: {status['open_files']}",
@@ -418,7 +532,7 @@ class CodingTool(BaseTool):
     # === Internal Helper Methods ===
 
     def _get_open_files(self) -> Dict[str, Any]:
-        """Get open files from VS Code"""
+        """Get open files from editor extension"""
         try:
             response = requests.get(
                 self.files_endpoint,
@@ -441,7 +555,7 @@ class CodingTool(BaseTool):
         start_line: Optional[int] = None,
         end_line: Optional[int] = None
     ) -> Dict[str, Any]:
-        """Fetch file content from VS Code"""
+        """Fetch file content from editor extension"""
         try:
             params = {'path': str(Path(file_path).resolve())}
 
@@ -470,7 +584,7 @@ class CodingTool(BaseTool):
         file_path: Optional[str] = None,
         selection: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """Send edit instruction to VS Code"""
+        """Send edit instruction to editor extension"""
         if not prompt or not prompt.strip():
             return {
                 'success': False,
@@ -505,7 +619,7 @@ class CodingTool(BaseTool):
         except requests.exceptions.ConnectionError:
             return {
                 'success': False,
-                'error': 'Could not connect to VS Code extension'
+                'error': f'Could not connect to {self.editor_name} extension'
             }
         except requests.exceptions.RequestException as e:
             return {

@@ -112,6 +112,15 @@ class Config:
             os.getenv("OLLAMA_PRELOAD_TIMEOUT", str(ollama_config.get("preload_timeout", "20")))
         )
         self.browser_headless: bool = os.getenv("BROWSER_HEADLESS", "true").lower() in ("1", "true", "yes", "on")
+
+        # Coding bridge configuration (Cursor-first, VS Code fallback)
+        self.coding_editor_name: str = os.getenv("CODING_EDITOR_NAME", "Cursor")
+        self.cursor_server_url: Optional[str] = os.getenv("CURSOR_SERVER_URL", "").strip() or None
+        self.cursor_timeout: Optional[int] = (
+            int(os.getenv("CURSOR_TIMEOUT")) if os.getenv("CURSOR_TIMEOUT") else None
+        )
+        self.vscode_server_url: str = os.getenv("VSCODE_SERVER_URL", "http://localhost:3000").strip()
+        self.vscode_timeout: int = int(os.getenv("VSCODE_TIMEOUT", "30"))
         
         # Override seed with environment variable if provided
         if os.getenv("OLLAMA_SEED"):

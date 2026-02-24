@@ -1,7 +1,7 @@
 # Filename: BASE/tools/installed/coding_VS_Code/component.py
 """
-Coding Tool (VS Code) - GUI Component
-Dynamic GUI panel for VS Code integration
+Coding Tool (Cursor) - GUI Component
+Dynamic GUI panel for Cursor integration
 """
 import tkinter as tk
 from tkinter import ttk
@@ -10,8 +10,8 @@ from BASE.interface.gui_themes import DarkTheme
 
 class CodingToolComponent:
     """
-    GUI component for Coding (VS Code) tool
-    Provides interface for VS Code extension control and monitoring
+    GUI component for Coding (Cursor) tool
+    Provides interface for Cursor extension control and monitoring
     """
     
     def __init__(self, parent_gui, ai_core, logger):
@@ -51,7 +51,7 @@ class CodingToolComponent:
         # Main panel frame
         self.panel_frame = ttk.LabelFrame(
             parent_frame,
-            text="VS Code Integration",
+            text="Cursor Integration",
             style="Dark.TLabelframe"
         )
         self.panel_frame.pack(fill=tk.BOTH, expand=True, pady=(5, 0))
@@ -102,13 +102,13 @@ class CodingToolComponent:
         
         self._create_tooltip(
             info_label,
-            "VS Code Extension Status:\n\n"
+            "Cursor Extension Status:\n\n"
             "Connected: Extension responding\n"
             "Not Connected: Extension not running\n\n"
             "Requirements:\n"
-            "- VS Code with Ollama Code Editor extension\n"
+            "- Cursor with Ollama Code Editor extension\n"
             "- Extension server on localhost:3000\n"
-            "- Press F5 in VS Code to activate"
+            "- Press F5 in Cursor to activate"
         )
     
     def _create_control_section(self):
@@ -142,7 +142,7 @@ class CodingToolComponent:
         # Label
         ttk.Label(
             files_frame,
-            text="Open Files in VS Code:",
+            text="Open Files in Cursor:",
             style="TLabel"
         ).pack(anchor=tk.W, pady=(0, 3))
         
@@ -214,7 +214,7 @@ class CodingToolComponent:
         # Send button
         self.send_button = ttk.Button(
             instruction_frame,
-            text="📤 Send to VS Code",
+            text="📤 Send to Cursor",
             command=self._send_instruction,
             width=20
         )
@@ -231,18 +231,23 @@ class CodingToolComponent:
         example_label.pack(pady=(0, 5))
     
     def _test_connection(self):
-        """Test VS Code extension connection"""
+        """Test Cursor extension connection"""
         self.coding_tool = self._get_coding_tool()
         
         if not self.coding_tool:
             self._show_error("Coding tool not initialized")
             return
         
-        self.logger.tool("Testing VS Code extension connection...")
+        self.logger.tool("Testing Cursor extension connection...")
         self.test_button.config(state=tk.DISABLED)
         
         # Check availability
-        if self.coding_tool.is_available():
+        bridge_ok = (
+            self.coding_tool.is_bridge_available()
+            if hasattr(self.coding_tool, "is_bridge_available")
+            else self.coding_tool.is_available()
+        )
+        if bridge_ok:
             self.logger.success("Connection test successful!")
             self._update_status_connected()
             self._update_open_files()
@@ -253,7 +258,7 @@ class CodingToolComponent:
         self.test_button.config(state=tk.NORMAL)
     
     def _send_instruction(self):
-        """Send manual coding instruction to VS Code"""
+        """Send manual coding instruction to Cursor"""
         self.coding_tool = self._get_coding_tool()
         
         if not self.coding_tool:
@@ -270,8 +275,13 @@ class CodingToolComponent:
             self._show_error("Please enter an instruction")
             return
         
-        if not self.coding_tool.is_available():
-            self._show_error("VS Code not connected")
+        bridge_ok = (
+            self.coding_tool.is_bridge_available()
+            if hasattr(self.coding_tool, "is_bridge_available")
+            else self.coding_tool.is_available()
+        )
+        if not bridge_ok:
+            self._show_error("Cursor not connected")
             return
         
         self.logger.tool(f"📤 Sending instruction: {instruction}")
@@ -309,7 +319,12 @@ class CodingToolComponent:
             self._update_status_not_available()
             return
         
-        if self.coding_tool.is_available():
+        bridge_ok = (
+            self.coding_tool.is_bridge_available()
+            if hasattr(self.coding_tool, "is_bridge_available")
+            else self.coding_tool.is_available()
+        )
+        if bridge_ok:
             self._update_status_connected()
             self._update_open_files()
         else:
@@ -333,7 +348,7 @@ class CodingToolComponent:
     def _update_status_connected(self):
         """Update UI for connected state"""
         self.status_label.config(
-            text="Connected to VS Code",
+            text="Connected to Cursor",
             foreground=DarkTheme.ACCENT_GREEN
         )
         self.test_button.config(state=tk.NORMAL)
@@ -342,7 +357,7 @@ class CodingToolComponent:
     def _update_status_disconnected(self):
         """Update UI for disconnected state"""
         self.status_label.config(
-            text="VS Code Not Responding",
+            text="Cursor Not Responding",
             foreground=DarkTheme.ACCENT_RED
         )
         self.test_button.config(state=tk.NORMAL)
@@ -353,10 +368,10 @@ class CodingToolComponent:
         self.open_files_display.delete("1.0", tk.END)
         self.open_files_display.insert(
             tk.END,
-            "VS Code extension not responding\n\n"
+            "Cursor extension not responding\n\n"
             "Troubleshooting:\n"
-            "• Ensure VS Code is running\n"
-            "• Press F5 in VS Code to activate extension\n"
+            "• Ensure Cursor is running\n"
+            "• Press F5 in Cursor to activate extension\n"
             "• Check port 3000 is not blocked\n"
             "• Extension server: http://localhost:3000"
         )
@@ -364,7 +379,14 @@ class CodingToolComponent:
     
     def _update_open_files(self):
         """Update open files display"""
-        if not self.coding_tool or not self.coding_tool.is_available():
+        if not self.coding_tool:
+            return
+        bridge_ok = (
+            self.coding_tool.is_bridge_available()
+            if hasattr(self.coding_tool, "is_bridge_available")
+            else self.coding_tool.is_available()
+        )
+        if not bridge_ok:
             return
         
         try:
@@ -382,7 +404,7 @@ class CodingToolComponent:
             self.open_files_display.delete("1.0", tk.END)
             
             if not files:
-                self.open_files_display.insert(tk.END, "No files open in VS Code")
+                self.open_files_display.insert(tk.END, "No files open in Cursor")
             else:
                 self.open_files_display.insert(tk.END, f"Open files ({len(files)}):\n\n")
                 

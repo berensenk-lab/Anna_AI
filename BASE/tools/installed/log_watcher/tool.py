@@ -14,6 +14,7 @@ from datetime import datetime
 from BASE.handlers.base_tool import BaseTool
 
 SEARCH_ROOT = "C:/Users/beren"
+PRIMARY_APP_LOG = "C:/Users/beren/Anna_AI/startup_log.txt"
 SKIP_DIRS   = {"anaconda3", "node_modules", "__pycache__", ".git", "venv", "AppData"}
 ERROR_KEYWORDS = [
     "error", "exception", "traceback", "fatal", "critical",
@@ -70,8 +71,11 @@ class LogWatcherTool(BaseTool):
         self._watch_lock    = asyncio.Lock()
         self._pending_alerts= deque(maxlen=50)
 
-        # Auto-discover log files
+        # Auto-discover .log files and include the main runtime startup log.
         found = self._discover_logs()
+        if os.path.exists(PRIMARY_APP_LOG):
+            found.append(PRIMARY_APP_LOG)
+        found = list(dict.fromkeys(found))
         for path in found:
             self._add_file_internal(path)
 

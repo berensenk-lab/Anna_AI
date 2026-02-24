@@ -2,20 +2,20 @@
   "tool_name": "log_watcher",
   "control_variable_name": "USE_LOG_WATCHER",
   "control_variable_value": true,
-  "tool_description": "Real-time log file monitoring. Auto-discovers .log files under C:/Users/beren and watches them for errors, exceptions, crashes, log spam and fast growth. Alerts injected into thought buffer proactively.",
+  "tool_description": "Real-time log file monitoring. Auto-discovers .log files under C:/Users/beren and also includes C:/Users/beren/Anna_AI/startup_log.txt. Watches logs for errors, exceptions, crashes, log spam and fast growth. Alerts injected into thought buffer proactively.",
   "priority": "MEDIUM",
   "available_commands": [
     {
       "command": "watch_file",
       "args": ["path: str", "label: str"],
       "description": "Start watching a specific log file",
-      "format": "{\"tool\": \"log_watcher.watch_file\", \"args\": [\"C:/Users/beren/Anna_AI/app.log\", \"Anna\"]}"
+      "format": "{\"tool\": \"log_watcher.watch_file\", \"args\": [\"C:/Users/beren/Anna_AI/startup_log.txt\", \"Anna\"]}"
     },
     {
       "command": "unwatch_file",
       "args": ["path: str"],
       "description": "Stop watching a log file",
-      "format": "{\"tool\": \"log_watcher.unwatch_file\", \"args\": [\"C:/Users/beren/Anna_AI/app.log\"]}"
+      "format": "{\"tool\": \"log_watcher.unwatch_file\", \"args\": [\"C:/Users/beren/Anna_AI/startup_log.txt\"]}"
     },
     {
       "command": "list_watched",
@@ -27,13 +27,13 @@
       "command": "get_tail",
       "args": ["path: str", "lines: int"],
       "description": "Get the last N lines from a log file",
-      "format": "{\"tool\": \"log_watcher.get_tail\", \"args\": [\"C:/Users/beren/Anna_AI/app.log\", 50]}"
+      "format": "{\"tool\": \"log_watcher.get_tail\", \"args\": [\"C:/Users/beren/Anna_AI/startup_log.txt\", 50]}"
     },
     {
       "command": "search_log",
       "args": ["path: str", "query: str"],
       "description": "Search a log file for a keyword",
-      "format": "{\"tool\": \"log_watcher.search_log\", \"args\": [\"C:/Users/beren/Anna_AI/app.log\", \"timeout\"]}"
+      "format": "{\"tool\": \"log_watcher.search_log\", \"args\": [\"C:/Users/beren/Anna_AI/startup_log.txt\", \"timeout\"]}"
     },
     {
       "command": "discover",
@@ -44,13 +44,13 @@
   ],
   "tool_usage_examples": [
     "{\"tool\": \"log_watcher.list_watched\", \"args\": []}",
-    "{\"tool\": \"log_watcher.get_tail\", \"args\": [\"C:/Users/beren/Anna_AI/app.log\", 100]}",
-    "{\"tool\": \"log_watcher.search_log\", \"args\": [\"C:/Users/beren/Anna_AI/app.log\", \"error\"]}",
+    "{\"tool\": \"log_watcher.get_tail\", \"args\": [\"C:/Users/beren/Anna_AI/startup_log.txt\", 100]}",
+    "{\"tool\": \"log_watcher.search_log\", \"args\": [\"C:/Users/beren/Anna_AI/startup_log.txt\", \"error\"]}",
     "{\"tool\": \"log_watcher.discover\", \"args\": []}",
     "{\"tool\": \"log_watcher.watch_file\", \"args\": [\"C:/Users/beren/myapp/server.log\", \"Server\"]}"
   ],
   "tool_usage_guidance": [
-    "Auto-discovers all .log files on startup — no manual setup needed",
+    "Auto-discovers all .log files on startup and adds startup_log.txt if present",
     "Polls every 5 seconds for new log content",
     "Detects: ERROR/EXCEPTION keywords, crash patterns, log spam (20+ repeats in 60s), fast growth (10MB/min)",
     "Use get_tail to read recent log output",

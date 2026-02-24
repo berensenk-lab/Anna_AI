@@ -10,6 +10,7 @@ import sounddevice as sd
 import queue
 import threading
 import time
+import shutil
 from pathlib import Path
 from typing import Optional, Callable, Tuple
 
@@ -192,27 +193,67 @@ class SileroVADEngine:
     
     def _load_vad_model(self) -> bool:
         """Load Silero VAD model"""
+        hub_repo_dir = Path(torch.hub.get_dir()) / "snakers4_silero-vad_master"
+
+        # First attempt: regular torch.hub cache load.
         try:
-            model, utils = torch.hub.load(
+            model, _ = torch.hub.load(
                 repo_or_dir='snakers4/silero-vad',
                 model='silero_vad',
                 force_reload=False,
-                onnx=False
+                onnx=False,
+                trust_repo=True
             )
-            
-            model.to(self._device)
-            model.eval()
-            
-            self._vad_model = model
-            
+            return self._finalize_model(model, source="torch.hub")
+        except Exception as e:
             if self.logger:
-                self.logger.system("[Silero VAD] Model loaded")
-            
-            return True
-        
+                self.logger.warning(f"[Silero VAD] torch.hub load failed: {e}")
+
+        # Second attempt: clear broken cache and force re-download.
+        if hub_repo_dir.exists() and not (hub_repo_dir / "hubconf.py").exists():
+            try:
+                shutil.rmtree(hub_repo_dir, ignore_errors=True)
+                if self.logger:
+                    self.logger.warning(f"[Silero VAD] Removed broken torch hub cache: {hub_repo_dir}")
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning(f"[Silero VAD] Could not clear broken cache: {e}")
+
+        try:
+            model, _ = torch.hub.load(
+                repo_or_dir='snakers4/silero-vad',
+                model='silero_vad',
+                force_reload=True,
+                onnx=False,
+                trust_repo=True
+            )
+            return self._finalize_model(model, source="torch.hub (reloaded)")
+        except Exception as e:
+            if self.logger:
+                self.logger.warning(f"[Silero VAD] torch.hub reload failed: {e}")
+
+        # Final fallback: use installed silero_vad package if available.
+        try:
+            from silero_vad import load_silero_vad
+            model = load_silero_vad(onnx=False)
+            return self._finalize_model(model, source="silero_vad package")
         except Exception as e:
             if self.logger:
                 self.logger.error(f"[Silero VAD] Model load failed: {e}")
+            return False
+
+    def _finalize_model(self, model, source: str) -> bool:
+        """Move model to target device and set eval mode."""
+        try:
+            model.to(self._device)
+            model.eval()
+            self._vad_model = model
+            if self.logger:
+                self.logger.system(f"[Silero VAD] Model loaded via {source}")
+            return True
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"[Silero VAD] Model finalize failed ({source}): {e}")
             return False
     
     def _vad_worker(self, on_speech_callback: Optional[Callable]):
