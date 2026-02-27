@@ -114,7 +114,7 @@
     "_note_search": "Search via USE_WEB_SEARCH (dynamically created from tool)",
     "use_search": false,
     "use_vision": false,
-    "use_warudo": false,
+    "use_warudo": true,
     "use_sound_effects": true,
     "sound_effects_directory": "./BASE/tools/installed/sound_effects/effects"
   },

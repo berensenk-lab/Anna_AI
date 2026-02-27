@@ -36,6 +36,8 @@ classifiers = [
 dependencies = [
     "numpy==1.26.4",
     "pillow==10.4.0",
+    "flask-cors==6.0.1",
+    "python-json-logger==2.0.7",
     "sounddevice==0.5.2",
     "soundfile==0.13.1",
     "pyttsx3==2.99",

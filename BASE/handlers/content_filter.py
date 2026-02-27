@@ -254,6 +254,16 @@ Response (one word only):"""
             return self.filter_outgoing(text, log_callback)
         else:
             return self.filter_incoming(text, log_callback)
+
+    def filter_input(self, text: str, log_callback=None) -> str:
+        """Backward-compatible input filter API returning cleaned text only."""
+        cleaned, _, _ = self.filter_incoming(text, log_callback=log_callback)
+        return cleaned
+
+    def filter_output(self, text: str, log_callback=None) -> str:
+        """Backward-compatible output filter API returning cleaned text only."""
+        cleaned, _, _ = self.filter_outgoing(text, log_callback=log_callback)
+        return cleaned
     
     def remove_emoji(self, text: str) -> str:
         """Remove emoji characters from text"""

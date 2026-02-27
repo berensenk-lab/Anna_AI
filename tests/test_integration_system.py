@@ -87,7 +87,7 @@ class TestCLIMode:
     """Test CLI mode operation."""
 
     @patch("builtins.input", side_effect=["test message", "exit"])
-    @patch.object("main.AnnaAIApp", "run_cli")
+    @patch("main.AnnaAIApp.run_cli")
     def test_cli_initialization(self, mock_run_cli, mock_input):
         """Test CLI mode can be initialized."""
         from main import AnnaAIApp

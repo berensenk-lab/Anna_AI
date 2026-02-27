@@ -166,7 +166,9 @@ class APIServer:
         self.app = Flask(__name__)
         self.config: Optional[Config] = None
         self.logger: Optional[Logger] = None
-        self.log_manager: Optional[LogManager] = None
+        # Initialize structured logging at construction time so request hooks
+        # and error handlers are safe before explicit server initialization.
+        self.log_manager: Optional[LogManager] = LogManager()
         self.ai_core = None
         self.start_time = datetime.now()
 
@@ -318,9 +320,6 @@ class APIServer:
             # Initialize config and logger
             self.config = Config()
             self.logger = Logger(self.config)
-
-            # Initialize structured logger
-            self.log_manager = LogManager()
 
             # Initialize AI core
             core_initializer = CoreInitializer(self.config, self.logger)

@@ -119,6 +119,11 @@ class Logger:
             gui_callback: Callback for GUI logging (message, msg_type, color)
             config: Config singleton instance with logging control variables
         """
+        # Backward compatibility: Logger(config) positional construction.
+        if config is None and name is not None and not isinstance(name, str):
+            config = name
+            name = "AnnaAI"
+
         # Skip initialization if already done
         if Logger._initialized:
             # Update config reference if provided (allows dynamic config updates)

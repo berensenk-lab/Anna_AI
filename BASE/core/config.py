@@ -14,6 +14,8 @@ load_dotenv()
 # Import bot info
 from personality.bot_info import agentname, username, responsemodel, visionmodel, embedmodel, toolmodel, thoughtmodel, actionmodel
 
+_instance = None
+
 def load_config():
     """Load configuration from JSON file"""
     project_root = Path(__file__).parent.parent.parent
@@ -29,9 +31,15 @@ class Config:
     
     def __new__(cls):
         """Singleton pattern: always return the same instance"""
-        if cls._instance is None:
+        global _instance
+        # Compatibility: tests reset module-level _instance to force reload.
+        if _instance is None:
             cls._instance = super().__new__(cls)
-        return cls._instance
+            cls._initialized = False
+            _instance = cls._instance
+        else:
+            cls._instance = _instance
+        return _instance
     
     def __init__(self):
         """Initialize only once"""
@@ -247,6 +255,13 @@ class Config:
 
         self._tool_registry = {}
         self._discover_and_register_tools()
+
+        # Backward-compatible aliases expected by tests and legacy call sites.
+        self.MODEL = self.text_model
+        self.THINKING_MODEL = self.thought_model
+        self.EMBEDDING_MODEL = self.embed_model
+        self.OLLAMA_ENDPOINT = self.ollama_endpoint
+        self.DEBUG = os.getenv("DEBUG", "false").lower() in ("1", "true", "yes", "on")
 
     def _discover_and_register_tools(self):
         """
