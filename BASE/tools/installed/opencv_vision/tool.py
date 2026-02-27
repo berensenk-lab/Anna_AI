@@ -302,7 +302,7 @@ class OpenCVVisionTool(BaseTool):
                         self._logger.error(f"[OpenCV Vision] Capture error: {e}")
                     time.sleep(0.1)
     
-    def _get_latest_frame(self) -> Optional[np.ndarray]:
+    def _get_latest_frame(self) -> Optional['np.ndarray']:
         """Get most recent captured frame"""
         with self.frame_lock:
             return self.latest_frame.copy() if self.latest_frame is not None else None
@@ -315,9 +315,9 @@ class OpenCVVisionTool(BaseTool):
         return len(self.fps_counter) / time_span if time_span > 0 else 0.0
     
     def _calculate_frame_difference(
-        self, 
-        frame1: np.ndarray, 
-        frame2: np.ndarray
+        self,
+        frame1: 'np.ndarray', 
+        frame2: 'np.ndarray'
     ) -> float:
         """Calculate difference between frames for change detection"""
         try:
@@ -326,7 +326,7 @@ class OpenCVVisionTool(BaseTool):
         except:
             return 0.0
     
-    async def _analyze_frame_with_vision(self, frame: np.ndarray) -> Optional[str]:
+    async def _analyze_frame_with_vision(self, frame: 'np.ndarray') -> Optional[str]:
         """
         Analyze frame using vision model with CUSTOMIZABLE PROMPT
         

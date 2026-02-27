@@ -49,7 +49,7 @@ USE_MEMORY_SEARCH = True
 USE_DICE_ROLLER = True
 USE_GAME_GUIDE = False
 USE_SCREENSHOT_VISION = True
-USE_OPENCV_VISION = False
+USE_OPENCV_VISION = True
 USE_GROUP_CHAT = False
 USE_MINECRAFT = False
 USE_MINECRAFT_SPECTATOR = False
@@ -195,7 +195,7 @@ AVATAR_SPEECH = True
 # ========================================================================
 
 # OpenCV Vision Configuration
-USE_OPENCV_VISION = False
+USE_OPENCV_VISION = True
 
 # Performance tuning
 opencv_vision_fps = 15
