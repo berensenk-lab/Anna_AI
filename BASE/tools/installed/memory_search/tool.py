@@ -7,6 +7,7 @@ FIX: Detailed logging AND keyword fallback when vector search fails
 from typing import List, Dict, Any
 from BASE.handlers.base_tool import BaseTool
 from datetime import datetime
+import heapq
 
 
 class MemorySearchTool(BaseTool):
@@ -18,7 +19,12 @@ class MemorySearchTool(BaseTool):
     Date filtering available for medium and long memory tiers
     """
     
-    __slots__ = ('memory_manager', 'memory_search', '_vector_repair_attempted')
+    __slots__ = (
+        'memory_manager', 'memory_search', '_vector_repair_attempted',
+        '_medium_keyword_cache', '_long_keyword_cache',
+        '_medium_inverted_index', '_medium_index_signature',
+        '_long_inverted_index', '_long_index_signature'
+    )
     
     @property
     def name(self) -> str:
@@ -30,6 +36,12 @@ class MemorySearchTool(BaseTool):
         self.memory_manager = None
         self.memory_search = None
         self._vector_repair_attempted = {'medium': False, 'long': False}
+        self._medium_keyword_cache = {}
+        self._long_keyword_cache = {}
+        self._medium_inverted_index = {}
+        self._medium_index_signature = None
+        self._long_inverted_index = {}
+        self._long_index_signature = None
         
         # Try multiple ways to access memory system
         if hasattr(self._config, 'ai_core'):
@@ -138,6 +150,12 @@ class MemorySearchTool(BaseTool):
     
     async def cleanup(self):
         """Cleanup memory search resources"""
+        self._medium_keyword_cache.clear()
+        self._long_keyword_cache.clear()
+        self._medium_inverted_index.clear()
+        self._medium_index_signature = None
+        self._long_inverted_index.clear()
+        self._long_index_signature = None
         if self._logger:
             self._logger.system("[MemorySearch] Cleaned up")
     
@@ -360,20 +378,22 @@ class MemorySearchTool(BaseTool):
     
     def _search_short_memory_internal(self, query: str, k: int = 1) -> List[Dict[str, Any]]:
         """Internal method: Search short-term memory using keyword matching"""
-        if not self.memory_manager.short_memory:
+        short_memory = self.memory_manager.short_memory
+        if not short_memory:
             if self._logger:
                 self._logger.system("[MemorySearch] Short memory is empty")
             return []
         
         if self._logger:
-            self._logger.system(f"[MemorySearch] Searching {len(self.memory_manager.short_memory)} short memory entries")
+            self._logger.system(f"[MemorySearch] Searching {len(short_memory)} short memory entries")
         
         query_lower = query.lower()
         query_keywords = set(query_lower.split())
+        query_keyword_count = len(query_keywords) or 1
         
         results = []
         
-        for entry in self.memory_manager.short_memory:
+        for entry in short_memory:
             content = entry.get('content', '').lower()
             
             score = 0.0
@@ -381,10 +401,11 @@ class MemorySearchTool(BaseTool):
             if query_lower in content:
                 score += 1.0
             
-            content_words = set(content.split())
-            keyword_overlap = len(query_keywords & content_words)
-            if keyword_overlap > 0:
-                score += 0.5 * (keyword_overlap / len(query_keywords))
+            if query_keywords:
+                content_words = set(content.split())
+                keyword_overlap = len(query_keywords & content_words)
+                if keyword_overlap > 0:
+                    score += 0.5 * (keyword_overlap / query_keyword_count)
             
             if score > 0:
                 results.append({
@@ -395,8 +416,7 @@ class MemorySearchTool(BaseTool):
                     'relevance': score
                 })
         
-        results.sort(key=lambda x: x['relevance'], reverse=True)
-        return results[:k]
+        return heapq.nlargest(k, results, key=lambda x: x['relevance']) if results else []
     
     async def _search_medium_memory(self, args: List[Any]) -> Dict[str, Any]:
         """Search medium-term memory"""
@@ -496,12 +516,14 @@ class MemorySearchTool(BaseTool):
     
     def _keyword_search_medium(self, query: str, k: int = 1) -> List[Dict]:
         """Fallback: Keyword-based search for medium memory"""
+        self._ensure_keyword_caches()
         if not hasattr(self.memory_manager, 'medium_memory'):
             if self._logger:
                 self._logger.system("[MemorySearch] No medium_memory attribute")
             return []
         
         medium_mem = self.memory_manager.medium_memory
+        self._prune_keyword_cache(self._medium_keyword_cache, len(medium_mem))
         
         if not medium_mem:
             if self._logger:
@@ -513,11 +535,22 @@ class MemorySearchTool(BaseTool):
         
         query_lower = query.lower()
         query_keywords = set(query_lower.split())
+        query_keyword_count = len(query_keywords) or 1
+        index = self._get_or_build_medium_index(medium_mem)
+        candidate_ids = set()
+        for token in query_keywords:
+            postings = index.get(token)
+            if postings:
+                candidate_ids.update(postings)
+        # Preserve legacy behavior for substring matches by falling back to full scan
+        # when token index finds no candidates.
+        scan_ids = candidate_ids if candidate_ids else range(len(medium_mem))
         
         results = []
         matches_found = 0
         
-        for i, entry in enumerate(medium_mem):
+        for i in scan_ids:
+            entry = medium_mem[i]
             content = entry.get('content', '').lower()
             
             score = 0.0
@@ -530,10 +563,13 @@ class MemorySearchTool(BaseTool):
                     self._logger.system(f"[MemorySearch] Found exact match in entry {i}: '{entry.get('content', '')[:100]}...'")
             
             # Keyword overlap
-            content_words = set(content.split())
-            keyword_overlap = len(query_keywords & content_words)
-            if keyword_overlap > 0:
-                score += 0.5 * (keyword_overlap / len(query_keywords))
+            if query_keywords:
+                content_words = self._get_cached_keywords(
+                    self._medium_keyword_cache, entry, 'content'
+                )
+                keyword_overlap = len(query_keywords & content_words)
+                if keyword_overlap > 0:
+                    score += 0.5 * (keyword_overlap / query_keyword_count)
             
             if score > 0:
                 results.append({
@@ -544,12 +580,12 @@ class MemorySearchTool(BaseTool):
                     'similarity': score
                 })
         
-        results.sort(key=lambda x: x['similarity'], reverse=True)
+        top_results = heapq.nlargest(k, results, key=lambda x: x['similarity']) if results else []
         
         if self._logger:
             self._logger.system(f"[MemorySearch] Keyword search found {len(results)} matching entries (returning top {k})")
         
-        return results[:k]
+        return top_results
     
     async def _search_long_memory(self, args: List[Any]) -> Dict[str, Any]:
         """Search long-term memory"""
@@ -648,20 +684,32 @@ class MemorySearchTool(BaseTool):
     
     def _keyword_search_long(self, query: str, k: int = 1) -> List[Dict]:
         """Fallback: Keyword-based search for long memory"""
+        self._ensure_keyword_caches()
         if not hasattr(self.memory_manager, 'long_memory') or not self.memory_manager.long_memory:
             if self._logger:
                 self._logger.system("[MemorySearch] long_memory is empty or not available")
             return []
         
+        long_mem = self.memory_manager.long_memory
+        self._prune_keyword_cache(self._long_keyword_cache, len(long_mem))
         if self._logger:
-            self._logger.system(f"[MemorySearch] Keyword searching {len(self.memory_manager.long_memory)} long memory entries")
+            self._logger.system(f"[MemorySearch] Keyword searching {len(long_mem)} long memory entries")
         
         query_lower = query.lower()
         query_keywords = set(query_lower.split())
+        query_keyword_count = len(query_keywords) or 1
+        index = self._get_or_build_long_index(long_mem)
+        candidate_ids = set()
+        for token in query_keywords:
+            postings = index.get(token)
+            if postings:
+                candidate_ids.update(postings)
+        scan_ids = candidate_ids if candidate_ids else range(len(long_mem))
         
         results = []
         
-        for entry in self.memory_manager.long_memory:
+        for i in scan_ids:
+            entry = long_mem[i]
             summary = entry.get('summary', '').lower()
             
             score = 0.0
@@ -669,10 +717,13 @@ class MemorySearchTool(BaseTool):
             if query_lower in summary:
                 score += 1.0
             
-            summary_words = set(summary.split())
-            keyword_overlap = len(query_keywords & summary_words)
-            if keyword_overlap > 0:
-                score += 0.5 * (keyword_overlap / len(query_keywords))
+            if query_keywords:
+                summary_words = self._get_cached_keywords(
+                    self._long_keyword_cache, entry, 'summary'
+                )
+                keyword_overlap = len(query_keywords & summary_words)
+                if keyword_overlap > 0:
+                    score += 0.5 * (keyword_overlap / query_keyword_count)
             
             if score > 0:
                 results.append({
@@ -681,12 +732,12 @@ class MemorySearchTool(BaseTool):
                     'similarity': score
                 })
         
-        results.sort(key=lambda x: x['similarity'], reverse=True)
+        top_results = heapq.nlargest(k, results, key=lambda x: x['similarity']) if results else []
         
         if self._logger:
             self._logger.system(f"[MemorySearch] Keyword search found {len(results)} matching entries")
         
-        return results[:k]
+        return top_results
     
     async def _search_base_knowledge(self, args: List[Any]) -> Dict[str, Any]:
         """Search base knowledge"""
@@ -810,15 +861,108 @@ class MemorySearchTool(BaseTool):
             return True
         except ValueError:
             return False
+
+    def _get_cached_keywords(
+        self,
+        cache: Dict[int, tuple],
+        entry: Dict[str, Any],
+        text_field: str,
+    ) -> set:
+        """
+        Get cached lowercased token set for an entry field.
+        Invalidates automatically when underlying text changes.
+        """
+        entry_id = id(entry)
+        text_value = entry.get(text_field, '')
+        cached = cache.get(entry_id)
+        if cached and cached[0] == text_value:
+            return cached[1]
+
+        tokens = set(str(text_value).lower().split()) if text_value else set()
+        cache[entry_id] = (text_value, tokens)
+        return tokens
+
+    def _ensure_keyword_caches(self) -> None:
+        """Lazily initialize keyword caches for direct/internal call paths."""
+        if not hasattr(self, '_medium_keyword_cache'):
+            self._medium_keyword_cache = {}
+        if not hasattr(self, '_long_keyword_cache'):
+            self._long_keyword_cache = {}
+        if not hasattr(self, '_medium_inverted_index'):
+            self._medium_inverted_index = {}
+        if not hasattr(self, '_medium_index_signature'):
+            self._medium_index_signature = None
+        if not hasattr(self, '_long_inverted_index'):
+            self._long_inverted_index = {}
+        if not hasattr(self, '_long_index_signature'):
+            self._long_index_signature = None
+
+    def _get_or_build_medium_index(self, medium_mem: List[Dict[str, Any]]) -> Dict[str, set]:
+        """Build/reuse inverted index for medium memory keyword lookup."""
+        if not medium_mem:
+            self._medium_inverted_index = {}
+            self._medium_index_signature = None
+            return self._medium_inverted_index
+
+        last_entry = medium_mem[-1]
+        signature = (
+            id(medium_mem),
+            len(medium_mem),
+            last_entry.get('timestamp', ''),
+            last_entry.get('content', ''),
+        )
+        if self._medium_index_signature == signature and self._medium_inverted_index:
+            return self._medium_inverted_index
+
+        inverted = {}
+        for idx, entry in enumerate(medium_mem):
+            tokens = self._get_cached_keywords(self._medium_keyword_cache, entry, 'content')
+            for token in tokens:
+                if token:
+                    inverted.setdefault(token, set()).add(idx)
+
+        self._medium_inverted_index = inverted
+        self._medium_index_signature = signature
+        return self._medium_inverted_index
+
+    def _get_or_build_long_index(self, long_mem: List[Dict[str, Any]]) -> Dict[str, set]:
+        """Build/reuse inverted index for long memory keyword lookup."""
+        if not long_mem:
+            self._long_inverted_index = {}
+            self._long_index_signature = None
+            return self._long_inverted_index
+
+        last_entry = long_mem[-1]
+        signature = (
+            id(long_mem),
+            len(long_mem),
+            last_entry.get('date', ''),
+            last_entry.get('summary', ''),
+        )
+        if self._long_index_signature == signature and self._long_inverted_index:
+            return self._long_inverted_index
+
+        inverted = {}
+        for idx, entry in enumerate(long_mem):
+            tokens = self._get_cached_keywords(self._long_keyword_cache, entry, 'summary')
+            for token in tokens:
+                if token:
+                    inverted.setdefault(token, set()).add(idx)
+
+        self._long_inverted_index = inverted
+        self._long_index_signature = signature
+        return self._long_inverted_index
+
+    def _prune_keyword_cache(self, cache: Dict[int, tuple], entry_count: int) -> None:
+        """
+        Keep keyword caches bounded to avoid growth when entries churn.
+        """
+        if len(cache) > max(2048, entry_count * 3):
+            cache.clear()
     
     def _filter_by_date(self, results: List[Dict], date_filter: str) -> List[Dict]:
         """Filter results by date"""
-        filtered = []
-        for result in results:
-            result_date = result.get('date', '')
-            if result_date and result_date == date_filter:
-                filtered.append(result)
-        return filtered
+        return [r for r in results if r.get('date', '') == date_filter]
     
     # ========================================================================
     # FORMATTING HELPERS
@@ -827,10 +971,11 @@ class MemorySearchTool(BaseTool):
     def _format_short_search_results(self, results: List[Dict]) -> str:
         """Format short-term memory search results"""
         lines = []
+        username = self.memory_manager.username
+        agentname = self.memory_manager.agentname
         
         for result in results:
-            role = (self.memory_manager.username if result['role'] == 'user' 
-                    else self.memory_manager.agentname)
+            role = username if result['role'] == 'user' else agentname
             timestamp = result.get('timestamp', 'Unknown')
             content = result['content']
             relevance = result['relevance']
@@ -845,10 +990,11 @@ class MemorySearchTool(BaseTool):
     def _format_medium_results(self, results: List[Dict]) -> str:
         """Format medium-term memory results"""
         lines = []
+        username = self.memory_manager.username
+        agentname = self.memory_manager.agentname
         
         for result in results:
-            role = (self.memory_manager.username if result['role'] == 'user' 
-                    else self.memory_manager.agentname)
+            role = username if result['role'] == 'user' else agentname
             timestamp = result.get('timestamp', 'Unknown')
             content = result['content']
             similarity = result['similarity']

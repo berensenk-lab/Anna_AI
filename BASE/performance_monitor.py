@@ -12,6 +12,7 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from collections import defaultdict
+from collections import deque
 from pathlib import Path
 
 
@@ -38,7 +39,7 @@ class PerformanceMonitor:
             max_metrics: Maximum metrics to store in memory
         """
         self.max_metrics = max_metrics
-        self.metrics: List[PerformanceMetric] = []
+        self.metrics = deque(maxlen=max_metrics)
         self.locks = threading.Lock()
         self.process = psutil.Process()
 
@@ -58,7 +59,8 @@ class PerformanceMonitor:
         """
         try:
             memory_mb = self.process.memory_info().rss / 1024 / 1024
-            cpu_percent = self.process.cpu_percent(interval=0.01)
+            # Non-blocking CPU sample to avoid adding latency to profiled calls.
+            cpu_percent = self.process.cpu_percent(interval=None)
 
             metric = PerformanceMetric(
                 timestamp=datetime.utcnow().isoformat() + "Z",
@@ -71,10 +73,6 @@ class PerformanceMonitor:
 
             with self.locks:
                 self.metrics.append(metric)
-
-                # Trim old metrics if needed
-                if len(self.metrics) > self.max_metrics:
-                    self.metrics = self.metrics[-self.max_metrics :]
 
         except Exception as e:
             print(f"[ERROR] Failed to record metric: {e}")
@@ -90,7 +88,7 @@ class PerformanceMonitor:
             List of matching metrics
         """
         with self.locks:
-            return [m for m in self.metrics if m.name == name]
+            return [m for m in list(self.metrics) if m.name == name]
 
     def get_statistics(self, name: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -104,9 +102,9 @@ class PerformanceMonitor:
         """
         with self.locks:
             metrics = (
-                [m for m in self.metrics if m.name == name]
+                [m for m in list(self.metrics) if m.name == name]
                 if name
-                else self.metrics
+                else list(self.metrics)
             )
 
         if not metrics:
@@ -151,19 +149,49 @@ class PerformanceMonitor:
             Summary statistics
         """
         with self.locks:
-            if not self.metrics:
+            snapshot = list(self.metrics)
+
+        if not snapshot:
                 return {"status": "no metrics"}
 
-            # Group by name
-            by_name = defaultdict(list)
-            for metric in self.metrics:
-                by_name[metric.name].append(metric)
+        # Group by name from one snapshot to avoid repeated lock/filter passes.
+        by_name = defaultdict(list)
+        for metric in snapshot:
+            by_name[metric.name].append(metric)
 
-            summary = {}
-            for name, metrics_list in by_name.items():
-                summary[name] = self.get_statistics(name)
+        summary = {}
+        for name, metrics_list in by_name.items():
+            durations = [m.duration_ms for m in metrics_list]
+            memory_values = [m.memory_mb for m in metrics_list]
+            cpu_values = [m.cpu_percent for m in metrics_list]
+            success_count = len([m for m in metrics_list if m.status == "success"])
+            failed_count = len([m for m in metrics_list if m.status == "failed"])
+            timeout_count = len([m for m in metrics_list if m.status == "timeout"])
 
-            return summary
+            summary[name] = {
+                "count": len(metrics_list),
+                "success": success_count,
+                "failed": failed_count,
+                "timeout": timeout_count,
+                "duration_ms": {
+                    "min": min(durations),
+                    "max": max(durations),
+                    "avg": sum(durations) / len(durations),
+                    "total": sum(durations),
+                },
+                "memory_mb": {
+                    "min": min(memory_values),
+                    "max": max(memory_values),
+                    "avg": sum(memory_values) / len(memory_values),
+                },
+                "cpu_percent": {
+                    "min": min(cpu_values),
+                    "max": max(cpu_values),
+                    "avg": sum(cpu_values) / len(cpu_values),
+                },
+            }
+
+        return summary
 
     def export_metrics(self, filepath: Path) -> bool:
         """
@@ -181,7 +209,7 @@ class PerformanceMonitor:
             filepath.parent.mkdir(parents=True, exist_ok=True)
 
             with self.locks:
-                metrics_data = [asdict(m) for m in self.metrics]
+                metrics_data = [asdict(m) for m in list(self.metrics)]
 
             with open(filepath, "w") as f:
                 json.dump(metrics_data, f, indent=2)

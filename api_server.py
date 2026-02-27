@@ -356,11 +356,12 @@ class APIServer:
         try:
             process = psutil.Process()
             return {
-                "cpu_percent": process.cpu_percent(interval=0.1),
+                # Use non-blocking CPU sampling to avoid endpoint latency.
+                "cpu_percent": process.cpu_percent(interval=None),
                 "memory_mb": process.memory_info().rss / 1024 / 1024,
                 "memory_percent": process.memory_percent(),
                 "num_threads": process.num_threads(),
-                "system_cpu_percent": psutil.cpu_percent(interval=0.1),
+                "system_cpu_percent": psutil.cpu_percent(interval=None),
                 "system_memory_percent": psutil.virtual_memory().percent,
             }
         except Exception as e:

@@ -29,7 +29,8 @@ class ToolLifecycleManager:
 
     __slots__ = (
         'project_root', 'logger', 'config', '_tool_metadata', '_active_tools',
-        '_event_loop', '_thought_buffer', '_json_cache', '_file_mtimes'
+        '_event_loop', '_thought_buffer', '_json_cache', '_file_mtimes',
+        '_tool_class_cache', '_tool_class_mtimes'
     )
 
     def __init__(self, project_root: Path, logger=None, config=None):
@@ -45,6 +46,8 @@ class ToolLifecycleManager:
 
         self._json_cache: Dict[str, Dict] = {}
         self._file_mtimes: Dict[str, float] = {}
+        self._tool_class_cache: Dict[str, Any] = {}
+        self._tool_class_mtimes: Dict[str, float] = {}
 
     # ========================================================================
     # JSON CACHING OPTIMIZATION
@@ -368,6 +371,13 @@ class ToolLifecycleManager:
     def load_tool_class(self, tool_file: Path, tool_name: str):
         """Dynamically load BaseTool class from tool.py"""
         try:
+            tool_path = str(tool_file)
+            tool_mtime = tool_file.stat().st_mtime
+
+            cached = self._tool_class_cache.get(tool_path)
+            if cached is not None and self._tool_class_mtimes.get(tool_path) == tool_mtime:
+                return cached
+
             module_name = f"tool_{tool_name}"
 
             spec = importlib.util.spec_from_file_location(
@@ -411,7 +421,10 @@ class ToolLifecycleManager:
                         f"using {found_classes[0][0]}"
                     )
 
-            return found_classes[0][1]
+            selected_class = found_classes[0][1]
+            self._tool_class_cache[tool_path] = selected_class
+            self._tool_class_mtimes[tool_path] = tool_mtime
+            return selected_class
 
         except Exception as e:
             if self.logger:

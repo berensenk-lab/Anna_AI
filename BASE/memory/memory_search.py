@@ -19,6 +19,8 @@ import numpy as np
 from pathlib import Path
 from typing import List, Dict, Optional, Any, Union
 import requests
+import heapq
+from collections import OrderedDict
 
 
 class MemorySearch:
@@ -27,7 +29,7 @@ class MemorySearch:
     __slots__ = (
         'logger', 'memory_manager', 'memory_dir', 'thought_examples_dir',
         'response_examples_dir', 'thought_embeddings', 'response_embeddings',
-        'ollama_url', 'embed_model'
+        'ollama_url', 'embed_model', '_embedding_cache', '_embedding_cache_size'
     )
     
     def __init__(self, memory_dir_or_manager: Optional[Any] = None, logger=None):
@@ -52,6 +54,8 @@ class MemorySearch:
         
         self.ollama_url = "http://localhost:11434"
         self.embed_model = "nomic-embed-text"
+        self._embedding_cache = OrderedDict()
+        self._embedding_cache_size = 128
         
         self._load_embeddings()
     
@@ -195,9 +199,8 @@ class MemorySearch:
                     'similarity': similarity
                 })
         
-        # Sort by similarity and return top k
-        results.sort(key=lambda x: x['similarity'], reverse=True)
-        return results[:k]
+        # Return top k without fully sorting all results.
+        return heapq.nlargest(k, results, key=lambda x: x['similarity']) if results else []
 
 
     def search_long_memory(self, query: str, k: int = 5) -> List[Dict[str, Any]]:
@@ -249,9 +252,8 @@ class MemorySearch:
                     'similarity': similarity
                 })
         
-        # Sort by similarity and return top k
-        results.sort(key=lambda x: x['similarity'], reverse=True)
-        return results[:k]
+        # Return top k without fully sorting all results.
+        return heapq.nlargest(k, results, key=lambda x: x['similarity']) if results else []
 
 
     def search_base_knowledge(self, query: str, k: int = 5, min_similarity: float = 0.4) -> List[Dict[str, Any]]:
@@ -298,9 +300,8 @@ class MemorySearch:
                     'similarity': similarity
                 })
         
-        # Sort by similarity and return top k
-        results.sort(key=lambda x: x['similarity'], reverse=True)
-        return results[:k]
+        # Return top k without fully sorting all results.
+        return heapq.nlargest(k, results, key=lambda x: x['similarity']) if results else []
 
 
     def get_short_memory(self) -> str:
@@ -387,6 +388,15 @@ class MemorySearch:
         Returns:
             Embedding vector or None if failed
         """
+        if not text:
+            return None
+
+        cached = self._embedding_cache.get(text)
+        if cached is not None:
+            # Maintain LRU order.
+            self._embedding_cache.move_to_end(text)
+            return cached
+
         try:
             response = requests.post(
                 f"{self.ollama_url}/api/embeddings",
@@ -394,7 +404,11 @@ class MemorySearch:
                 timeout=30
             )
             response.raise_for_status()
-            return response.json()["embedding"]
+            embedding = response.json()["embedding"]
+            self._embedding_cache[text] = embedding
+            if len(self._embedding_cache) > self._embedding_cache_size:
+                self._embedding_cache.popitem(last=False)
+            return embedding
         except Exception as e:
             if self.logger:
                 self.logger.warning(f"[MemorySearch] Embedding error: {e}")
@@ -497,8 +511,9 @@ class MemorySearch:
             # Fallback to keyword-only search
             query_embedding = None
         
-        # Extract keywords from query
+        # Extract keywords from query once.
         query_keywords = query.lower().split()
+        query_keyword_set = {kw for kw in query_keywords if kw}
         
         results = []
         
@@ -533,7 +548,13 @@ class MemorySearch:
                 
                 # Keyword match score (weight: 0.3)
                 chunk_keywords = chunk.get('metadata', {}).get('keywords', [])
-                keyword_score = self._keyword_match_score(query_keywords, chunk_keywords)
+                chunk_set = {kw.lower() for kw in chunk_keywords if kw}
+                if query_keyword_set and chunk_set:
+                    inter = query_keyword_set & chunk_set
+                    union = query_keyword_set | chunk_set
+                    keyword_score = (len(inter) / len(union)) if union else 0.0
+                else:
+                    keyword_score = 0.0
                 
                 # Combined score: 70% similarity + 30% keyword match
                 combined_score = (similarity * 0.7) + (keyword_score * 0.3)
@@ -548,9 +569,8 @@ class MemorySearch:
                     }
                     results.append(result)
         
-        # Sort by similarity and return top k
-        results.sort(key=lambda x: x['similarity'], reverse=True)
-        return results[:k]
+        # Return top k without fully sorting all candidates.
+        return heapq.nlargest(k, results, key=lambda x: x['similarity']) if results else []
     
     def get_thought_interpretation_examples(
         self,
